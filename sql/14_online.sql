@@ -33,6 +33,8 @@ alter table public.ol_meta  enable row level security;
 alter table public.ol_props enable row level security;
 alter table public.ol_meet  enable row level security;
 -- بلا سياسات: لا قراءة ولا كتابة من المتصفح مباشرة (الخادم يعمل بمفتاح الخدمة)
+grant select, insert, update, delete on public.ol_rows, public.ol_meta, public.ol_props, public.ol_meet to service_role;
+grant usage, select on sequence public.ol_rows_id_seq to service_role;
 
 -- استبدال ورقة كاملة
 create or replace function public.ol_put_sheet(p_sheet text, p_rows jsonb) returns void

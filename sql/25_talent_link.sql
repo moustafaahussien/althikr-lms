@@ -21,7 +21,8 @@ language sql stable security definer set search_path = public as $$
   select case when p.id is null then jsonb_build_object('ok', false)
     else jsonb_build_object('ok', true, 'id', p.id, 'name', p.full_name, 'email', p.email, 'role', p.role, 'title', coalesce(p.job_title, ''),
       'staff', p.role::text not in ('student', 'parent'),
-      'admin', p.role::text in ('admin', 'leadership') or coalesce(p.job_title, '') ~ '(موهب|الموهوبين)')
+      'admin', p.role::text in ('admin', 'leadership') or coalesce(p.job_title, '') ~ '(موهب|الموهوبين)',
+      'emp_no', (select d.emp_no from staff_directory d where d.profile_id = p.id limit 1))
   end
   from (select 1) x left join profiles p on p.id = public.me_id() and p.active
 $$;

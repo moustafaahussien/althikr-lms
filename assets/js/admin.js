@@ -425,7 +425,7 @@
       const rows = all.filter((p) => { const t = T[p.id];
         return (!rf || p.role === rf) && has(t, 'stages', sf) && has(t, 'subjects', bf) && has(t, 'supervisors', pf)
           && (!q || norm(p.full_name + ' ' + (p.email || '') + ' ' + (t ? t.classes.map((c) => c.label).join(' ') : '')).includes(q)); });
-      $('#tbl', pane).innerHTML = `<p class="hint" style="margin:0 0 8px">${rows.length} موظف — المادة والمرحلة والفصول والنصاب من جدول الحصص في قسم الإشراف التربوي.</p>
+      $('#tbl', pane).innerHTML = `<p class="hint" style="margin:0 0 8px">${rows.length} موظف — المادة والمرحلة والفصول والنصاب من جدول الحصص في مكتب الإشراف التربوي.</p>
         <table><thead><tr><th>الاسم</th><th>المادة</th><th>المرحلة</th><th>الفصول</th><th>الحصص/أسبوع</th><th>المشرف</th><th>البريد</th><th>الدور</th><th>الحالة</th><th></th></tr></thead>
         <tbody>${rows.length ? rows.map((p) => { const t = T[p.id]; return `<tr>
           <td><b>${esc(p.full_name)}</b>${p.job_title ? `<div class="hint" style="margin:0">${esc(p.job_title)}</div>` : ''}</td>
@@ -470,7 +470,7 @@
         ${T[p.id] ? `<h4 style="margin:14px 0 6px">التدريس (من جدول الحصص) — ${T[p.id].class_count} فصل، ${T[p.id].weekly_periods} حصة أسبوعيًا${T[p.id].supervisors ? ' — المشرف: ' + esc(T[p.id].supervisors) : ''}</h4>
           <div class="table-wrap" style="max-height:240px;overflow:auto"><table><thead><tr><th>الفصل</th><th>المادة</th><th>الحصص</th></tr></thead><tbody>
           ${T[p.id].classes.map((c) => `<tr><td>${esc(c.label)}</td><td>${esc(c.subject)}</td><td>${c.periods ?? '—'}</td></tr>`).join('')}</tbody></table></div>
-          <p class="hint">لتعديل فصول المعلم أو مادته: من قسم الإشراف التربوي (جدول الحصص / الإعدادات).</p>` : ''}
+          <p class="hint">لتعديل فصول المعلم أو مادته: من مكتب الإشراف التربوي (جدول الحصص / الإعدادات).</p>` : ''}
         <p class="hint">«الإدارة العليا» ترى كل المدرسة للقراءة. «مدير مرحلة» و«مشرف» يريان ما يحدده النطاق أدناه. «المعلم» يرى فصوله المُسندة فقط.</p>
         <h4 style="margin:14px 0 6px">النطاقات</h4>
         ${isNew ? '<p class="hint">احفظ الموظف أولًا ثم افتح «تعديل» لإضافة النطاقات.</p>' : `
@@ -719,7 +719,7 @@
     const draw = () => {
       const f = val(pane, '#stF');
       const rows = R.classes.filter((c) => !f || String(c.stage_id) === f);
-      $('#tbl', pane).innerHTML = `<p class="hint" style="margin:0 0 8px">${rows.length} فصل — المعلمون والمواد من جدول الحصص في قسم الإشراف التربوي.</p>
+      $('#tbl', pane).innerHTML = `<p class="hint" style="margin:0 0 8px">${rows.length} فصل — المعلمون والمواد من جدول الحصص في مكتب الإشراف التربوي.</p>
         <table><thead><tr><th>الفصل</th><th>القسم</th><th>المعلمون</th><th>المواد</th><th>الحصص/أسبوع</th><th>الطلاب</th><th>رائد الفصل</th><th>الحالة</th><th></th></tr></thead>
         <tbody>${rows.length ? rows.map((c) => { const t = CT[c.id]; return `<tr><td><b>${esc(c.label)}</b></td><td>${esc(c.section_name)}</td>
           <td title="${esc(t ? t.teachers.map((x) => x.subject + ': ' + x.teacher).join('\n') : '')}">${t ? t.teacher_count : 0}</td>
@@ -960,7 +960,8 @@
   async function settingsTab(pane) {
     const rows = await run(sb.from('app_settings').select('*'));
     const get = (k) => rows.find((r) => r.key === k)?.value;
-    pane.innerHTML = `<div class="card glass">
+    pane.innerHTML = `<div class="notice info" style="margin:0 0 14px">⏰ توقيت الحصص و🗓️ جداول حصص المشرفين (رفع الجدول، مادة كل معلم، مرحلة كل صف) في <a href="settings.html"><b>إعدادات المدرسة</b></a> — يديرها أيضًا الإدارة العليا ومديرو المراحل.</div>
+      <div class="card glass">
       <div class="form-grid">
         <label class="f">اسم المدرسة<input id="sn" value="${esc(get('school_name') || '')}"></label>
         <label class="f">نطاقات البريد المسموحة (افصل بفاصلة)<input id="dm" dir="ltr" value="${esc((get('allowed_domains') || []).join(', '))}"></label>

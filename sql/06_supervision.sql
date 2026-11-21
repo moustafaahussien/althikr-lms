@@ -1,5 +1,5 @@
 -- =====================================================================
---  الملف 6: قسم الإشراف التربوي — الخادم الكامل على Supabase
+--  الملف 6: مكتب الإشراف التربوي — الخادم الكامل على Supabase
 --  (بديل Google Sheets / Apps Script)
 --  - أعضاء المنصة = حسابات منصة المدرسة (الدخول الموحّد بحساب Google)
 --  - بيانات كل مشرف (جدوله، إعداداته، تذكيراته، تقييماته، جلساته) في supervision_data
@@ -87,7 +87,7 @@ language sql immutable as $$
   select 'tt_' || left(encode(sha256(convert_to('tt:' || pid::text, 'UTF8')), 'hex'), 24)
 $$;
 
--- دوري في قسم الإشراف التربوي: owner (مدير نظام المنصة) / sys / admin / member — أو null إن لم أكن عضوًا مفعّلًا
+-- دوري في مكتب الإشراف التربوي: owner (مدير نظام المنصة) / sys / admin / member — أو null إن لم أكن عضوًا مفعّلًا
 create or replace function private.sv_role(pid uuid) returns text
 language plpgsql stable security definer set search_path = public as $$
 declare r public.user_role; m record;

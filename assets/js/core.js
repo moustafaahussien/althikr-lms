@@ -155,6 +155,7 @@
       <nav class="nav">
         <a href="home.html" class="${here === 'home.html' ? 'on' : ''}">الرئيسية</a>
         ${isAdmin ? `<a href="admin.html" class="${here === 'admin.html' ? 'on' : ''}">لوحة الإدارة</a>` : ''}
+        ${['admin','leadership','principal'].includes(p.role) ? `<a href="settings.html" class="${here === 'settings.html' ? 'on' : ''}">إعدادات المدرسة</a>` : ''}
       </nav>
       <div class="me">
         <div class="me-text"><b>${esc(p.full_name)}</b><small>${esc(p.job_title || ROLE_LABELS[p.role])}</small></div>

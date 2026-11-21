@@ -10,7 +10,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <meta name="theme-color" content="#0f6e6a">
-<title>قسم الإشراف التربوي – منصة دار الذكر التعليمية</title>
+<title>مكتب الإشراف التربوي – منصة دار الذكر التعليمية</title>
 <script src="i18n.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../assets/js/config.js"></script>
@@ -211,7 +211,7 @@ dialog::backdrop{background:#0006}
 <body>
 <header>
   <div class="hrow">
-    <a class="brandlink" href="../home.html" title="منصة دار الذكر التعليمية"><span class="logo-tile"><img src="../assets/img/logo-mark.png" alt="مدارس دار الذكر"></span><span><h1 id="appTitle">قسم الإشراف التربوي</h1><small class="plat">منصة دار الذكر التعليمية</small></span></a>
+    <a class="brandlink" href="../home.html" title="منصة دار الذكر التعليمية"><span class="logo-tile"><img src="../assets/img/logo-mark.png" alt="مدارس دار الذكر"></span><span><h1 id="appTitle">مكتب الإشراف التربوي</h1><small class="plat">منصة دار الذكر التعليمية</small></span></a>
     <div class="clock"><button class="btn sm" id="inboxBtn" style="background:transparent;color:#fff;border-color:#ffffff66;position:relative">📩 الرسائل<span id="inboxBadge" style="display:none;position:absolute;top:-6px;left:-6px;background:#e4a842;color:#3d2600;border-radius:999px;font-size:11px;padding:0 6px;font-weight:700"></span></button><span id="whoLbl" class="sync"></span><button class="btn sm langbtn" id="langBtn" data-raw title="English / Arabic">EN</button><button class="btn sm" id="codeBtn" style="display:none" title="تغيير كود الدخول">🔑 الكود</button><a class="btn sm" id="lmsHome" href="../home.html" style="background:transparent;color:#fff;border-color:#ffffff66;text-decoration:none" title="العودة إلى منصة المدرسة">🏠 منصة المدرسة</a><button class="btn sm" id="logoutBtn" style="background:transparent;color:#fff;border-color:#ffffff66">خروج</button><span id="todayLbl"></span><b id="clk">--:--</b></div>
   </div>
   <nav id="tabs">
@@ -220,7 +220,6 @@ dialog::backdrop{background:#0006}
     <button data-t="ev">التقييمات <span id="evCount"></span></button>
     <button data-t="ses">الجلسات <span id="sesCount"></span></button>
     <button data-t="week">جدول معلم</button>
-    <button data-t="set">الإعدادات</button>
     <button data-t="sch" id="schTab" style="display:none">🏫 جدول المدرسة</button>
     <button data-t="adm" id="admTab" style="display:none">المشرفون</button>
     <div id="calBar" class="calbar" role="button" tabindex="0" title="التقويم الدراسي 1448هـ"></div>
@@ -386,46 +385,6 @@ dialog::backdrop{background:#0006}
     </div>
   </section>
 
-  <section id="p-set" class="panel">
-    <div id="setOwnerNote"></div>
-    <div class="sec card">
-      <h3>اسم القسم / الوحدة</h3>
-      <p class="h">يظهر أعلى الصفحة (مثال: وحدة مهارات القرن 21، قسم الرياضيات).</p>
-      <input id="titleIn" style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:10px" placeholder="اسم القسم">
-    </div>
-    <div class="sec card">
-      <h3>توقيت الحصص</h3>
-      <p class="h">لكل مرحلة توقيتها حسب الجداول الزمنية الرسمية للفصل الأول 1448هـ (الثانوي حسب التوقيت الشتوي — 7 حصص). كل صف يتبع توقيت مرحلته تلقائيًا، ويمكن تغيير ذلك من عمود «التوقيت» في جدول «مرحلة كل صف».</p>
-      <div id="timesBox"></div>
-    </div>
-    <div class="sec card" id="secSheets">
-      <h3>أسماء الجداول</h3>
-      <p class="h">كل ورقة في ملف Excel تظهر هنا كجدول مستقل. سمِّها باسم واضح (مثل: بنين ابتدائي، بنات، المسار الأمريكي).</p>
-      <div id="sheetsBox"></div>
-    </div>
-    <div class="sec card">
-      <h3>مادة كل معلم</h3>
-      <p class="h">اختر المادة أو اكتب مادة جديدة.</p>
-      <div id="subjBox"></div>
-    </div>
-    <div class="sec card">
-      <h3>مرحلة كل صف</h3>
-      <p class="h">حدد المرحلة لكل صف دراسي.</p>
-      <div id="stageBox"></div>
-    </div>
-    <div class="sec card">
-      <h3>رفع جدول الحصص من ملف Excel</h3>
-      <p class="h">ارفع ملف Excel بهذا الشكل (وعند تغيّر الجدول ارفع الملف الجديد): الأيام في العمود الأول، وأرقام الحصص في الصف العلوي، وفي كل خلية سطر لكل معلم بالصيغة «الاسم الصف» مثل «الشهري 6-د» أو «Hussain 5B». الاسم بدون صف يعني أن المعلم بدون حصة. الإعدادات والتذكيرات تبقى كما هي. لو في الملف أكثر من ورقة، ستُقرأ كل الأوراق كجداول منفصلة؛ احذف الأوراق غير المطلوبة قبل الرفع.</p>
-      <input type="file" id="xlsIn" accept=".xlsx,.xls">
-      <span id="xlsMsg" class="sync"></span>
-    </div>
-    <div class="sec card">
-      <h3>نسخة احتياطية</h3>
-      <p class="h">انسخ الإعدادات كنص واحفظه عندك، أو الصق نسخة سابقة لاسترجاعها.</p>
-      <div class="bar"><button class="btn" id="copyCfg">نسخ الإعدادات</button><button class="btn" id="pasteCfgBtn">استرجاع من نص</button></div>
-      <textarea id="cfgText" style="width:100%;min-height:80px;display:none;direction:ltr;font-family:monospace;font-size:12px"></textarea>
-    </div>
-  </section>
 </main>
 
 <dialog id="dlg"><div class="dlg" id="dlgBody"></div></dialog>
@@ -440,7 +399,7 @@ dialog::backdrop{background:#0006}
 <div id="toast"></div>
 <div id="login"><form class="box" id="loginForm">
   <img src="../assets/img/logo.png" alt="مدارس دار الذكر" style="width:150px;max-width:60%;display:block;margin:0 auto 6px">
-  <h2 style="margin:6px 0 2px">قسم الإشراف التربوي</h2>
+  <h2 style="margin:6px 0 2px">مكتب الإشراف التربوي</h2>
   <div style="color:var(--muted)">مدارس دار الذكر</div>
   <div id="ssoState" style="margin:16px 0 6px;font-weight:600">جارٍ الدخول بحساب المدرسة…</div>
   <div id="linkBox" style="display:none"></div>
@@ -565,6 +524,9 @@ function ttMaps(){ // أسماء الجداول ومواد المعلمين وم
   cfg.sheetNames=sn; cfg.subjects=Object.assign({},(TT&&TT.subjects)||{}); cfg.stages=Object.assign({},(TT&&TT.stages)||{});
   if(TT&&TT.mirror) cfg.schoolMirror=true; else delete cfg.schoolMirror;
   delete cfg.raw;
+  // توقيت الحصص من إعدادات المدرسة (مرة واحدة للمدرسة كلها)
+  const times={}; PROF_ORDER.forEach(k=>{ const rows=TT&&TT.times&&TT.times[k]; if(rows&&rows.length){ const a=[]; rows.forEach(r=>{ a[r.p-1]={s:r.s||"",e:r.e||""}; }); for(let i=0;i<a.length;i++) if(!a[i]) a[i]={s:"",e:""}; times[k]=a; } else times[k]=JSON.parse(JSON.stringify(PROFILES[k].t)); });
+  cfg.times=times; cfg.profOf=Object.assign({},(TT&&TT.profs)||{});
 }
 function ttKey(){ return "tt_tt_"+CODE; }
 async function ttLoad(){
@@ -710,7 +672,7 @@ function renderDay(){
   const tn=document.getElementById("timeNotice");
   tn.innerHTML = "";
   const list=document.getElementById("dayList"), hero=document.getElementById("hero");
-  if(!ENTRIES.length){ hero.innerHTML=""; list.innerHTML=`<div class="card empty" style="line-height:2">لم يُرفع جدول الحصص بعد.<br>اذهب إلى تبويب <b>«الإعدادات»</b> ← <b>«رفع جدول الحصص من ملف Excel»</b> وارفع ملف جدولك.</div>`; return; }
+  if(!ENTRIES.length){ hero.innerHTML=""; list.innerHTML=`<div class="card empty" style="line-height:2">لم يُرفع جدول حصصك بعد.<br>جدول الحصص يرفعه مدير المرحلة من <b>«إعدادات المدرسة»</b> في منصة دار الذكر التعليمية.</div>`; return; }
   if(day>4){ hero.innerHTML=""; list.innerHTML=`<div class="card empty">${DAYS[day]} إجازة، لا توجد حصص. اختر يومًا آخر.</div>`; return; }
   const items=filtered(day);
   const showFree=document.getElementById("fFree").checked, hidePast=document.getElementById("fHidePast").checked;
@@ -1011,7 +973,7 @@ function showAlarm(due){
   const orig=document.getElementById("appTitle").textContent; let on=false; clearInterval(titleFlash);
   titleFlash=setInterval(()=>{ document.title=(on=!on)?"🔔 حصة تبدأ قريبًا!":orig; },900);
 }
-document.getElementById("alarmOk").onclick=()=>{ document.getElementById("alarm").classList.remove("on"); clearInterval(titleFlash); document.title="قسم الإشراف التربوي – منصة دار الذكر التعليمية"; };
+document.getElementById("alarmOk").onclick=()=>{ document.getElementById("alarm").classList.remove("on"); clearInterval(titleFlash); document.title="مكتب الإشراف التربوي – منصة دار الذكر التعليمية"; };
 
 /* ================= جدول معلم ================= */
 function renderWeek(){
@@ -1041,82 +1003,11 @@ function renderWeek(){
   document.getElementById("weekView").innerHTML=h;
 }
 
-/* ================= الإعدادات ================= */
-let canEditCfg = true;
-function renderSettings(){
-  document.getElementById("titleIn").value = cfg.title||"";
-  document.getElementById("setOwnerNote").innerHTML = canEditCfg?"":`<div class="notice">هذه الإعدادات للعرض فقط؛ يعدّلها صاحب الصفحة.</div>`;
-  const dis=canEditCfg?"":"disabled";
-  // حساب مسؤول النظام بلا جدول خاص: المواد والمراحل وأسماء الجداول تأتي من جداول المشرفين ولا تُحفظ هنا
-  const disM=(canEditCfg && !cfg.schoolMirror)?"":"disabled";
-  if(cfg.schoolMirror) document.getElementById("setOwnerNote").innerHTML=`<div class="notice">أنت تعرض <b>جدول المدرسة الموحد</b> من جداول كل المشرفين؛ لذلك خانات «أسماء الجداول» و«مادة كل معلم» و«مرحلة كل صف» للعرض فقط — يعدّلها كل مشرف من حسابه. التوقيت واسم القسم يمكنك تعديلهما.</div>`;
-  // التوقيت: جدول لكل مرحلة
-  const timeTable=(key,label)=>{ const tt=cfg.times[key]||[]; return `<div style="flex:1 1 400px;min-width:280px"><b>${esc(label)}</b><div class="tablewrap" style="margin-top:6px"><table class="set"><thead><tr><th>الحصة</th><th>من</th><th>إلى</th></tr></thead><tbody>${Array.from({length:NPER},(_,i)=>`<tr><td>${i+1}</td><td><input type="time" ${dis} data-tk="${key}" data-ti="${i}" data-tf="s" value="${esc((tt[i]||{}).s||"")}"></td><td><input type="time" ${dis} data-tk="${key}" data-ti="${i}" data-tf="e" value="${esc((tt[i]||{}).e||"")}"></td></tr>`).join("")}</tbody></table></div></div>`; };
-  document.getElementById("secSheets").style.display = MULTI()?"":"none";
-  let th=`<div style="display:flex;gap:12px;flex-wrap:wrap">${PROF_ORDER.map(k=>timeTable(k,PROFILES[k].name)).join("")}</div>`;
-  th+=`<div class="bar" style="margin-top:10px"><button class="btn sm" id="resetTimes" ${dis}>إرجاع التوقيت الرسمي</button></div>`;
-  document.getElementById("timesBox").innerHTML=th;
-  // أسماء الجداول
-  document.getElementById("sheetsBox").innerHTML=`<div class="tablewrap"><table class="set"><thead><tr><th>الورقة في الملف</th><th>المعلمون</th><th>الاسم الظاهر</th></tr></thead><tbody>${SHEETS.map(s=>{ const ts=[...new Set(ENTRIES.filter(e=>e.sheet===s.idx&&e.teacher).map(e=>e.teacher))]; return `<tr><td>${esc(s.name)}</td><td style="text-align:right">${esc(ts.join("، "))}</td><td><input ${disM} data-sn="${s.idx}" value="${esc(cfg.sheetNames[s.idx]||"")}" placeholder="${esc("الجدول "+(s.idx+1))}"></td></tr>`; }).join("")}</tbody></table></div>`;
-  // المواد
-  const allSubs=[...new Set(["الذكاء العاطفي","التصميم من أجل التغيير","EQ","STEM",...Object.values(cfg.subjects)])];
-  const tks=[]; const seen=new Set(); ENTRIES.forEach(e=>{ if(!e.teacher) return; const k=e.sheet+"|"+e.teacher; if(seen.has(k)) return; seen.add(k); tks.push({k,sheet:e.sheet,teacher:e.teacher,n:ENTRIES.filter(x=>x.sheet===e.sheet&&x.teacher===e.teacher&&x.kind==="class").length}); });
-  tks.sort((a,b)=>a.sheet-b.sheet||a.teacher.localeCompare(b.teacher,"ar"));
-  document.getElementById("subjBox").innerHTML=`<datalist id="subjList">${allSubs.map(s=>`<option value="${esc(s)}">`).join("")}</datalist><div class="tablewrap"><table class="set"><thead><tr>${MULTI()?"<th>الجدول</th>":""}<th>المعلم</th><th>عدد الحصص</th><th>المادة</th></tr></thead><tbody>${tks.map(t=>{ const cur=cfg.subjects[t.k]||SUBJECT_BY_NAME[t.teacher]||""; const fixed=teacherSubjects({sheet:t.sheet,teacher:t.teacher}); if(fixed) return `<tr>${MULTI()?`<td>${esc(sheetName(t.sheet))}</td>`:""}<td>${esc(t.teacher)}</td><td>${t.n}</td><td style="text-align:right">${esc(fixed)} <span class="sync">(من جدول المدرسة)</span></td></tr>`; return `<tr>${MULTI()?`<td>${esc(sheetName(t.sheet))}</td>`:""}<td>${esc(t.teacher)}</td><td>${t.n}</td><td><input ${disM} list="subjList" data-sub="${esc(t.k)}" value="${esc(cur)}" placeholder="غير محدد" style="${cur?"":"border-color:#e4a842;background:#fffaf0"}"></td></tr>`; }).join("")}</tbody></table></div>`;
-  // المراحل
-  const gks=[]; const sg=new Set(); ENTRIES.filter(e=>e.kind==="class").forEach(e=>{ const k=stageKey(e); if(sg.has(k)) return; sg.add(k); gks.push({k,e,cls:[...new Set(ENTRIES.filter(x=>x.kind==="class"&&stageKey(x)===k).map(x=>x.cls))].sort()}); });
-  gks.sort((a,b)=>a.e.sheet-b.e.sheet||a.e.track.localeCompare(b.e.track)||a.e.gradeNum-b.e.gradeNum);
-  document.getElementById("stageBox").innerHTML=`<div class="tablewrap"><table class="set"><thead><tr>${MULTI()?"<th>الجدول</th>":""}<th>المعلم/المادة</th><th>الصف</th><th>الشُعب</th><th>المرحلة</th><th>التوقيت</th></tr></thead><tbody>${gks.map(g=>{ const cur=stageOf(g.e); const subs=[...new Set(ENTRIES.filter(x=>x.kind==="class"&&stageKey(x)===g.k).map(subjectOf))].join("، "); return `<tr>${MULTI()?`<td>${esc(sheetName(g.e.sheet))}</td>`:""}<td>${esc(subs)}</td><td>${g.e.track==="american"?"Grade "+g.e.gradeNum:"الصف "+(GRADE_AR[g.e.gradeNum]||g.e.gradeNum)}</td><td style="font-size:12px">${esc(g.cls.join("، "))}</td><td><select ${disM} data-stg="${esc(g.k)}" style="${cur==="غير محدد"?"border-color:#e4a842;background:#fffaf0":""}">${STAGES.map(s=>`<option value="${esc(s)}" ${s===cur?"selected":""}>${s}</option>`).join("")}</select></td><td><select ${dis} data-prof="${esc(g.k)}">${PROF_ORDER.map(k=>`<option value="${k}" ${profOf(g.e)===k?"selected":""}>${esc(PROFILES[k].name)}</option>`).join("")}</select></td></tr>`; }).join("")}</tbody></table></div>`;
-}
-
-document.getElementById("p-set").addEventListener("click",ev=>{ if(ev.target.id==="resetTimes" && canEditCfg){ PROF_ORDER.forEach(k=>cfg.times[k]=JSON.parse(JSON.stringify(PROFILES[k].t))); cfg.profOf={}; saveCfg(); renderSettings(); renderDay(); toast("تم إرجاع التوقيت الرسمي ✓"); } });
-document.getElementById("p-set").addEventListener("change",ev=>{
-  const el=ev.target; if(!canEditCfg) return;
-  if(el.dataset.tk){ const t=cfg.times[el.dataset.tk]; t[+el.dataset.ti]=t[+el.dataset.ti]||{}; t[+el.dataset.ti][el.dataset.tf]=el.value;
-    // تعبئة ذكية: عند كتابة بداية الحصة ولا توجد نهاية، اقترح 45 دقيقة
-    if(el.dataset.tf==="s" && !t[+el.dataset.ti].e && el.value){ t[+el.dataset.ti].e=fmtHM(toMin(el.value)+45); renderSettings(); }
-  }
-  else if(cfg.schoolMirror && (el.dataset.sn!==undefined || el.dataset.sub || el.dataset.stg)){ renderSettings(); return toast("هذه الخانة يعدّلها كل مشرف من حسابه"); }
-  else if(el.dataset.sn!==undefined || el.dataset.sub || el.dataset.stg){ ttSettingChange(el); return; }
-  else if(el.id==="titleIn"){ cfg.title=el.value.trim(); applyTitle(); }
-  else if(el.dataset.prof){ cfg.profOf[el.dataset.prof]=el.value; }
-  else return;
-  saveCfg(); fillFilters(); toast("تم الحفظ ✓");
-});
-
-// أسماء الجداول / مادة المعلم / مرحلة الصف: تُحفظ في قاعدة بيانات المنصة مباشرة
-async function ttSettingChange(el){
-  const v=el.value.trim();
-  try{
-    if(el.dataset.sn!==undefined){ const idx=+el.dataset.sn; await ttMeta({action:"label",idx,value:v}); const sh=(TT.sheets||[]).find(x=>x.k===idx); if(sh) sh.label=v||null; }
-    else if(el.dataset.sub){ const k=el.dataset.sub, j=k.indexOf("|"), idx=+k.slice(0,j), teacher=k.slice(j+1);
-      await ttMeta({action:"subject",idx,teacher,value:v}); if(v) TT.subjects[k]=v; else delete TT.subjects[k]; el.style.cssText=v?"":"border-color:#e4a842;background:#fffaf0"; }
-    else if(el.dataset.stg){ const [idx,track,grade]=el.dataset.stg.split("|"); await ttMeta({action:"stage",idx:+idx,track,grade:+grade,value:el.value}); TT.stages[el.dataset.stg]=el.value; }
-    LS.set(ttKey(),TT); rebuild(); renderAll(); if(el.dataset.stg) renderSettings(); fillFilters(); toast("تم الحفظ ✓");
-  }catch(e){ toast("تعذّر الحفظ على الخادم — حاول مرة أخرى"); renderSettings(); }
-}
-document.getElementById("xlsIn").addEventListener("change", async ev=>{
-  const f=ev.target.files[0]; if(!f) return; const msg=document.getElementById("xlsMsg");
-  if(!canEditCfg){ msg.textContent="التحديث متاح لصاحب الصفحة فقط."; return; }
-  msg.textContent="جارٍ القراءة…";
-  try{
-    await loadXLSX();
-    const wb=XLSX.read(await f.arrayBuffer(),{type:"array"});
-    const raw=wb.SheetNames.map(n=>({name:n, rows:XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,defval:"",raw:false}).map(r=>r.map(c=>String(c??"")))}));
-    const test=parseSheets(raw);
-    if(!test.entries.length) throw new Error("لم أجد أيامًا وأرقام حصص في الملف");
-    msg.textContent="جارٍ الحفظ في قاعدة بيانات المنصة…";
-    const {data,error}=await SB.rpc("sv_tt_put",{p:ttPayload(test,{})}); if(error||!data||!data.ok) throw new Error((error&&error.message)||(data&&data.error)||"save");
-    await ttLoad();
-    msg.textContent=`تم ✓ — ${test.sheets.length} جداول، ${test.entries.filter(e=>e.kind==="class").length} حصة أسبوعيًا.`;
-  }catch(e){ msg.textContent="تعذّرت قراءة الملف: "+(e.message||e); }
-  ev.target.value="";
-});
+/* ================= الإعدادات =================
+   انتقلت إلى «إعدادات المدرسة» في المنصة (يديرها مدير النظام والإدارة العليا ومديرو المراحل):
+   توقيت الحصص، رفع جداول المشرفين، أسماء الجداول، مادة كل معلم، مرحلة كل صف وتوقيته. */
+function renderSettings(){}
 function loadXLSX(){ return new Promise((res,rej)=>{ if(window.XLSX) return res(); const s=document.createElement("script"); s.src="xlsx.full.min.js"; s.onload=res; s.onerror=()=>{ const s2=document.createElement("script"); s2.src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"; s2.onload=res; s2.onerror=()=>rej(new Error("تعذّر تحميل قارئ Excel")); document.head.appendChild(s2); }; document.head.appendChild(s); }); }
-
-document.getElementById("copyCfg").onclick=async()=>{ const txt=JSON.stringify({cfg,reminders:prefs.reminders}); const ta=document.getElementById("cfgText"); ta.style.display="block"; ta.value=txt; ta.select(); try{ await navigator.clipboard.writeText(txt); toast("تم النسخ ✓ — الصقه في ملف نصي واحفظه"); }catch(e){ toast("حدّد النص الظاهر وانسخه يدويًا"); } };
-document.getElementById("pasteCfgBtn").onclick=()=>{ const ta=document.getElementById("cfgText"); if(ta.style.display!=="block"||!ta.value.trim()){ ta.style.display="block"; ta.value=""; ta.placeholder="الصق النسخة الاحتياطية هنا ثم اضغط «استرجاع من نص» مرة أخرى"; ta.focus(); return; }
-  try{ const o=JSON.parse(ta.value); if(o.cfg && canEditCfg){ cfg=migrateCfg(o.cfg); saveCfg(); } if(Array.isArray(o.reminders)){ prefs.reminders=o.reminders; savePrefs(); } rebuild(); renderAll(); toast("تم الاسترجاع ✓"); ta.style.display="none"; }catch(e){ toast("النص غير صالح"); } };
 
 /* ================= الحفظ والمزامنة (Google Sheet عبر Apps Script) ================= */
 const API = (window.TT_API||"").trim();
@@ -1143,7 +1034,7 @@ async function jsonp(params, timeout=20000){
 }
 async function jsonpRetry(params){ for(let i=0;i<3;i++){ try{ return await jsonp(params); }catch(e){ if(i===2) throw e; await new Promise(r=>setTimeout(r,1200*(i+1))); } } }
 function localKey(){ return "tt_data_"+CODE; }
-function cfgForSave(){ const c=Object.assign({},cfg); ["raw","sheetNames","stages","subjects","schoolMirror"].forEach(k=>delete c[k]); return c; }
+function cfgForSave(){ const c=Object.assign({},cfg); ["raw","sheetNames","stages","subjects","schoolMirror","times","profOf","title"].forEach(k=>delete c[k]); return c; }
 function saveLocal(){ LS.set(localKey(),{cfg:cfgForSave(),prefs,stamp:lastStamp}); }
 function saveCfg(){ saveLocal(); queueSave(); }
 function savePrefs(){ saveLocal(); queueSave(); }
@@ -1183,8 +1074,8 @@ function applyData(d){
   rebuild(); applyTitle(); renderAll(true);
 }
 function applyTitle(){
-  const t = cfg.title || (WHO&&WHO.dept) || "";
-  document.getElementById("appTitle").innerHTML = "قسم الإشراف التربوي"+(t?" – <bdi>"+esc(t)+"</bdi>":"");
+  const t = (WHO&&WHO.dept) || "";
+  document.getElementById("appTitle").innerHTML = "مكتب الإشراف التربوي"+(t?" – <bdi>"+esc(t)+"</bdi>":"");
   document.getElementById("whoLbl").textContent = WHO&&WHO.name ? WHO.name : "";
 }
 // دمج نسخة الجهاز (بها تعديلات لم تُرفع) مع نسخة أحدث على الخادم من جهاز آخر: لا يضيع تقييم ولا تذكير من أي منهما
@@ -1236,7 +1127,7 @@ document.addEventListener("click",ev=>{ const b=ev.target.closest(".peye"); if(!
 function forceLogout(msg){ remSynced=false; CODE=""; LS.set("tt_code",""); initCloud(); }
 document.getElementById("loginForm").addEventListener("submit",ev=>ev.preventDefault());
 document.getElementById("logoutBtn").onclick=()=>{
-  const b=document.getElementById("dlgBody"); b.innerHTML=`<h3>تسجيل الخروج من منصة المدرسة؟</h3><p>سيتم الخروج من منصة المدرسة وقسم الإشراف التربوي معًا على هذا الجهاز. بياناتك محفوظة على الخادم.</p><div class="acts"><button class="btn" id="x1">إلغاء</button><button class="btn pri" id="x2">خروج</button></div>`;
+  const b=document.getElementById("dlgBody"); b.innerHTML=`<h3>تسجيل الخروج من منصة المدرسة؟</h3><p>سيتم الخروج من منصة المدرسة ومكتب الإشراف التربوي معًا على هذا الجهاز. بياناتك محفوظة على الخادم.</p><div class="acts"><button class="btn" id="x1">إلغاء</button><button class="btn pri" id="x2">خروج</button></div>`;
   const d=document.getElementById("dlg"); d.showModal(); b.querySelector("#x1").onclick=()=>d.close();
   b.querySelector("#x2").onclick=async()=>{ d.close();
     if(dirty || LS.get(pendKey())){ clearTimeout(saveTimer); toast("جارٍ رفع تعديلاتك قبل الخروج…"); await flushSave(); }
@@ -1267,7 +1158,7 @@ async function initCloud(){
     ssoState("تعذّر الاتصال بالخادم. تأكد من الإنترنت وأعد تحميل الصفحة."); return;
   }
   if(r && r.ok) return startWithCode(r.id);
-  if(r && r.error==="not_member"){ CODE=""; LS.set("tt_code",""); ssoState("ليست لديك صلاحية على قسم الإشراف التربوي. إذا كنت مشرفًا تواصل مع مشرف مهارات القرن 21 لإضافتك."); return; }
+  if(r && r.error==="not_member"){ CODE=""; LS.set("tt_code",""); ssoState("ليست لديك صلاحية على مكتب الإشراف التربوي. إذا كنت مشرفًا تواصل مع مشرف مهارات القرن 21 لإضافتك."); return; }
   if(r && r.error==="no_session"){ location.href=LMS_LOGIN; return; }
   ssoState("تعذّر الدخول ("+((r&&r.error)||"")+")، أعد تحميل الصفحة.");
 }
@@ -1285,7 +1176,7 @@ function applyAdmin(){ document.getElementById("admTab").style.display = (WHO &&
   if((!(WHO&&WHO.admin) && curTab==="adm") || (!IS_SYS() && curTab==="sch")) document.querySelector('#tabs [data-t="day"]').click(); }
 function inviteText(u,code){ if(LANG!=="en") return inviteTextAr(u,code); return `Hello ${u.name},
 
-The «Educational Supervision Department» is now part of the school platform:
+The «Educational Supervision Office» is now part of the school platform:
 ${PAGE_URL}
 
 🔐 Sign in with your school Google account (@althikr.edu.sa) — no code needed.
@@ -1313,7 +1204,7 @@ ${PAGE_URL}
 `+inviteTextAr(u,code); }
 function inviteTextAr(u,code){ return `السلام عليكم ${u.name}،
 
-«قسم الإشراف التربوي» أصبح جزءًا من منصة المدرسة:
+«مكتب الإشراف التربوي» أصبح جزءًا من منصة المدرسة:
 ${PAGE_URL}
 
 🔐 الدخول بحساب Google المدرسي (@althikr.edu.sa) — بدون كود.
@@ -1339,7 +1230,7 @@ async function adminCall(params){
   const m=document.getElementById("admMsg"); m.textContent="جارٍ التنفيذ…";
   try{
     const r=await jsonp(Object.assign({code:CODE},params),25000);
-    if(!r.ok){ m.textContent = r.error==="not_admin"?"هذه الصلاحية للمدير فقط": r.error==="not_sys"?"هذه الصلاحية لمسؤول النظام فقط": r.error==="owner"?"حساب صاحب النظام لا يمكن تعديله من هنا": r.error==="self"?"لا يمكن تنفيذ هذا على حسابك أنت": r.error==="bad_email"?"البريد يجب أن يكون على نطاق المدرسة @althikr.edu.sa": r.error==="email_taken"?"هذا البريد مستخدم لحساب آخر": r.error==="exists"?"هذا الشخص عضو في قسم الإشراف التربوي بالفعل": r.error==="no_name"?"اكتب اسم المشرف (حسابه غير موجود في منصة المدرسة بعد)": "تعذّر التنفيذ ("+(r.error||"")+")"; return r; }
+    if(!r.ok){ m.textContent = r.error==="not_admin"?"هذه الصلاحية للمدير فقط": r.error==="not_sys"?"هذه الصلاحية لمسؤول النظام فقط": r.error==="owner"?"حساب صاحب النظام لا يمكن تعديله من هنا": r.error==="self"?"لا يمكن تنفيذ هذا على حسابك أنت": r.error==="bad_email"?"البريد يجب أن يكون على نطاق المدرسة @althikr.edu.sa": r.error==="email_taken"?"هذا البريد مستخدم لحساب آخر": r.error==="exists"?"هذا الشخص عضو في مكتب الإشراف التربوي بالفعل": r.error==="no_name"?"اكتب اسم المشرف (حسابه غير موجود في منصة المدرسة بعد)": "تعذّر التنفيذ ("+(r.error||"")+")"; return r; }
     if(r.users){ ADM_USERS=r.users; renderAdmin(); }
     m.textContent="تم ✓"; setTimeout(()=>{ if(m.textContent==="تم ✓") m.textContent=""; },2500);
     return r;
@@ -2276,12 +2167,11 @@ function restoreTab(){ if(!TAB_PENDING||TAB_PENDING==="day") return; const b=doc
 function renderAll(fromSync){
   fillFilters(); renderDay(); renderReminders(); updEvCount(); updSesCount(); if(curTab==="ev") renderEvals(); if(curTab==="ses") renderSessions();
   if(curTab==="week") renderWeek();
-  if(curTab==="set" && !(fromSync && document.activeElement && document.getElementById("p-set").contains(document.activeElement))) renderSettings();
 }
 document.getElementById("tabs").onclick=ev=>{ const b=ev.target.closest("button"); if(!b) return; unlockAudio();
   curTab=b.dataset.t; LS.set("tt_tab",curTab); TAB_PENDING=null; document.querySelectorAll("#tabs button").forEach(x=>x.classList.toggle("on",x===b));
   document.querySelectorAll(".panel").forEach(p=>p.classList.toggle("on",p.id==="p-"+curTab));
-  if(curTab==="week") renderWeek(); if(curTab==="set") renderSettings(); if(curTab==="rem") renderReminders(); if(curTab==="adm") loadAdmin(); if(curTab==="ev") renderEvals(); if(curTab==="ses") renderSessions(); if(curTab==="sch") loadSchool(); };
+  if(curTab==="week") renderWeek(); if(curTab==="rem") renderReminders(); if(curTab==="adm") loadAdmin(); if(curTab==="ev") renderEvals(); if(curTab==="ses") renderSessions(); if(curTab==="sch") loadSchool(); };
 const shiftDay=n=>{ viewDate.setDate(viewDate.getDate()+n); if(viewDate.getDay()===5||viewDate.getDay()===6){ viewDate.setDate(viewDate.getDate()+(n>0?(7-viewDate.getDay()):(4-viewDate.getDay()))); } renderDay(); };
 document.getElementById("prevDay").onclick=()=>shiftDay(-1);
 document.getElementById("nextDay").onclick=()=>shiftDay(1);

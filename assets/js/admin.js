@@ -942,6 +942,11 @@
         <label class="f">اسم المدرسة<input id="sn" value="${esc(get('school_name') || '')}"></label>
         <label class="f">نطاقات البريد المسموحة (افصل بفاصلة)<input id="dm" dir="ltr" value="${esc((get('allowed_domains') || []).join(', '))}"></label>
       </div>
+      <div class="card glass" style="margin:16px 0;padding:14px">
+        <label style="display:flex;gap:10px;align-items:center;font-weight:800;font-size:1.02rem">
+          <input type="checkbox" id="stLogin" ${get('student_login_enabled') === true ? 'checked' : ''}> السماح للطلاب بالدخول إلى المنصة</label>
+        <p class="hint" style="margin:6px 0 0">بريد كل طالب = رقم هويته@${esc(LMS.C.SCHOOL_DOMAIN)} ويُضبط تلقائيًا من نظام التسجيل. عند الإيقاف تبقى بيانات الطلاب محفوظة، لكن أي طالب يحاول الدخول يرى رسالة «دخول الطلاب غير متاح حاليًا». المعلمون والإدارة غير متأثرين.</p>
+      </div>
       <p class="hint">⚠️ أي حساب خارج هذه النطاقات لن يرى أي بيانات حتى لو كان مسجّلًا. لا تحذف نطاق المدرسة وإلا ستفقد الدخول أنت أيضًا.</p>
       <button class="btn primary" id="sv">حفظ الإعدادات</button></div>`;
     $('#sv', pane).onclick = async () => {
@@ -949,7 +954,13 @@
       const myDomain = (ME.email || '').split('@')[1];
       if (!domains.includes(myDomain)) { toast(`يجب أن تبقى «${myDomain}» ضمن النطاقات وإلا ستفقد الدخول.`, 'warn'); return; }
       try {
-        await run(sb.from('app_settings').upsert([{ key: 'school_name', value: val(pane, '#sn') }, { key: 'allowed_domains', value: domains }]));
+        const stOn = $('#stLogin', pane).checked;
+        if (stOn !== (get('student_login_enabled') === true)) {
+          if (!await confirmBox(stOn ? 'فتح دخول الطلاب؟ سيتمكن كل طالب نشط من الدخول ببريده المدرسي فورًا.' : 'إيقاف دخول الطلاب؟ سيُمنع كل الطلاب من الدخول فورًا.', stOn ? 'نعم، افتح الدخول' : 'نعم، أوقف', !stOn)) return;
+        }
+        await run(sb.from('app_settings').upsert([{ key: 'school_name', value: val(pane, '#sn') }, { key: 'allowed_domains', value: domains },
+                                                  { key: 'student_login_enabled', value: stOn }]));
+        rows.splice(0, rows.length, ...(await run(sb.from('app_settings').select('*'))));
         toast('تم حفظ الإعدادات');
       } catch (er) { toast(errMsg(er), 'err'); }
     };

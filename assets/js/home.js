@@ -4,6 +4,7 @@
   const ctx = await requireAuth();
   const p = ctx.profile, role = p.role;
   const STAFF = !['student', 'parent'].includes(role);
+  const LEADER = role === 'admin' || role === 'leadership';
   const main = $('#main');
 
   // ---------- البطاقة الترحيبية ----------
@@ -118,21 +119,21 @@
     if (!c) return;
     try {
       const rows = await fetchAll(() => sb.from('students')
-        .select('student_number, guardian_name, guardian_phone, profile:profiles(full_name, email, active)')
+        .select(`student_number, guardian_name, guardian_phone, profile:profiles(full_name${LEADER ? ', email' : ''}, active)`)
         .eq('class_id', c.id).order('student_number'));
       rows.sort((a, b) => (a.profile?.full_name || '').localeCompare(b.profile?.full_name || '', 'ar'));
       const body = `
         <p class="hint">${rows.length} طالب</p>
         <div class="table-wrap"><table>
-          <thead><tr><th>#</th><th>الاسم</th><th>رقم الطالب</th><th>البريد</th><th>ولي الأمر</th><th>الجوال</th></tr></thead>
+          <thead><tr><th>#</th><th>الاسم</th><th>رقم الطالب</th>${LEADER ? '<th>البريد</th>' : ''}<th>ولي الأمر</th><th>الجوال</th></tr></thead>
           <tbody>${rows.length ? rows.map((r, i) => `<tr><td>${i + 1}</td><td>${esc(r.profile?.full_name)}</td>
-            <td>${esc(r.student_number)}</td><td dir="ltr">${esc(r.profile?.email || '')}</td>
+            <td>${esc(r.student_number || '')}</td>${LEADER ? `<td dir="ltr">${esc(r.profile?.email || '')}</td>` : ''}
             <td>${esc(r.guardian_name || '')}</td><td dir="ltr">${esc(r.guardian_phone || '')}</td></tr>`).join('')
             : '<tr><td colspan="6" class="empty">لا يوجد طلاب</td></tr>'}</tbody></table></div>`;
       modal({ title: c.label, body, wide: true, actions: [
         { label: 'تنزيل Excel (CSV)', cls: 'primary', onClick: () => {
-          downloadCSV(`${c.label}.csv`, [['#', 'الاسم', 'رقم الطالب', 'البريد', 'ولي الأمر', 'الجوال']]
-            .concat(rows.map((r, i) => [i + 1, r.profile?.full_name, r.student_number, r.profile?.email, r.guardian_name, r.guardian_phone])));
+          downloadCSV(`${c.label}.csv`, [['#', 'الاسم', 'رقم الطالب', 'ولي الأمر', 'الجوال']]
+            .concat(rows.map((r, i) => [i + 1, r.profile?.full_name, r.student_number, r.guardian_name, r.guardian_phone])));
           return false;
         } },
         { label: 'إغلاق', cls: 'ghost' }] });

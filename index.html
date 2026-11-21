@@ -58,7 +58,9 @@
       if (ctx && ctx.registered) { location.replace('home.html'); return; }
 
       const email = (ctx && ctx.email) || session.user.email || '';
-      const msg = ctx && ctx.domain_ok === false
+      const msg = ctx && ctx.students_closed
+        ? `دخول الطلاب إلى المنصة غير متاح حاليًا، وسيُعلَن عند فتحه.`
+        : ctx && ctx.domain_ok === false
         ? `الحساب <b dir="ltr">${esc(email)}</b> ليس حسابًا مدرسيًا. استخدم بريدك على <b dir="ltr">@${esc(C.SCHOOL_DOMAIN)}</b>.`
         : `الحساب <b dir="ltr">${esc(email)}</b> غير مسجّل في المنصة أو موقوف. تواصل مع إدارة المنصة لإضافتك.`;
       area.innerHTML = `<div class="notice err">${msg}</div>

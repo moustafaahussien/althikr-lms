@@ -10,6 +10,7 @@
   const rank = (g) => { const i = ORDER.indexOf(g); return i < 0 ? 99 : i; };
   const norm = (s) => String(s || '').toLowerCase().replace(/[أإآٱ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/\s+/g, ' ').trim();
   const initials = (n) => String(n || '').trim().split(/\s+/).slice(0, 2).map((w) => w[0] || '').join(' ');
+  const txt = (v) => Array.isArray(v) ? v.join('، ') : String(v || '');
   const telFmt = (m) => /^05\d{8}$/.test(m) ? `${m.slice(0, 3)} ${m.slice(3, 6)} ${m.slice(6)}` : m;
   const wa = (m) => /^05\d{8}$/.test(m) ? '966' + m.slice(1) : (/^01\d{9}$/.test(m) ? '20' + m.slice(1) : '');
 
@@ -18,8 +19,8 @@
     const { data, error } = await sb.rpc('staff_dir_list');
     if (error) throw error;
     ALL = (data || []).map((p) => Object.assign(p, {
-      subj: (p.subjects || []).join('، '), stg: (p.stages || []).join('، '),
-      key: norm([p.name, p.en, p.title, p.grp, (p.subjects || []).join(' '), p.email, p.mobile, p.manager, p.no].join(' '))
+      subj: txt(p.subjects), stg: txt(p.stages),
+      key: norm([p.name, p.en, p.title, p.grp, txt(p.subjects), p.email, p.mobile, p.manager, p.no].join(' '))
     })).sort((a, b) => rank(a.grp) - rank(b.grp) || a.name.localeCompare(b.name, 'ar'));
   } catch (e) { $('#list').innerHTML = `<div class="notice err">${esc(errMsg(e))}</div>`; return; }
 

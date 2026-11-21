@@ -1123,7 +1123,7 @@ async function loadRemote(silent){
   return r;
 }
 /* ===== الدخول الموحّد مع منصة المدرسة ===== */
-const LMS_LOGIN = new URL("../index.html", location.href).href;
+const LMS_LOGIN = new URL("../index.html?next=supervision/", location.href).href;
 const SB = (window.supabase && window.LMS_CONFIG && !/YOUR-/.test(LMS_CONFIG.SUPABASE_URL))
   ? window.supabase.createClient(LMS_CONFIG.SUPABASE_URL, LMS_CONFIG.SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false } })
   : null;

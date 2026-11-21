@@ -24,7 +24,8 @@
   <script src="assets/js/core.js"></script>
   <script>
   (async function () {
-    const { sb, C, configured, esc, $, signInWithGoogle, signOut, getContext, errMsg } = LMS;
+    const { sb, C, configured, esc, $, signInWithGoogle, signOut, getContext, errMsg, rememberNext, takeNext } = LMS;
+    rememberNext();
     $('#pname').textContent = C.PLATFORM_NAME;
     $('#sname').textContent = C.SCHOOL_NAME;
     const area = $('#area');
@@ -55,7 +56,7 @@
       const { data: { session } } = await sb.auth.getSession();
       if (!session) { showLogin(); return; }
       const ctx = await getContext();
-      if (ctx && ctx.registered) { location.replace('home.html'); return; }
+      if (ctx && ctx.registered) { location.replace(takeNext() || 'home.html'); return; }
 
       const email = (ctx && ctx.email) || session.user.email || '';
       const msg = ctx && ctx.students_closed

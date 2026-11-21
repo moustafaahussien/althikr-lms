@@ -99,6 +99,17 @@
   }
 
   // ---------- الدخول ----------
+  // صفحة داخلية للرجوع إليها بعد الدخول (مثل supervision/) — مسارات نسبية فقط
+  function safeNext(n) { return n && /^[a-z0-9][a-z0-9/_.-]*$/i.test(n) && !n.includes('..') ? n : ''; }
+  function rememberNext() {
+    const n = safeNext(new URLSearchParams(location.search).get('next'));
+    try { if (n) sessionStorage.setItem('lms_next', n); } catch (_) {}
+  }
+  function takeNext() {
+    let n = ''; try { n = safeNext(sessionStorage.getItem('lms_next')); sessionStorage.removeItem('lms_next'); } catch (_) {}
+    return n;
+  }
+
   async function signInWithGoogle() {
     const redirectTo = new URL('index.html', location.href.replace(/[^/]*([?#].*)?$/, '')).href;
     const { error } = await sb.auth.signInWithOAuth({
@@ -165,5 +176,5 @@
   }
 
   window.LMS = { sb, C, configured, ROLE_LABELS, esc, $, $$, toast, modal, confirmBox, errMsg,
-                 fetchAll, signInWithGoogle, signOut, getContext, requireAuth, downloadCSV };
+                 fetchAll, signInWithGoogle, signOut, getContext, requireAuth, downloadCSV, rememberNext, takeNext };
 })();

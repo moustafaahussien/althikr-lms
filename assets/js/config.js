@@ -1,0 +1,37 @@
+/* =====================================================================
+   إعدادات المنصة — هذا هو الملف الوحيد الذي تحتاج تعديله عند الإعداد
+   ===================================================================== */
+window.LMS_CONFIG = {
+  // من Supabase → Project Settings → API
+  SUPABASE_URL: 'https://zpbhzhpvpvehowxvlsgp.supabase.co',
+  SUPABASE_ANON_KEY: 'sb_publishable_xPzQ55aK-_9OeBjIQwt5yw_DPAw3lC9',
+
+  // نطاق البريد المدرسي (يُمرَّر لـ Google ليعرض حسابات المدرسة فقط)
+  SCHOOL_DOMAIN: 'althikr.edu.sa',
+
+  PLATFORM_NAME: 'منصة دار الذكر التعليمية',
+  SCHOOL_NAME: 'مدارس دار الذكر',
+
+  /* الوحدات التي تظهر في الصفحة الرئيسية.
+     roles: الأدوار التي ترى الوحدة (اتركها [] لتظهر للجميع)
+     url:   رابط الوحدة — اتركه '' لتظهر بعلامة «قريبًا»
+     الأدوار: admin, leadership, principal, supervisor, teacher, staff, student, parent */
+  MODULES: [
+    // —— وحدات المنصة الجديدة (تُبنى في المراحل القادمة) ——
+    { key: 'lessons',     title: 'تحضير الدروس',        icon: '📘', url: '', roles: ['admin','leadership','principal','supervisor','teacher'], desc: 'خطط الدروس بالقوالب واعتماد المشرف' },
+    { key: 'course',      title: 'صفحات المواد',        icon: '🗂️', url: '', roles: [],  desc: 'المحتوى الأسبوعي والإعلانات لكل فصل' },
+    { key: 'homework',    title: 'الواجبات',            icon: '📝', url: '', roles: [],  desc: 'إنشاء الواجبات والتسليم والتصحيح' },
+    { key: 'exams',       title: 'الاختبارات وبنك الأسئلة', icon: '🧪', url: '', roles: [],  desc: 'اختبارات إلكترونية بتصحيح تلقائي' },
+    { key: 'analytics',   title: 'التحليل والمقارنة',    icon: '📊', url: '', roles: ['admin','leadership','principal','supervisor','teacher'], desc: 'تحليل الأسئلة ومقارنة الفصول والمعلمين' },
+    { key: 'gradebook',   title: 'سجل الدرجات',         icon: '🏅', url: '', roles: [],  desc: 'الدرجات مجمّعة تلقائيًا' },
+    { key: 'portfolio',   title: 'ملف إنجاز الطالب',     icon: '🎒', url: '', roles: [],  desc: 'مشاريع الطالب ومسابقاته وإنجازاته' },
+
+    // —— منصاتك الحالية (تُدمج تدريجيًا) ——
+    { key: 'online',      title: 'التعليم عن بعد',       icon: '🎥', url: 'https://moustafaahussien.github.io/21csu/online-learning.html', roles: [], desc: 'روابط الحصص والحضور' },
+    { key: 'supervision', title: 'منصة الإشراف التربوي', icon: '🧭', url: 'https://moustafaahussien.github.io/21csu/timetable/', roles: ['admin','leadership','principal','supervisor'], desc: 'جداول الحصص وتقييم المعلمين' },
+    { key: '21csu',       title: 'مهارات القرن 21',      icon: '🚀', url: 'https://moustafaahussien.github.io/21csu/', roles: [], desc: 'البرامج الستة للوحدة' },
+    { key: 'ai',          title: 'المعلم الذكي',         icon: '🤖', url: 'https://moustafaahussien.github.io/21csu/ai/', roles: ['admin','leadership','principal','supervisor','teacher','staff'], desc: 'أدوات الذكاء الاصطناعي للمعلمين' },
+    { key: 'talent',      title: 'منصة الموهبة',         icon: '🌟', url: 'https://moustafaahussien.github.io/Mawhiba/', roles: [], desc: 'برامج موهبة والمسابقات' },
+    { key: 'gifted',      title: 'الكشف عن الموهوبين',   icon: '🧩', url: 'https://moustafaahussien.github.io/matrices-test/', roles: ['admin','leadership','principal','supervisor','teacher'], desc: 'اختبارات رافن وتورانس' }
+  ]
+};

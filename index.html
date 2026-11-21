@@ -8,7 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="icon" type="image/png" href="favicon.png">
   <meta name="theme-color" content="#0f6e6a">
-  <link rel="stylesheet" href="assets/css/app.css?v=202611211957">
+  <link rel="stylesheet" href="assets/css/app.css?v=202611212003">
 </head>
 <body>
   <div class="login-wrap">
@@ -22,8 +22,8 @@
   <footer class="credit" style="position:fixed;bottom:0;inset-inline:0">إعداد وتصميم: مصطفى حسين · <a href="privacy.html">سياسة الخصوصية</a></footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="assets/js/config.js?v=202611211957"></script>
-  <script src="assets/js/core.js?v=202611211957"></script>
+  <script src="assets/js/config.js?v=202611212003"></script>
+  <script src="assets/js/core.js?v=202611212003"></script>
   <script>
   (async function () {
     const { sb, C, configured, esc, $, signInWithGoogle, signOut, getContext, errMsg, rememberNext, takeNext } = LMS;
@@ -58,7 +58,8 @@
       const { data: { session } } = await sb.auth.getSession();
       if (!session) { showLogin(); return; }
       const ctx = await getContext();
-      if (ctx && ctx.registered) { location.replace(takeNext() || 'home.html'); return; }
+      // المشرف يبدأ من مكتب الإشراف التربوي مباشرة (الرئيسية متاحة من الشريط العلوي)
+      if (ctx && ctx.registered) { location.replace(takeNext() || (ctx.profile && ctx.profile.role === 'supervisor' ? 'supervision/' : 'home.html')); return; }
 
       const email = (ctx && ctx.email) || session.user.email || '';
       const msg = ctx && ctx.students_closed

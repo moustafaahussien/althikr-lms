@@ -27,7 +27,8 @@
     <div class="grid modules" id="modules"></div>`;
 
   // ---------- الوحدات ----------
-  const mods = (C.MODULES || []).filter((m) => !m.roles || !m.roles.length || m.roles.includes(role));
+  // المشرف يرى الوحدات الجاهزة فقط (الوحدات «قريبًا» تظهر له تلقائيًا عند تفعيلها)
+  const mods = (C.MODULES || []).filter((m) => (!m.roles || !m.roles.length || m.roles.includes(role)) && (role !== 'supervisor' || m.url));
   $('#modules').innerHTML = mods.map((m) => m.url
     ? `<a class="module glass" href="${esc(m.url)}" ${/^https?:/i.test(m.url) ? 'target="_blank" rel="noopener"' : ''}><span class="ic">${m.icon}</span><b>${esc(m.title)}</b><small>${esc(m.desc || '')}</small></a>`
     : `<div class="module glass soon"><span class="badge">قريبًا</span><span class="ic">${m.icon}</span><b>${esc(m.title)}</b><small>${esc(m.desc || '')}</small></div>`

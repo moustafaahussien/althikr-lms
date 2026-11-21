@@ -125,7 +125,7 @@ begin
   select value into k from private.secrets where key = 'onesignal_key';
   if k is null or coalesce(array_length(ids, 1), 0) = 0 then return false; end if;
   payload := jsonb_build_object(
-    'app_id', '6f0b9d1d-b9c7-4d3c-90a0-ac78f2dc170b',
+    'app_id', '0ab398f6-a82a-4bc6-ac4d-aab5d6cfb915',
     'target_channel', 'push',
     'include_aliases', jsonb_build_object('external_id', to_jsonb(ids)),
     'headings', jsonb_build_object('en', p_title, 'ar', p_title),

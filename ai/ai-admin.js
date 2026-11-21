@@ -61,23 +61,19 @@ A.applyLang();
 A.onLang(() => { S.ready ? draw() : login(); });
 
 const GUIDE = { ar: [
-  ['إنشاء الخادم (مرة واحدة)', 'أنشئ Google Sheet جديداً باسم «منصة المعلم الذكي» ← الإضافات (Extensions) ← Apps Script ← احذف الكود الموجود والصق محتوى الملف ai/ai-script.gs من المستودع كاملاً ← عدّل كود المدير في سطر INITIAL_ADMIN_CODE ← احفظ.'],
-  ['تشغيل الإعداد', 'اختر الدالة setup من القائمة أعلى المحرر ← تشغيل (Run) ← وافق على الصلاحيات (حسابك ← متقدم ← الانتقال إلى المشروع). ستُنشأ ورقة products ومجلد «منصة المعلم الذكي - ملفات المنتجات» في Drive.'],
-  ['النشر', 'Deploy ← New deployment ← النوع Web app ← Execute as: Me ← Who has access: Anyone ← Deploy ← انسخ الرابط الذي ينتهي بـ /exec.'],
-  ['ربط الموقع', 'في GitHub افتح ai/config.js وضع الرابط بين علامتي التنصيص: window.AI_API = "الرابط"; ثم Commit. بعد دقيقة يعمل المعرض.'],
-  ['المراجعة اليومية', 'يصلك بريد عند كل منتج جديد. ادخل هنا ← «معاينة» ← «اعتماد ونشر» أو «رفض / طلب تعديل» مع ملاحظة تصل للمعلم.'],
-  ['تعديل منتج منشور', 'إذا عدّل المعلم منتجاً منشوراً تبقى النسخة القديمة ظاهرة ويظهر لك «تعديل بانتظار الاعتماد» ← «مراجعة التعديل» ← اعتماد أو رفض.'],
-  ['نسي المعلم الكود', 'من صف المنتج ← «كود جديد للمعلم» ← أرسل له الرقم والكود الجديد.'],
-  ['أي تعديل على الخادم', 'بعد تعديل الكود في Apps Script: Deploy ← Manage deployments ← ✏️ ← Version: New version ← Deploy (الرابط لا يتغير).']
+  ['من يدخل', 'الصفحة جزء من منصة دار الذكر التعليمية: يدخلها منسوبو المدرسة بحساب المدرسة فقط، ولوحة الإدارة لمدير النظام. لا توجد أكواد مدير.'],
+  ['المراجعة اليومية', 'يصلك إشعار في «الرسائل» بالمنصة عند كل منتج جديد. ادخل هنا ← «معاينة» ← «اعتماد ونشر» أو «رفض / طلب تعديل» مع ملاحظة تصل للمعلم في رسائله.'],
+  ['تعديل منتج منشور', 'إذا عدّل المعلم منتجاً منشوراً تبقى النسخة القديمة ظاهرة ويظهر لك «تعديل بانتظار الاعتماد» ← «مراجعة التعديل» ← اعتمد أو ارفض.'],
+  ['صاحب المنتج', 'المنتج مربوط بحساب المعلم الذي أرسله، فيعدّله ويتابعه من «متابعة منتجي» بدون كود. الكود احتياطي فقط (للمنتجات المنقولة من الصفحة القديمة): «كود جديد للمعلم».'],
+  ['الإشعارات', 'من الإعدادات: اكتب بريد مدرسي (أو أكثر بفاصلة) لمن يستلم إشعارات المنتجات الجديدة، واتركه فارغاً ليستلمها مدير النظام.'],
+  ['الملفات', 'الصور والملفات تُحفظ في مخزن المنصة (Supabase)، والتطبيقات (HTML) داخل قاعدة البيانات وتعمل في إطار معزول.']
 ], en: [
-  ['Create the server (once)', 'Create a new Google Sheet named “Smart Teacher” → Extensions → Apps Script → delete existing code and paste ai/ai-script.gs in full → change INITIAL_ADMIN_CODE → Save.'],
-  ['Run setup', 'Choose the setup function at the top of the editor → Run → approve permissions. This creates the products sheet and a Drive folder for product files.'],
-  ['Deploy', 'Deploy → New deployment → Web app → Execute as: Me → Who has access: Anyone → Deploy → copy the URL ending in /exec.'],
-  ['Connect the site', 'In GitHub open ai/config.js and paste the URL: window.AI_API = "URL"; then commit. The showcase works a minute later.'],
-  ['Daily review', 'You get an email for each new product. Come here → Preview → Approve & publish, or Reject with a note sent to the teacher.'],
+  ['Who can enter', 'This page is part of the Dar Al-Thikr learning platform: staff sign in with their school account; the admin dashboard is for the system admin. No admin codes.'],
+  ['Daily review', 'You get a platform message for each new product. Come here → Preview → Approve & publish, or Reject with a note sent to the teacher.'],
   ['Edits to published products', 'If a teacher edits a published product, the old version stays live and you see “Edit awaiting approval” → Review edit → approve or reject.'],
-  ['Teacher forgot the code', 'On the product row → New teacher code → send them the ID and the new code.'],
-  ['Any server change', 'After editing the Apps Script code: Deploy → Manage deployments → ✏️ → Version: New version → Deploy (URL stays the same).']
+  ['Product owner', 'Each product is linked to the teacher account that submitted it; they edit it from “Track my product” without a code. Codes are only a fallback.'],
+  ['Notifications', 'In settings, enter school email(s) to receive new-product notifications; leave empty for the system admin.'],
+  ['Files', 'Images and files are stored in the platform storage; HTML apps are stored in the database and run in a sandboxed frame.']
 ]};
 function guideHtml(open) {
   return '<details class="glass" style="padding:16px 20px;margin-top:20px"' + (open ? ' open' : '') + '><summary style="cursor:pointer;font-family:var(--display);font-weight:800">📘 ' + esc(A.T('adm.guide')) + '</summary>' +
@@ -212,7 +208,7 @@ function settingsHtml() {
   const s = S.settings;
   return '<details class="glass" style="padding:16px 20px;margin-top:24px"><summary style="cursor:pointer;font-family:var(--display);font-weight:800">⚙️ ' + esc(A.T('adm.settings')) + '</summary>' +
     '<div class="fgrid" style="margin-top:14px"><div class="fld"><label for="sn">' + esc(A.T('adm.notify')) + '</label><input class="inp" id="sn" type="email" dir="ltr" value="' + esc(s.notifyEmail || '') + '"></div>' +
-    '<div class="fld"><label for="sc">' + esc(A.T('adm.newCode')) + '</label><input class="inp" id="sc" type="password" dir="ltr" autocomplete="new-password"><div class="hint">' + esc(A.T('adm.newCodeH')) + '</div></div>' +
+    '<div class="fld" hidden><label for="sc">' + esc(A.T('adm.newCode')) + '</label><input class="inp" id="sc" type="password" dir="ltr" autocomplete="new-password"><div class="hint">' + esc(A.T('adm.newCodeH')) + '</div></div>' +
     (s.folderUrl ? '<div class="fld full"><span class="lbl">' + esc(A.T('adm.folder')) + '</span><a class="btn xs soft" style="align-self:flex-start" href="' + esc(A.safeUrl(s.folderUrl)) + '" target="_blank" rel="noopener">📁 Google Drive ↗</a></div>' : '') +
     '</div><div class="f-foot"><span class="sp"></span><button class="btn grad sm" type="button" id="saveSet">' + esc(A.T('adm.saveSet')) + '</button></div></details>';
 }

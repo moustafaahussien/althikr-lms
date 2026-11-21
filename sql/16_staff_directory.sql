@@ -38,17 +38,19 @@ begin
   from jsonb_array_elements(p_rows) x;
 
   -- 1) ربط يدوي (zid → id الحساب)
-  update _d set pid = (p_manual->>(zid::text))::uuid, how = 'manual' where p_manual ? (zid::text);
+  -- (القيمة "skip" = لا يُربط الآن ولا يُنشأ له حساب، حتى يُحسم من هو)
+  update _d set how = 'skip' where p_manual->>(zid::text) = 'skip';
+  update _d set pid = (p_manual->>(zid::text))::uuid, how = 'manual' where p_manual ? (zid::text) and p_manual->>(zid::text) <> 'skip';
   -- 2) بالبريد
   update _d d set pid = p.id, how = 'email' from profiles p
-   where d.pid is null and d.email is not null and p.email = d.email;
+   where d.pid is null and d.how is null and d.email is not null and p.email = d.email;
   -- 3) بالاسم العربي / الإنجليزي / الأسماء البديلة في الجداول (تطابق وحيد فقط، والحساب غير مربوط بغيره)
   update _d d set pid = m.id, how = 'name' from (
     select d2.zid, min(p.id::text)::uuid id, count(distinct p.id) c
     from _d d2 join profiles p on p.role not in ('student','parent')
       and (public.norm(p.full_name) in (public.norm(d2.name_ar), public.norm(d2.name_en))
            or exists (select 1 from staff_aliases a where a.profile_id = p.id and a.alias in (public.norm(d2.name_ar), public.norm(d2.name_en))))
-    where d2.pid is null
+    where d2.pid is null and d2.how is null
     group by d2.zid) m
    where d.zid = m.zid and m.c = 1 and d.pid is null
      and not exists (select 1 from _d o where o.pid = m.id);
@@ -72,7 +74,7 @@ begin
       update profiles set job_title = r.title_hr where id = r.pid and nullif(btrim(job_title),'') is null and r.title_hr is not null;
     end loop;
     -- موظفون في الدليل ليس لهم حساب: يُنشأ لهم حساب (بريد المدرسة فقط) — معلم أو موظف
-    for r in select * from _d where pid is null and email like '%@' || dom loop
+    for r in select * from _d where pid is null and how is null and email like '%@' || dom loop
       if not exists (select 1 from profiles where email = r.email) then
         insert into profiles(email, full_name, role, job_title, source)
         values (r.email, r.name_ar, case when r.title_hr like 'معلم%' then 'teacher' else 'staff' end::public.user_role, r.title_hr, 'zenhr')

@@ -7,6 +7,8 @@
   // ترتيب الأقسام في الدليل
   const ORDER = ['إدارة المدارس', 'التطوير التربوي', 'بنين — ابتدائي', 'بنين — متوسط', 'بنين — ثانوي', 'الدبلوم الأمريكي', 'قسم البنات',
     'الموارد البشرية', 'المالية', 'تقنية المعلومات', 'خدمة العملاء', 'المشتريات', 'التسويق والاتصال المؤسسي', 'إدارة المرافق'];
+  // داخل كل قسم: القيادات أولًا ثم المشرفون ثم المعلمون ثم البقية
+  const senior = (t) => { t = String(t || ''); return /تنفيذي|مدير التعليم|مدير عام/.test(t) ? 0 : /^مدير|مديرة|رئيس/.test(t) ? 1 : /وكيل/.test(t) ? 2 : /مرشد/.test(t) ? 4 : /^مشرف|منسق/.test(t) ? 3 : /^معلم/.test(t) ? 5 : 6; };
   const rank = (g) => { const i = ORDER.indexOf(g); return i < 0 ? 99 : i; };
   const norm = (s) => String(s || '').toLowerCase().replace(/[أإآٱ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/\s+/g, ' ').trim();
   const initials = (n) => String(n || '').trim().split(/\s+/).slice(0, 2).map((w) => w[0] || '').join(' ');
@@ -21,7 +23,7 @@
     ALL = (data || []).map((p) => Object.assign(p, {
       subj: txt(p.subjects), stg: txt(p.stages),
       key: norm([p.name, p.en, p.title, p.grp, txt(p.subjects), p.email, p.mobile, p.manager, p.no].join(' '))
-    })).sort((a, b) => rank(a.grp) - rank(b.grp) || a.name.localeCompare(b.name, 'ar'));
+    })).sort((a, b) => rank(a.grp) - rank(b.grp) || senior(a.title) - senior(b.title) || a.name.localeCompare(b.name, 'ar'));
   } catch (e) { $('#list').innerHTML = `<div class="notice err">${esc(errMsg(e))}</div>`; return; }
 
   const groups = [...new Set(ALL.map((p) => p.grp))].sort((a, b) => rank(a) - rank(b));

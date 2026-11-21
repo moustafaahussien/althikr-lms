@@ -50,8 +50,6 @@
     history.replaceState(null, '', '#' + tab);
   }
   $('#tabs').onclick = (e) => { const b = e.target.closest('button'); if (b) show(b.dataset.tab); };
-  show((location.hash || '#duty').slice(1));
-  if (STAFF) sb.rpc('req_list', { p_box: 'inbox' }).then(({ data }) => { const n = (data || []).length; $('#reqBadge').hidden = !n; $('#reqBadge').textContent = n; });
 
   // ============================ المناوبة ============================
   let STAGES = [];
@@ -325,4 +323,8 @@
       const { error } = await sb.rpc('trn_impact', { p_id: t.id, p_rating: Number($('#iR', body).value), p_note: $('#iN', body).value });
       if (error) { toast(errMsg(error), 'err'); return false; } toast('تم ✓'); paintTrn(); return true; } }] });
   }
+  // البدء (بعد تعريف كل المتغيرات)
+  show((location.hash || '#duty').slice(1));
+  window.addEventListener('hashchange', () => show(location.hash.slice(1)));
+  if (STAFF) loadReqBadge();
 })();

@@ -192,3 +192,9 @@ footer.credit { text-align: center; color: var(--muted); font-size: .82rem; padd
   .hero h1 { font-size: 1.25rem; }
   .page { padding: 14px 10px 50px; }
 }
+
+/* ---------- الهجري بجانب حقول التاريخ + أدوات الجداول ---------- */
+.hijri-hint { display: inline-block; margin-inline-start: 6px; color: var(--accent); font-size: .78rem; font-weight: 600; white-space: nowrap; }
+.tbl-tools { display: flex; gap: 6px; justify-content: flex-end; margin: 4px 0 6px; }
+.tbl-tools .btn { padding: 3px 10px; font-size: .8rem; }
+@media print { #topbar, .tbl-tools, .no-print, .credit { display: none !important; } }

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>نصاب الحصص — منصة دار الذكر التعليمية</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <meta name="theme-color" content="#0f6e6a">
+    <link rel="stylesheet" href="assets/css/app.css?v=202611220200">
+  <style>
+    .stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; margin-bottom: 12px; }
+    .stat { padding: 12px 14px; } .stat b { font-size: 1.5rem; color: var(--brand); display: block; } .stat small { color: var(--muted); }
+    .bar { height: 8px; border-radius: 99px; background: #eef2f4; min-width: 90px; overflow: hidden; }
+    .bar i { display: block; height: 100%; background: var(--brand); border-radius: 99px; }
+    .bar.over i { background: #d9822b; } .bar.under i { background: #9fb3c0; }
+    .tt-grid th, .tt-grid td { text-align: center; white-space: normal; min-width: 92px; font-size: .84rem; }
+    .tt-grid td b { display: block; color: var(--brand); } .tt-grid td.off { background: #fafbfc; color: #b8c2cc; }
+  </style>
+</head>
+<body>
+  <header id="topbar"></header>
+  <main class="page">
+    <section class="hero glass">
+      <h1>📊 نصاب الحصص</h1>
+      <p>عدد الحصص الأسبوعية لكل معلم من جداول الحصص المعتمدة، مع المواد والفصول والمشرف، وزر لعرض جدوله وطباعته.</p>
+    </section>
+    <div class="stats" id="stats"></div>
+    <div class="toolbar glass" style="padding:10px">
+      <input id="q" class="grow" type="search" placeholder="ابحث باسم المعلم أو المادة أو الفصل…">
+      <select id="stg"><option value="">كل المراحل</option></select>
+      <select id="sub"><option value="">كل المواد</option></select>
+      <select id="sup"><option value="">كل المشرفين</option></select>
+      <label class="hint" style="display:flex;align-items:center;gap:6px">النصاب المعتمد <input id="std" type="number" min="1" max="40" style="width:70px"></label>
+    </div>
+    <div id="list"><div class="empty">جارٍ التحميل…</div></div>
+  </main>
+  <footer class="credit">إعداد وتصميم: مصطفى حسين</footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/js/config.js?v=202611220200"></script>
+  <script src="assets/js/academic-calendar.js?v=202611220200"></script>
+  <script src="assets/js/core.js?v=202611220200"></script>
+  <script src="assets/js/load.js?v=202611220200"></script>
+</body>
+</html>
+

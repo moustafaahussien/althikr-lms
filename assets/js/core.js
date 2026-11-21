@@ -170,6 +170,7 @@
       ['admin.html', 'لوحة الإدارة', p.role === 'admin'],
       ['settings.html', 'إعدادات المدرسة', ['admin', 'leadership', 'principal'].includes(p.role)],
       ['supervision/', '🧭 مكتب الإشراف التربوي', ['admin', 'leadership', 'principal', 'supervisor'].includes(p.role)],
+      ['teaching-load.html', '📊 نصاب الحصص', ['admin', 'leadership', 'principal', 'supervisor'].includes(p.role)],
       ['staff-directory.html', '📇 دليل الموظفين', !['student', 'parent'].includes(p.role)]];
     bar.innerHTML = `
       <div class="hrow">
@@ -252,7 +253,98 @@
     setTimeout(() => URL.revokeObjectURL(a.href), 2000);
   }
 
+  /* ---------- التاريخ الهجري (أم القرى) ---------- */
+  function hijri(d, opts) {
+    try {
+      const dt = d instanceof Date ? d : (/^\d{4}-\d{2}-\d{2}$/.test(String(d)) ? parseYmd(String(d)) : new Date(d));
+      if (isNaN(dt)) return '';
+      return dt.toLocaleDateString('ar-SA-u-ca-islamic-umalqura-nu-latn', opts || { day: 'numeric', month: 'long', year: 'numeric' });
+    } catch (e) { return ''; }
+  }
+  const dateLine = (d) => { const dt = d || new Date();
+    return `${dt.toLocaleDateString(LOC, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} م — ${hijri(dt)}`; };
+  // كل حقل تاريخ في المنصة يظهر بجانبه التاريخ الهجري تلقائيًا
+  function hijriHint(inp) {
+    let h = inp.nextElementSibling;
+    if (!h || !h.classList || !h.classList.contains('hijri-hint')) {
+      h = document.createElement('small'); h.className = 'hijri-hint'; inp.after(h);
+      inp.addEventListener('input', () => hijriHint(inp)); inp.addEventListener('change', () => hijriHint(inp));
+    }
+    h.textContent = inp.value ? hijri(inp.value) : '';
+  }
+
+  /* ---------- الطباعة والتصدير الموحّدان لكل التقارير ---------- */
+  const PRINT_CSS = `@page{size:A4;margin:14mm 12mm}*{box-sizing:border-box}body{font-family:'IBM Plex Sans Arabic',Tahoma,sans-serif;color:#1b2430;margin:0;direction:rtl;font-size:12px}
+    .ph{display:flex;align-items:center;gap:12px;border-bottom:3px solid #0f6e6a;padding-bottom:8px;margin-bottom:12px}
+    .ph img{width:62px;height:62px;object-fit:contain}.ph h1{margin:0;font-size:18px;color:#0f6e6a}.ph .s{color:#66727f;font-size:11px}.ph .d{margin-inline-start:auto;text-align:left;font-size:11px;color:#444}
+    h2{font-size:15px;margin:10px 0 6px}table{width:100%;border-collapse:collapse;margin:6px 0 12px}th,td{border:1px solid #c9d3dc;padding:5px 7px;text-align:right;vertical-align:top}
+    th{background:#e8f2f1;color:#0b5653}tr:nth-child(even) td{background:#fafcfc}.btn,.no-print,.hijri-hint,button{display:none!important}a{color:inherit;text-decoration:none}
+    .pf{margin-top:14px;border-top:1px solid #ddd;padding-top:6px;color:#888;font-size:10px;display:flex;justify-content:space-between}`;
+  function printHTML(title, html) {
+    const w = window.open('', '_blank');
+    if (!w) { toast('اسمح للمتصفح بفتح نافذة الطباعة', 'warn'); return; }
+    const base = location.href.replace(/[^/]*([?#].*)?$/, '').replace(/supervision\/$/, '');
+    w.document.write(`<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${esc(title)}</title>
+      <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;600;700&display=swap" rel="stylesheet"><style>${PRINT_CSS}</style></head><body>
+      <div class="ph"><img src="${base}assets/img/logo.png" alt=""><div><h1>${esc(title)}</h1><div class="s">${esc(C.SCHOOL_NAME || 'مدارس دار الذكر')} — ${esc(C.PLATFORM_NAME || '')}</div></div>
+      <div class="d">${esc(dateLine())}</div></div>${html}
+      <div class="pf"><span>${esc(C.PLATFORM_NAME || '')}</span><span>طُبع في ${esc(new Date().toLocaleString('ar-SA-u-ca-gregory-nu-latn'))}</span></div>
+      <script>document.fonts&&document.fonts.ready.then(()=>setTimeout(()=>print(),250));<\/script></body></html>`);
+    w.document.close();
+  }
+  function tableRows(tbl) {
+    return $$('tr', tbl).filter((tr) => tr.offsetParent !== null || !tr.closest('tbody'))
+      .map((tr) => $$('th,td', tr).filter((c) => !c.classList.contains('actions') && !c.classList.contains('no-export'))
+        .map((c) => (c.innerText || '').replace(/\s+/g, ' ').trim()));
+  }
+  function titleFor(el) {
+    if (el.dataset.title) return el.dataset.title;
+    let n = el;
+    for (let i = 0; i < 12 && n; i++) {
+      let p = n.previousElementSibling;
+      while (p) { const h = p.matches('h1,h2,h3') ? p : p.querySelector && p.querySelector('h1,h2,h3'); if (h) return h.textContent.trim(); p = p.previousElementSibling; }
+      n = n.parentElement;
+    }
+    return document.title.split('—')[0].trim();
+  }
+  function printTable(wrapOrTable, title) {
+    const tbl = wrapOrTable.tagName === 'TABLE' ? wrapOrTable : $('table', wrapOrTable);
+    const c = tbl.cloneNode(true);
+    $$('.actions,.no-export,button,input,select', c).forEach((x) => { if (x.matches('td,th')) x.remove(); else x.replaceWith(document.createTextNode(x.value || x.textContent || '')); });
+    $$('tr', c).forEach((tr, i) => { const o = $$('tr', tbl)[i]; if (o && o.closest('tbody') && o.offsetParent === null) tr.remove(); });
+    printHTML(title || titleFor(wrapOrTable), c.outerHTML);
+  }
+  function exportTable(wrapOrTable, title) {
+    const tbl = wrapOrTable.tagName === 'TABLE' ? wrapOrTable : $('table', wrapOrTable);
+    const t = (title || titleFor(wrapOrTable)).replace(/[\\/:*?"<>|]+/g, '-');
+    downloadCSV(`${t} ${ymd(new Date())}.csv`, tableRows(tbl));
+  }
+  // كل جدول في المنصة يحصل تلقائيًا على زري «طباعة» و«Excel»
+  function addTableTools(wrap) {
+    if (wrap.dataset.tools || wrap.classList.contains('no-tools') || !$('table', wrap) || wrap.closest('.modal-wrap.no-tools')) return;
+    wrap.dataset.tools = '1';
+    const bar = document.createElement('div'); bar.className = 'tbl-tools no-print';
+    bar.innerHTML = '<button type="button" class="btn sm" data-a="p">🖨️ طباعة</button><button type="button" class="btn sm" data-a="x">⬇️ Excel</button>';
+    bar.onclick = (e) => { const b = e.target.closest('button'); if (!b) return; b.dataset.a === 'p' ? printTable(wrap) : exportTable(wrap); };
+    wrap.before(bar);
+  }
+  function enhance(root) {
+    if (!root || !root.querySelectorAll) return;
+    if (root.matches && root.matches('input[type=date]')) hijriHint(root);
+    $$('input[type=date]', root).forEach(hijriHint);
+    if (root.matches && root.matches('.table-wrap')) addTableTools(root);
+    $$('.table-wrap', root).forEach(addTableTools);
+  }
+  if (typeof MutationObserver !== 'undefined') {
+    const start = () => { enhance(document.body);
+      new MutationObserver((ms) => ms.forEach((m) => m.addedNodes.forEach((n) => n.nodeType === 1 && enhance(n)))).observe(document.body, { childList: true, subtree: true });
+      // تغيير قيمة حقل التاريخ من الكود (بدون حدث) — نحدّث الهجري دوريًا وبخفة
+      setInterval(() => $$('input[type=date]').forEach((i) => { const h = i.nextElementSibling; if (h && h.classList.contains('hijri-hint') && h.dataset.v !== i.value) { h.dataset.v = i.value; h.textContent = i.value ? hijri(i.value) : ''; } }), 1500);
+    };
+    document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', start) : start();
+  }
+
   window.LMS = { sb, C, configured, ROLE_LABELS, esc, $, $$, toast, modal, confirmBox, errMsg,
                  fetchAll, signInWithGoogle, signOut, getContext, requireAuth, downloadCSV, rememberNext, takeNext,
-                 getView, setView, canSwitch, applyView };
+                 getView, setView, canSwitch, applyView, hijri, dateLine, printHTML, printTable, exportTable, tableRows, ymd };
 })();

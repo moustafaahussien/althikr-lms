@@ -59,7 +59,10 @@
       if (!session) { showLogin(); return; }
       const ctx = await getContext();
       // المشرف يبدأ من مكتب الإشراف التربوي مباشرة (الرئيسية متاحة من الشريط العلوي)
-      if (ctx && ctx.registered) { location.replace(takeNext() || (ctx.profile && ctx.profile.role === 'supervisor' ? 'supervision/' : 'home.html')); return; }
+      const nxt = takeNext();
+      if (ctx && ctx.registered) { location.replace(nxt || (ctx.profile && ctx.profile.role === 'supervisor' ? 'supervision/' : 'home.html')); return; }
+      // صفحة «التعليم عن بعد» تقبل أي حساب مدرسي (الطلاب يدخلونها حتى لو كانت بقية المنصة مقفولة عليهم)
+      if (ctx && ctx.domain_ok !== false && /^online\//.test(nxt)) { location.replace(nxt); return; }
 
       const email = (ctx && ctx.email) || session.user.email || '';
       const msg = ctx && ctx.students_closed

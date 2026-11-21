@@ -1,0 +1,2159 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>التعليم عن بعد — منصة دار الذكر التعليمية</title>
+<link rel="icon" type="image/png" href="../favicon.png">
+<meta name="theme-color" content="#0f6e6a">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../assets/js/config.js"></script>
+<meta name="description" content="روابط الفصول الافتراضية وجداول الحصص لجميع صفوف مدارس دار الذكر">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Noto+Kufi+Arabic:wght@300;600;900&family=Sora:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F5F6FC;
+    --ink:#14173A;
+    --muted:#565D8C;
+    --glass:rgba(255,255,255,.66);
+    --glass-edge:rgba(255,255,255,.95);
+    --line:rgba(60,70,160,.14);
+    --violet:#6D4BFF; --cyan:#0EA5D6; --green:#0E9F76; --orange:#E8790A; --pink:#E63E7C; --red:#E5383B;
+    --foil:linear-gradient(100deg,#6D4BFF 0%,#0EA5D6 20%,#0E9F76 40%,#E8790A 60%,#E63E7C 80%,#6D4BFF 100%);
+    --display:'Sora','Noto Kufi Arabic','IBM Plex Sans Arabic',Tahoma,sans-serif;
+    --body:'IBM Plex Sans Arabic','Sora',Tahoma,sans-serif;
+    --wrap:1200px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth;scroll-padding-top:100px;overflow-x:clip}
+  body{font-family:var(--body);background:var(--bg);color:var(--ink);line-height:1.85;font-size:17px;-webkit-font-smoothing:antialiased;overflow-x:clip}
+  a{color:inherit;text-decoration:none}
+  button,input{font:inherit;color:inherit}
+  button{cursor:pointer}
+  :focus-visible{outline:3px solid var(--violet);outline-offset:3px;border-radius:10px}
+  .wrap{max-width:var(--wrap);margin-inline:auto;padding-inline:24px}
+  [hidden]{display:none!important}
+
+  .aurora{position:fixed;inset:-25%;z-index:-1;pointer-events:none;
+    background:
+      radial-gradient(40% 35% at 20% 25%,rgba(109,75,255,.22),transparent 70%),
+      radial-gradient(35% 30% at 80% 20%,rgba(14,165,214,.20),transparent 70%),
+      radial-gradient(38% 34% at 72% 80%,rgba(230,62,124,.16),transparent 70%),
+      radial-gradient(34% 30% at 15% 85%,rgba(232,121,10,.14),transparent 70%);
+    animation:drift 28s ease-in-out infinite alternate}
+  @keyframes drift{to{transform:translate3d(4%,3%,0) rotate(6deg) scale(1.08)}}
+
+  /* ---------- الشريط العلوي ---------- */
+  .nav{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:60;
+    width:min(1200px,calc(100% - 24px));height:66px;padding-inline:16px 12px;
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    background:var(--glass);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);
+    border:1px solid var(--glass-edge);border-radius:22px;box-shadow:0 12px 36px -16px rgba(40,50,140,.35)}
+  .logos{display:flex;align-items:center;gap:12px}
+  .logos .sep{width:1px;height:30px;background:var(--line)}
+  .logo{position:relative;display:inline-flex;align-items:center;justify-content:center;height:44px;min-width:44px}
+  .logo img{height:44px;width:auto;display:block}
+  .logo .ph{display:none;font-size:11.5px;line-height:1.3;color:var(--muted);text-align:center;border:1.5px dashed rgba(60,70,160,.35);border-radius:11px;padding:5px 10px;white-space:nowrap}
+  .logo-dt,.logo-dt img{height:58px}
+  .logo.missing img{display:none}
+  .logo.missing .ph{display:block}
+  .nav-right{display:flex;align-items:center;gap:8px}
+  .home-link{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:14px;font-size:15px;color:var(--muted);white-space:nowrap;transition:background .2s,color .2s}
+  .home-link:hover{background:rgba(109,75,255,.09);color:var(--ink)}
+  .home-link svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .lang{direction:ltr;display:inline-flex;align-items:center;padding:3px;border:0;border-radius:14px;background:rgba(20,23,58,.07);font-family:'Sora',sans-serif;font-weight:600;font-size:13px}
+  .lang span{padding:6px 12px;border-radius:11px;color:var(--muted);transition:background .2s,color .2s}
+  html[lang="ar"] .lang [data-l="ar"],html[lang="en"] .lang [data-l="en"]{background:var(--ink);color:#fff}
+
+  /* ---------- الهيرو ---------- */
+  .hero{padding:124px 0 26px;text-align:center}
+  .live-pill{display:inline-flex;align-items:center;gap:8px;padding:6px 16px;border-radius:999px;background:var(--glass);border:1px solid var(--glass-edge);font-family:var(--display);font-weight:600;font-size:14px;color:var(--muted);box-shadow:0 8px 24px -14px rgba(40,50,140,.4);margin-bottom:16px}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--red);box-shadow:0 0 0 0 rgba(229,56,59,.6);animation:ping 1.8s infinite}
+  @keyframes ping{70%{box-shadow:0 0 0 9px rgba(229,56,59,0)}100%{box-shadow:0 0 0 0 rgba(229,56,59,0)}}
+  .hero h1{font-family:var(--display);font-weight:900;font-size:clamp(36px,5.4vw,70px);line-height:1.3;margin-bottom:10px;
+    background-image:var(--foil);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;
+    animation:foil 10s linear infinite,rise .9s cubic-bezier(.2,.8,.2,1) both}
+  @keyframes foil{to{background-position:200% 0}}
+  @keyframes rise{from{opacity:0;transform:translateY(22px);filter:blur(8px)}to{opacity:1;transform:none;filter:none}}
+  .hero .lead{color:var(--muted);font-size:clamp(16px,1.6vw,19px);max-width:40em;margin:0 auto 24px;animation:rise .9s .1s cubic-bezier(.2,.8,.2,1) both}
+  .howto{display:flex;justify-content:center;flex-wrap:wrap;gap:10px;animation:rise .9s .2s cubic-bezier(.2,.8,.2,1) both}
+  .howto li{list-style:none;display:flex;align-items:center;gap:10px;padding:8px 16px 8px 18px;border-radius:16px;background:var(--glass);border:1px solid var(--glass-edge);font-weight:500;font-size:15px}
+  .howto b{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;color:#fff;font-family:'Sora',sans-serif;font-size:14px;background:linear-gradient(135deg,var(--violet),var(--pink))}
+
+  /* ---------- رسائل الحالة ---------- */
+  .notice{display:flex;align-items:flex-start;gap:14px;margin:6px 0 18px;padding:16px 20px;border-radius:20px;background:#fff;border:1px solid var(--line);border-inline-start:5px solid var(--c,var(--orange));box-shadow:0 10px 30px -20px rgba(40,50,140,.5)}
+  .notice svg{flex:none;width:24px;height:24px;margin-top:3px;fill:none;stroke:var(--c,var(--orange));stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .notice b{display:block;font-family:var(--display);font-weight:600}
+  .notice p{color:var(--muted);font-size:15px}
+  .notice button{margin-top:8px;padding:6px 16px;border-radius:12px;border:1px solid var(--line);background:var(--bg);font-weight:600;font-size:14px}
+  .status-bar{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:6px 14px;margin:18px 0 6px;font-size:14px;color:var(--muted)}
+  .status-bar button{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:12px;border:1px solid var(--line);background:var(--glass);font-size:13.5px;font-weight:600;color:var(--muted)}
+  .status-bar button svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+  .status-bar button.spin svg{animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* ---------- خريطة المدرسة ---------- */
+  .sec-title{font-family:var(--display);font-weight:900;font-size:clamp(22px,2.4vw,30px);margin:26px 0 14px;display:flex;align-items:center;gap:12px}
+  .sec-title::before{content:"";width:8px;height:1.1em;border-radius:6px;background:linear-gradient(var(--violet),var(--pink))}
+  .map{display:grid;grid-template-columns:1.9fr 1fr;gap:18px;align-items:start}
+  .track{position:relative;padding:20px;border-radius:26px;background:var(--glass);border:1px solid var(--glass-edge);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 22px 50px -32px rgba(40,50,140,.55)}
+  .track-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+  .track-head .ico{display:grid;place-items:center;width:46px;height:46px;border-radius:15px;color:#fff;background:linear-gradient(135deg,var(--c),color-mix(in srgb,var(--c) 55%,#14173A));box-shadow:0 10px 22px -10px var(--c)}
+  .track-head .ico svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+  .track-head h3{font-family:var(--display);font-weight:900;font-size:20px;line-height:1.4}
+  .track-head small{display:block;font-family:var(--body);font-weight:500;font-size:13.5px;color:var(--muted)}
+  .sections{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .section{padding:14px;border-radius:20px;background:rgba(255,255,255,.7);border:1px solid var(--line)}
+  .section h4{font-family:var(--display);font-weight:600;font-size:16px;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+  .section h4 i{width:10px;height:10px;border-radius:50%;background:var(--c)}
+  .stage{padding:10px 0;border-top:1px dashed var(--line)}
+  .stage:first-of-type{border-top:0;padding-top:2px}
+  .stage-name{font-size:14px;font-weight:600;color:var(--muted);margin-bottom:8px}
+  .stage-name span{font-weight:400;font-size:12.5px}
+  .grades{display:flex;flex-wrap:wrap;gap:8px}
+  .grade{position:relative;min-width:54px;padding:8px 12px;border-radius:14px;border:1.5px solid color-mix(in srgb,var(--c) 30%,transparent);background:#fff;
+    font-family:var(--display);font-weight:600;font-size:14px;line-height:1.35;text-align:center;transition:transform .18s,box-shadow .18s,background .18s,color .18s}
+  .grade:hover{transform:translateY(-2px);box-shadow:0 10px 20px -12px var(--c);border-color:var(--c)}
+  .grade.on{background:var(--c);border-color:var(--c);color:#fff;box-shadow:0 12px 24px -12px var(--c)}
+  .grade .n{position:absolute;top:-8px;inset-inline-end:-6px;min-width:20px;height:20px;padding-inline:5px;border-radius:999px;display:grid;place-items:center;
+    font-family:'Sora',sans-serif;font-size:11px;font-weight:800;color:#fff;background:var(--ink);border:2px solid #fff}
+  .grade .live{position:absolute;top:-5px;inset-inline-start:-5px;width:12px;height:12px;border-radius:50%;background:var(--red);border:2px solid #fff;animation:ping 1.8s infinite}
+  .track.american .grades{display:grid;grid-template-columns:repeat(3,1fr)}
+
+  /* ---------- بوابة الدخول ---------- */
+  .login{max-width:520px;margin:18px auto 0;padding:30px 26px 24px;border-radius:28px;text-align:center;background:var(--glass);border:1px solid var(--glass-edge);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 26px 60px -36px rgba(40,50,140,.6)}
+  .login .lock{display:inline-grid;place-items:center;width:62px;height:62px;border-radius:20px;color:#fff;background:linear-gradient(135deg,var(--violet),var(--pink));box-shadow:0 14px 28px -14px rgba(109,75,255,.8);margin-bottom:10px}
+  .login .lock svg{width:30px;height:30px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+  .login h2{font-family:var(--display);font-weight:900;font-size:24px;line-height:1.4}
+  .login>p{color:var(--muted);font-size:15px}
+  .code-row{display:flex;gap:8px;margin:16px 0 6px}
+  .g-signin{display:flex;flex-direction:column;align-items:center;gap:6px;margin:16px 0 4px;min-height:44px}
+  .g-signin small{color:var(--muted);font-size:12.5px}
+  .or-line{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:13px;margin:10px 0 0}
+  .or-line::before,.or-line::after{content:"";flex:1;height:1px;background:var(--line)}
+  .code-row input{flex:1;min-width:0;padding:13px 16px;border-radius:16px;border:1.5px solid var(--line);background:#fff;font-family:'Sora',monospace;font-weight:600;font-size:19px;letter-spacing:.35em;text-align:center;text-transform:uppercase;outline:0;transition:border-color .2s,box-shadow .2s}
+  .code-row input:focus{border-color:var(--violet);box-shadow:0 0 0 4px rgba(109,75,255,.12)}
+  .code-row button{padding:0 22px;border:0;border-radius:16px;font-family:var(--display);font-weight:600;font-size:16px;color:#fff;background:linear-gradient(135deg,var(--violet),var(--pink));box-shadow:0 12px 24px -14px rgba(109,75,255,.8)}
+  .code-row button:disabled,.code-row input:disabled{opacity:.6;cursor:wait}
+  .bind-tabs{display:flex;gap:6px;margin:16px 0 4px;padding:4px;border-radius:16px;background:color-mix(in srgb,var(--line) 45%,transparent)}
+  .bind-tabs button{flex:1;padding:10px 8px;border:0;border-radius:12px;background:transparent;font-family:var(--display);font-weight:600;font-size:14.5px;color:var(--muted);cursor:pointer}
+  .bind-tabs button[aria-pressed="true"]{background:#fff;color:var(--ink,#1b1f3b);box-shadow:0 6px 14px -10px rgba(40,50,140,.6)}
+  .pick-box{display:flex;flex-direction:column;gap:10px;margin:14px 0 6px;text-align:start}
+  .pick-box select{width:100%;padding:12px 14px;border-radius:14px;border:1.5px solid var(--line);background:#fff;font:inherit;font-size:15.5px}
+  .pick-box select:focus{outline:0;border-color:var(--violet);box-shadow:0 0 0 4px rgba(109,75,255,.12)}
+  .pick-confirm{padding:12px 14px;border-radius:14px;background:color-mix(in srgb,var(--violet) 8%,#fff);font-size:14.5px;line-height:1.7}
+  .pick-btn{padding:13px 16px;border:0;border-radius:16px;font-family:var(--display);font-weight:600;font-size:16px;color:#fff;background:linear-gradient(135deg,var(--violet),var(--pink));box-shadow:0 12px 24px -14px rgba(109,75,255,.8);cursor:pointer}
+  .pick-btn:disabled{opacity:.55;cursor:not-allowed}
+  .login-err{margin-top:6px;padding:8px 12px;border-radius:12px;background:color-mix(in srgb,var(--red) 10%,#fff);color:#B5172F!important;font-weight:600;font-size:14.5px!important}
+  .login-note{margin-top:12px;font-size:13px!important}
+  .picker{margin-top:18px;padding:16px;border-radius:24px;background:var(--glass);border:1px solid var(--glass-edge);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+  .pgroups{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:10px}
+  .pgroup{padding:10px 12px;border-radius:18px;background:rgba(255,255,255,.75);border:1px solid var(--line)}
+  .pg-name{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--muted);margin-bottom:8px}
+  .pg-name i{width:9px;height:9px;border-radius:50%;background:var(--c)}
+  .picker .who{margin-bottom:10px}
+  .pg-name{flex-wrap:wrap}
+  .live-badge{margin-inline-start:auto;display:inline-flex;align-items:center;gap:6px;padding:2px 10px;border-radius:999px;font-size:12.5px;font-weight:700;background:var(--red);color:#fff}
+  .live-badge::before{content:"";width:7px;height:7px;border-radius:50%;background:#fff;animation:blink 1s infinite}
+  .live-badge.none{background:var(--bg);color:var(--muted);font-weight:600}
+  .live-badge.none::before{display:none}
+  .gate-days{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:2px 0 12px}
+  .gd-l{display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:14px;color:var(--muted)}
+  .gd-l svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .gd-chips{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+  .gd-chips .chip{padding:6px 12px;font-size:13.5px}
+  .gd-chips input{min-height:34px;padding:4px 8px;border-radius:999px;border:1px solid var(--line);background:#fff;font:inherit;font-size:13.5px;color:var(--ink)}
+  .plan-badge{margin-inline-start:auto;display:inline-flex;align-items:center;padding:2px 10px;border-radius:999px;font-size:12.5px;font-weight:700}
+  .plan-badge.ok{background:color-mix(in srgb,var(--green) 16%,#fff);color:#0B6E52}
+  .plan-badge.miss{background:color-mix(in srgb,#E8790A 16%,#fff);color:#B45309}
+  .grade .plan-n{background:var(--green)}
+  .grade .miss-n{background:#E8790A}
+  .now-list.miss-list{border-color:color-mix(in srgb,#E8790A 35%,#fff)}
+  .miss-list .now-h svg{width:18px;height:18px;fill:none;stroke:#B45309;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .now-list.ok-list{border-color:color-mix(in srgb,var(--green) 35%,#fff)}
+  .ok-list .now-h{margin:0;color:#0B6E52}
+  .pgroup.has-live{border-color:color-mix(in srgb,var(--red) 40%,#fff)}
+  .grade .live-n{background:var(--red)}
+  .now-list{margin-top:12px;padding:12px;border-radius:18px;background:#fff;border:1px solid color-mix(in srgb,var(--red) 30%,#fff)}
+  .now-h{display:flex;align-items:center;gap:8px;font-family:var(--display);font-weight:600;font-size:15px;margin-bottom:6px}
+  .now-item{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px dashed var(--line)}
+  .now-item:first-of-type{border-top:0}
+  .now-main{flex:1;min-width:0;text-align:start;border:0;background:none;padding:0;font-size:14.5px;line-height:1.5}
+  .now-main b{font-family:var(--display);color:color-mix(in srgb,var(--c) 70%,#14173A)}
+  .now-main span{display:block;color:var(--muted);font-size:13.5px}
+  .now-join{flex:none;display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:12px;color:#fff;font-weight:600;font-size:14px;background:linear-gradient(135deg,var(--red),#B5172F)}
+  .now-join svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .who{display:inline-flex;align-items:center;gap:6px;margin-inline-end:6px;font-weight:600;color:var(--muted);font-size:14.5px}
+  .who svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+  .tab{display:flex;flex-direction:column;align-items:flex-start;padding:8px 16px;border-radius:16px;border:1.5px solid color-mix(in srgb,var(--c) 30%,transparent);background:#fff;font-family:var(--display);font-weight:600;font-size:15px;line-height:1.35;transition:background .2s,color .2s}
+  .tab small{font-family:var(--body);font-weight:500;font-size:12px;opacity:.75}
+  .tab.on{background:var(--c);border-color:var(--c);color:#fff}
+
+  /* ---------- نموذج إدخال الجداول ---------- */
+  .picker-top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:10px}
+  .picker-top .who{margin:0}
+  .ed-open{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border:0;border-radius:14px;color:#fff;font-family:var(--display);font-weight:600;font-size:15px;background:linear-gradient(135deg,var(--violet),var(--pink));box-shadow:0 10px 22px -12px rgba(109,75,255,.8)}
+  .ed-open svg,.ed-btn svg,.ed-ic svg,.row-link svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  body.ed-lock{overflow:hidden}
+  .ed-wrap{position:fixed;inset:0;z-index:100;background:rgba(20,23,58,.45);backdrop-filter:blur(4px);display:flex;justify-content:center;align-items:flex-start;padding:24px 12px;overflow:auto}
+  .ed-panel{width:min(980px,100%);background:var(--bg);border-radius:26px;box-shadow:0 40px 90px -30px rgba(20,23,58,.6);display:flex;flex-direction:column;max-height:calc(100vh - 48px)}
+  .ed-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:18px 22px;border-bottom:1px solid var(--line)}
+  .ed-head h2{font-family:var(--display);font-weight:900;font-size:22px;line-height:1.4}
+  .ed-head small{color:var(--muted);font-size:14px}
+  .ed-body{padding:16px 22px;overflow:auto;flex:1}
+  .ed-foot{display:flex;justify-content:flex-end;gap:10px;padding:14px 22px;border-top:1px solid var(--line)}
+  .ed-date{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px;margin-bottom:6px}
+  .ed-date label{display:flex;flex-direction:column;gap:4px;font-size:13.5px;font-weight:600;color:var(--muted)}
+  .ed-quick{display:flex;gap:6px;flex-wrap:wrap}
+  .ed-hint{font-size:13.5px;color:var(--muted);margin:6px 0 12px}
+  .ed-loading{padding:30px;text-align:center;color:var(--muted)}
+  .ed-rows{display:grid;gap:12px}
+  .ed-tabs{margin:0 0 12px}
+  .lk-row .lk-name{width:auto;height:auto;padding:4px 10px;font-family:var(--display);font-size:14px;margin-inline-end:auto}
+  .lk-row .lk-link{grid-column:span 4}
+  .lk-row .lk-owner{grid-column:span 2}
+  .lk-row.dirty{border-color:var(--violet);box-shadow:0 0 0 3px rgba(109,75,255,.08)}
+  .lk-badge{font-size:12px;font-weight:700;color:var(--violet);background:color-mix(in srgb,var(--violet) 12%,#fff);padding:2px 10px;border-radius:999px}
+  .ed-filter{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px;margin:0 0 12px;padding:10px 12px;border-radius:16px;background:#fff;border:1px solid var(--line)}
+  .ed-filter label{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:700;color:var(--muted);flex:1;min-width:220px}
+  .ed-filter label svg{display:none}
+  .ed-btn.sm{padding:8px 14px;font-size:13.5px}
+  .ed-row{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;padding:14px;border-radius:18px;background:#fff;border:1px solid var(--line)}
+  .ed-row-h{grid-column:1/-1;display:flex;align-items:center;gap:6px}
+  .ed-row-h b{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;background:var(--bg);font-family:'Sora',sans-serif;font-size:13px;margin-inline-end:auto}
+  .ed-row label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:600;color:var(--muted);min-width:0}
+  .ed-row label{grid-column:span 2}
+  .ed-row .w3{grid-column:span 3}
+  .ed-row .w1{grid-column:span 1}
+  .ed-wrap input,.ed-wrap select{width:100%;min-height:40px;padding:8px 10px;border-radius:11px;border:1px solid var(--line);background:#fff;font:inherit;font-size:14.5px;color:var(--ink)}
+  .ed-wrap input:focus,.ed-wrap select:focus{outline:0;border-color:var(--violet);box-shadow:0 0 0 3px rgba(109,75,255,.12)}
+  .ed-ic{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--muted)}
+  .ed-ic.danger:hover{color:var(--red);border-color:var(--red)}
+  .ed-add{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:14px 0}
+  .ed-add select{max-width:320px}
+  .ed-or{color:var(--muted);font-size:14px}
+  .ed-btn{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:13px;border:1px solid var(--line);background:#fff;font-weight:600;font-size:14.5px}
+  .ed-btn.primary{border:0;color:#fff;background:linear-gradient(135deg,var(--green),#0B6E52);box-shadow:0 10px 22px -12px var(--green)}
+  .ed-btn.primary:disabled{opacity:.6;cursor:wait}
+  .ed-btn.ghost{background:transparent;color:var(--muted)}
+  .ed-btn.ghost:hover{background:#fff;color:var(--ink)}
+  .ed-copy{margin-top:6px;padding:12px 14px;border-radius:16px;background:#fff;border:1px solid var(--line)}
+  .ed-copy summary{cursor:pointer;font-weight:600;font-size:14.5px}
+  .ed-days{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  .ed-day{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);font-size:13.5px}
+  .ed-day input{width:auto;min-height:0}
+  .ed-ok{margin-top:12px;padding:10px 14px;border-radius:12px;background:color-mix(in srgb,var(--green) 12%,#fff);color:#0B6E52;font-weight:600;font-size:14.5px}
+  .chip.has-dated{border-color:var(--violet)}
+  .rp-open{background:linear-gradient(135deg,#0EA5D6,#0B6E52)}
+  .pt-btns{display:flex;flex-wrap:wrap;gap:8px}
+  .rp-panel{width:min(860px,100%)}
+  .rp-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0 4px}
+  .rp-tab{padding:7px 14px;border-radius:999px;border:1px solid var(--line);background:#fff;font-weight:600;font-size:13.5px;color:var(--ink)}
+  .rp-tab.on{background:var(--ink);border-color:var(--ink);color:#fff}
+  .rp-meta{font-size:13px;color:var(--muted);margin:8px 0 14px;line-height:1.7}
+  .rp-meta b{color:var(--ink)}
+  .rp-meta .warn{color:#B45309}
+  .rp-cards{display:grid;gap:12px}
+  .rp-card{border-radius:20px;background:#fff;border:1px solid var(--line);overflow:hidden}
+  .rp-card > button{width:100%;display:flex;align-items:center;gap:14px;padding:16px 18px;border:0;background:none;text-align:start;color:var(--ink);font:inherit;cursor:pointer}
+  .rp-card .rp-ic{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:color-mix(in srgb,var(--c) 14%,#fff);color:var(--c);flex:none}
+  .rp-card .rp-ic svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .rp-card .rp-t{flex:1;min-width:0}
+  .rp-card .rp-t span{display:block;font-size:14px;color:var(--muted);font-weight:600}
+  .rp-card .rp-t small{display:block;font-size:12.5px;color:var(--muted);margin-top:2px}
+  .rp-num{font-family:'Sora',var(--display);font-weight:800;font-size:32px;line-height:1;color:var(--c)}
+  .rp-num em{font-style:normal;font-size:16px;color:var(--muted);font-weight:600}
+  .rp-chev{width:20px;height:20px;fill:none;stroke:var(--muted);stroke-width:2;transition:transform .2s;flex:none}
+  .rp-card.open .rp-chev{transform:rotate(180deg)}
+  .rp-list{display:none;border-top:1px solid var(--line);padding:6px 18px 14px}
+  .rp-card.open .rp-list{display:block}
+  .rp-row{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center;padding:9px 0;border-bottom:1px dashed var(--line);font-size:14.5px}
+  .rp-row:last-child{border-bottom:0}
+  .rp-row b{font-family:'Sora',var(--display);font-size:15px}
+  .rp-row b em{font-style:normal;color:var(--muted);font-weight:500;font-size:13px}
+  .rp-bar{grid-column:1/-1;height:6px;border-radius:9px;background:var(--bg);overflow:hidden}
+  .rp-bar i{display:block;height:100%;border-radius:9px;background:var(--c)}
+  .rp-row.zero{color:var(--muted)}
+  .rp-row.zero .rp-bar i{background:#E5383B}
+  .rp-sub{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px}
+  .rp-sub span{font-size:12.5px;padding:3px 10px;border-radius:999px;background:var(--bg);color:var(--muted)}
+  .rp-sub span b{font-size:12.5px;color:var(--ink)}
+  .rp-empty{padding:30px;text-align:center;color:var(--muted)}
+  .rp-foot{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .subj-hint{font-size:12px;font-weight:600;line-height:1.5;min-height:18px}
+  .subj-hint.ok{color:#0B6E52}
+  .subj-hint.none{color:var(--muted)}
+  .subj-hint.warn{color:#B45309}
+  .row-link{display:flex;align-items:center;gap:4px;margin-top:6px;padding:2px 10px;border-radius:999px;font-size:12.5px;font-weight:600;color:#fff;background:var(--violet);width:fit-content}
+  @media (max-width:640px){
+    .ed-wrap{padding:0}
+    .ed-panel{border-radius:0;max-height:100vh;height:100vh}
+    .ed-row{grid-template-columns:1fr 1fr}
+    .ed-row label,.ed-row .w3,.ed-row .wp,.lk-row .lk-link,.lk-row .lk-owner{grid-column:1/-1}
+    .ed-row .w1:not(.wp){grid-column:span 1}
+  }
+
+  /* ---------- لوحة الصف ---------- */
+  .panel{margin-top:26px;padding:22px;border-radius:28px;background:var(--glass);border:1px solid var(--glass-edge);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 26px 60px -36px rgba(40,50,140,.6);border-top:5px solid var(--c,var(--violet))}
+  .pick{padding:44px 20px;text-align:center;color:var(--muted)}
+  .pick svg{width:54px;height:54px;fill:none;stroke:var(--violet);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;margin-bottom:8px}
+  .pick b{display:block;font-family:var(--display);font-size:20px;color:var(--ink)}
+  .p-head{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:14px}
+  .crumbs{font-size:14px;color:var(--muted);display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px}
+  .crumbs i{opacity:.5;font-style:normal}
+  .p-head h2{font-family:var(--display);font-weight:900;font-size:clamp(24px,2.8vw,34px);line-height:1.35;color:color-mix(in srgb,var(--c) 70%,#14173A)}
+  .copy{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:14px;border:1px solid var(--line);background:#fff;font-weight:600;font-size:14px;transition:background .2s}
+  .copy:hover{background:var(--bg)}
+  .copy svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .copy.done{color:var(--green);border-color:var(--green)}
+  .contacts{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+  .contact{display:inline-flex;align-items:center;flex-wrap:wrap;gap:4px 10px;padding:9px 16px;border-radius:16px;background:#fff;border:1px solid var(--line);font-size:14.5px}
+  .contact svg{width:18px;height:18px;fill:none;stroke:var(--c);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .contact span{color:var(--muted)}
+  .contact a{font-family:'Sora',sans-serif;font-weight:600;direction:ltr;color:color-mix(in srgb,var(--c) 75%,#14173A)}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+  .chip{padding:7px 14px;border-radius:999px;border:1px solid var(--line);background:#fff;font-size:14px;font-weight:600;color:var(--muted);transition:background .2s,color .2s}
+  .chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .chip.today::after{content:"•";color:var(--red);margin-inline-start:5px}
+
+  .groups{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:16px}
+  .group{display:flex;flex-direction:column;border-radius:24px;background:#fff;border:1px solid var(--line);box-shadow:0 14px 30px -24px rgba(40,50,140,.6);overflow:hidden}
+  .group.is-live{border-color:color-mix(in srgb,var(--red) 55%,#fff);box-shadow:0 0 0 3px rgba(229,56,59,.10),0 18px 36px -26px rgba(229,56,59,.6)}
+  .g-head{padding:16px 18px 14px;display:flex;flex-direction:column;gap:10px;background:linear-gradient(160deg,color-mix(in srgb,var(--c) 10%,#fff),#fff 70%)}
+  .g-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .g-title{font-family:var(--display);font-weight:900;font-size:22px;line-height:1.3}
+  .g-title small{display:block;font-family:var(--body);font-weight:500;font-size:13.5px;color:var(--muted)}
+  .badge{font-size:12.5px;font-weight:600;padding:4px 11px;border-radius:999px;white-space:nowrap;background:var(--bg);color:var(--muted)}
+  .badge.live{background:var(--red);color:#fff;display:inline-flex;align-items:center;gap:6px}
+  .badge.live::before{content:"";width:7px;height:7px;border-radius:50%;background:#fff;animation:blink 1s infinite}
+  @keyframes blink{50%{opacity:.25}}
+  .badge.soon,.badge.brk{background:color-mix(in srgb,var(--orange) 15%,#fff);color:color-mix(in srgb,var(--orange) 75%,#14173A)}
+  .now-line{font-size:15px;color:var(--muted)}
+  .now-line b{color:var(--ink);font-family:var(--display)}
+  .now-par{display:block;margin-top:4px;padding-inline-start:10px;border-inline-start:3px solid var(--c, var(--line))}
+  .meta{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:14px;color:var(--muted)}
+  .meta span{display:inline-flex;align-items:center;gap:6px}
+  .meta svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .note{font-size:14px;padding:8px 12px;border-radius:12px;background:var(--bg);color:var(--muted)}
+  .join{display:flex;align-items:center;justify-content:center;gap:10px;padding:13px 18px;border-radius:16px;font-family:var(--display);font-weight:600;font-size:16.5px;color:#fff;
+    background:linear-gradient(135deg,var(--c,var(--violet)),color-mix(in srgb,var(--c,var(--violet)) 55%,#14173A));box-shadow:0 12px 24px -14px var(--c,var(--violet));transition:transform .2s,box-shadow .2s}
+  .join:hover{transform:translateY(-2px)}
+  .join svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .group.is-live .join{background:linear-gradient(135deg,var(--red),#B5172F);box-shadow:0 12px 24px -14px var(--red)}
+  .join.off{background:var(--bg);color:var(--muted);box-shadow:none;cursor:not-allowed;border:1px dashed var(--line)}
+  /* حصص متوازية: زر لكل مادة جنب بعض */
+  .joins{display:grid;grid-template-columns:repeat(var(--n,3),minmax(0,1fr));gap:8px}
+  .joins .join{flex-direction:column;gap:5px;padding:11px 6px;font-size:14.5px;line-height:1.3;text-align:center;min-height:68px;overflow-wrap:anywhere}
+  @media (max-width:520px){.joins{gap:6px}.joins .join{font-size:13px;padding:10px 4px;border-radius:14px}}
+  .joins .join svg{width:19px;height:19px;flex:none}
+
+  .tt{list-style:none;border-top:1px solid var(--line)}
+  .tt li{display:grid;grid-template-columns:34px 1fr auto;align-items:center;gap:10px;padding:9px 18px;border-bottom:1px dashed var(--line);font-size:15px}
+  .tt li:last-child{border-bottom:0}
+  .tt .pn{display:grid;place-items:center;width:30px;height:30px;border-radius:10px;background:color-mix(in srgb,var(--c) 12%,#fff);color:color-mix(in srgb,var(--c) 75%,#14173A);font-family:'Sora',sans-serif;font-weight:800;font-size:13px}
+  .tt .sub b{display:block;font-family:var(--display);font-weight:600;line-height:1.4}
+  .tt .sub span{font-size:13.5px;color:var(--muted)}
+  .tt .tm{font-family:'Sora','IBM Plex Sans Arabic',sans-serif;font-size:12.5px;font-weight:600;color:var(--muted);white-space:nowrap;text-align:end;line-height:1.5}
+  .tt li.past{opacity:.45}
+  .tt li.cur{background:color-mix(in srgb,var(--red) 7%,#fff)}
+  .tt li.cur .pn{background:var(--red);color:#fff}
+  .tt li.cur .tm::before{content:attr(data-now);display:block;color:var(--red);font-family:var(--body);font-weight:700}
+  .tt li.brk{grid-template-columns:34px 1fr auto;background:repeating-linear-gradient(-45deg,rgba(232,121,10,.06) 0 8px,transparent 8px 16px)}
+  .tt li.brk .pn{background:color-mix(in srgb,var(--orange) 15%,#fff);color:var(--orange)}
+  .tt li.brk .pn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .tt li.brk.cur{background:color-mix(in srgb,var(--orange) 12%,#fff)}
+  .tt li.brk.cur .pn{background:var(--orange);color:#fff}
+  .tt li.brk.cur .tm::before{color:var(--orange)}
+  .tt-empty{padding:14px 18px;font-size:14px;color:var(--muted);border-top:1px solid var(--line)}
+  .tt-win{display:flex;align-items:center;gap:10px;font-size:15px;color:var(--ink)}
+  .tt-win svg{flex:none;width:20px;height:20px;fill:none;stroke:var(--c);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+  .empty-state{padding:36px 16px;text-align:center;color:var(--muted)}
+  .empty-state svg{width:46px;height:46px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;opacity:.6;margin-bottom:6px}
+  .empty-state b{display:block;font-family:var(--display);color:var(--ink);font-size:18px}
+
+  footer{padding:36px 0 44px;color:var(--muted);font-size:15px}
+  footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:16px;padding-block:22px;border-radius:24px;background:var(--glass);border:1px solid var(--glass-edge)}
+  footer b{color:var(--ink);font-weight:600}
+  footer .privacy{display:block;margin-top:2px;font-size:13.5px;color:var(--violet);text-decoration:underline;text-underline-offset:3px}
+
+  @media (max-width:980px){
+    .map{grid-template-columns:1fr}
+    .track.american .grades{display:flex}
+  }
+  @media (max-width:640px){
+    .wrap{padding-inline:16px}
+    .home-link span{display:none}
+    .sections{grid-template-columns:1fr}
+    .track,.panel{padding:16px;border-radius:22px}
+    .groups{grid-template-columns:1fr}
+    .tt li{padding:9px 14px}
+    .howto li{font-size:14px}
+    .logo img{height:38px}
+    .logo-dt,.logo-dt img{height:50px}
+  }
+  /* ---------- إيقاف التعليم عن بعد ---------- */
+  body.paused-lock{overflow:hidden}
+  .pause-screen{position:fixed;inset:0;z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center;background:var(--bg)}
+  .pause-screen::before{content:"";position:absolute;inset:0;z-index:-1;background:
+      radial-gradient(45% 40% at 20% 25%,rgba(109,75,255,.20),transparent 70%),
+      radial-gradient(40% 35% at 80% 75%,rgba(14,159,118,.18),transparent 70%)}
+  .pause-screen img{height:86px;width:auto}
+  .pause-screen h1{font-family:var(--display);font-weight:900;font-size:clamp(36px,7vw,76px);line-height:1.3;padding:.1em .15em .35em;   /* مساحة لنقط الياء: التدرج لا يُرسم خارج حدود العنوان */
+    background-image:var(--foil);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;animation:foil 10s linear infinite}
+  .pause-screen p{color:var(--muted);font-size:clamp(16px,1.8vw,20px);max-width:32em}
+  .pause-admin{position:absolute;bottom:18px;inset-inline:0;display:flex;flex-direction:column;align-items:center;gap:8px}
+  .pause-admin>button{border:0;background:none;color:var(--muted);font-size:13px;text-decoration:underline;text-underline-offset:3px;opacity:.75}
+  .pause-admin .login-err{max-width:340px}
+  .sys-btn{background:linear-gradient(135deg,var(--red),#B5172F)!important;box-shadow:0 10px 22px -12px var(--red)!important}
+  .sys-btn.resume{background:linear-gradient(135deg,var(--green),#0B6E52)!important;box-shadow:0 10px 22px -12px var(--green)!important}
+  .sys-btn:disabled{opacity:.6;cursor:wait}
+
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation:none!important;transition:none!important}
+  }
+
+  /* ===== تصميم منصة دار الذكر التعليمية (نفس شريط وألوان مكتب الإشراف التربوي) ===== */
+  :root{ --bg:#f4f6f8; --ink:#1b2430; --muted:#66727f; --glass:#fff; --glass-edge:#e2e7ec; --line:#e2e7ec;
+    --violet:#0f6e6a; --foil:linear-gradient(100deg,#0f6e6a,#0f8a4f);
+    --display:'IBM Plex Sans Arabic',Tahoma,sans-serif; --body:'IBM Plex Sans Arabic',Tahoma,sans-serif; }
+  body{font-size:16px;line-height:1.7}
+  .aurora{display:none}
+  .nav{position:sticky;top:0;left:auto;transform:none;width:100%;height:auto;min-height:66px;border-radius:0;border:0;
+    background:#0f6e6a;color:#fff;padding:10px 18px;backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:0 2px 10px -4px rgba(11,86,83,.5)}
+  .nav .brandlink{display:flex;align-items:center;gap:10px;color:#fff;text-decoration:none}
+  .nav .logo-tile{width:42px;height:42px;border-radius:12px;background:#fff;display:grid;place-items:center;padding:4px;flex:0 0 auto}
+  .nav .logo-tile img{width:100%;height:100%;object-fit:contain}
+  .nav .brandlink b{font-size:19px;font-weight:700;display:block;line-height:1.25}
+  .nav .brandlink small{display:block;font-size:12px;color:#d6ecea;line-height:1.2}
+  .nav .home-link{color:#d6ecea;border:1px solid #ffffff55;border-radius:10px;padding:6px 12px}
+  .nav .home-link:hover{background:#ffffff18;color:#fff}
+  .nav .home-link svg{stroke:currentColor}
+  .nav .lang{background:transparent;color:#fff;border:1px solid #ffffff55}
+  .hero{padding:28px 0 18px}
+  .hero h1{background:none;-webkit-text-fill-color:#1b2430;color:#1b2430}
+  .g-signin .sso-btn{display:inline-flex;align-items:center;gap:10px;justify-content:center;padding:12px 22px;border-radius:12px;background:#0f6e6a;color:#fff;font-weight:700;text-decoration:none;font-size:16px}
+  .g-signin .sso-btn:hover{background:#0b5653}
+  .g-signin .sso-btn svg{width:22px;height:22px;background:#fff;border-radius:50%;padding:2px}
+</style>
+</head>
+<body>
+<div class="aurora" aria-hidden="true"></div>
+
+<header class="nav">
+  <a class="brandlink" href="../home.html" title="منصة دار الذكر التعليمية">
+    <span class="logo-tile logo-dt"><img src="../assets/img/logo-mark.png" alt="مدارس دار الذكر"></span>
+    <span><b data-t="title"></b><small>منصة دار الذكر التعليمية</small></span>
+  </a>
+  <div class="nav-right">
+    <a class="home-link" href="../home.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg><span data-t="home"></span></a>
+    <button class="lang" id="langBtn" type="button" aria-label="Change language / تغيير اللغة"><span data-l="ar">AR</span><span data-l="en">EN</span></button>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <span class="live-pill"><i class="dot" aria-hidden="true"></i><span data-t="pill"></span></span>
+    <h1 data-t="title"></h1>
+    <p class="lead" data-t="lead"></p>
+    <ol class="howto">
+      <li><b>1</b><span data-t="how1"></span></li>
+      <li><b>2</b><span data-t="how2"></span></li>
+      <li><b>3</b><span data-t="how3"></span></li>
+    </ol>
+    <div class="status-bar">
+      <span id="updated"></span>
+      <button type="button" id="refreshBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg><span data-t="refresh"></span></button>
+      <button type="button" id="logoutBtn" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 16l-4-4 4-4"/><path d="M6 12h10"/></svg><span data-t="logout"></span></button>
+    </div>
+  </section>
+
+  <div id="notices"></div>
+
+  <section id="gate" aria-live="polite"></section>
+
+  <section class="panel" id="panel" aria-live="polite" hidden></section>
+</main>
+
+<div class="ed-wrap" id="editor" hidden role="dialog" aria-modal="true" aria-labelledby="edTitle">
+  <div class="ed-panel">
+    <div class="ed-head">
+      <div><h2 id="edTitle" data-t="edTitle"></h2><small id="edWho"></small></div>
+      <button type="button" class="ed-ic" id="edClose" aria-label="close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg></button>
+    </div>
+    <div class="ed-body" id="edBody"></div>
+    <div class="ed-foot">
+      <button type="button" class="ed-btn ghost" id="edCancel" data-t="edCancel"></button>
+      <button type="button" class="ed-btn primary" id="edSave"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg><span></span></button>
+    </div>
+  </div>
+</div>
+
+<div class="ed-wrap" id="report" hidden role="dialog" aria-modal="true" aria-labelledby="rpTitle">
+  <div class="ed-panel rp-panel">
+    <div class="ed-head">
+      <div><h2 id="rpTitle" data-t="rpTitle"></h2><small id="rpWho"></small></div>
+      <button type="button" class="ed-ic" id="rpClose" aria-label="close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg></button>
+    </div>
+    <div class="ed-body" id="rpBody"></div>
+  </div>
+</div>
+
+<div class="pause-screen" id="pauseScreen" hidden role="alertdialog" aria-modal="true" aria-labelledby="pauseT">
+  <img src="../assets/img/logo.png" alt="" onerror="this.remove()">
+  <h1 id="pauseT" data-t="pausedT"></h1>
+  <p data-t="pausedD"></p>
+  <div class="pause-admin" id="pauseAdmin"></div>
+</div>
+
+<footer>
+  <div class="wrap">
+    <div><b data-t="footerName"></b><a class="privacy" href="../privacy.html" data-t="privacy"></a></div>
+    <div data-t="footerBy"></div>
+  </div>
+</footer>
+
+<script>
+/* ==================================================================
+   ⚙️ الإعدادات — هذا هو الجزء الوحيد الذي تحتاج تعديله
+   ================================================================== */
+
+// رابط خادم Apps Script (ينتهي بـ /exec) — انظر ملف online-learning-script.gs
+// الجدول نفسه يبقى «مقيَّدًا»، والخادم لا يرسل إلا بيانات الفصل صاحب الرمز.
+// خادم «التعليم عن بعد» على منصة المدرسة (Supabase Edge Function) — الدخول بحساب المنصة
+const SCRIPT_URL = (window.LMS_CONFIG && LMS_CONFIG.SUPABASE_URL) ? LMS_CONFIG.SUPABASE_URL + "/functions/v1/online" : "";
+const SB = (window.supabase && window.LMS_CONFIG) ? window.supabase.createClient(LMS_CONFIG.SUPABASE_URL, LMS_CONFIG.SUPABASE_ANON_KEY, { auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:false } }) : null;
+const LMS_LOGIN = new URL("../index.html?next=online/", location.href).href;
+let SSO_EMAIL = "";
+async function lmsToken(){ try{ const { data } = await SB.auth.getSession(); const s = data && data.session; SSO_EMAIL = s ? (s.user.email || "").toLowerCase() : ""; return s ? s.access_token : ""; }catch(e){ return ""; } }
+async function authHeaders(){ const tok = await lmsToken(); const h = { apikey: LMS_CONFIG.SUPABASE_ANON_KEY }; if (tok) h.Authorization = "Bearer " + tok; return h; }
+
+// كل كم دقيقة تُحدَّث البيانات تلقائيًا والصفحة مفتوحة
+const AUTO_REFRESH_MIN = 8;   // + فارق عشوائي حتى دقيقتين لكل جهاز، ولا تحديث والصفحة في الخلفية
+
+
+/* ==================================================================
+   1) هيكل المدرسة (المسارات ← الأقسام ← المراحل ← الصفوف)
+   ⚠️ هيكل الصفوف ودوال التفسير (norm / parseScope / parseGrade / classKey / parsePeriod / parseDay / parseTime)
+   لها نسخة مطابقة في online-learning-script.gs (GRADES_ و norm_ …) — أي تعديل هنا يُنقل للخادم أيضًا.
+   ================================================================== */
+const ORD_AR = ["","الأول","الثاني","الثالث","الرابع","الخامس","السادس","السابع","الثامن","التاسع","العاشر","الحادي عشر","الثاني عشر"];
+const ORD_EN = ["","1st","2nd","3rd","4th","5th","6th","7th","8th","9th","10th","11th","12th"];
+const range = (a,b)=> Array.from({length:b-a+1},(_,i)=>a+i);
+
+const SCHOOL = [
+  { key:"national", color:"#6D4BFF", ar:"المسار الوطني", en:"National Track",
+    icon:'<path d="M4 21V9l8-5 8 5v12"/><path d="M9 21v-6h6v6"/><path d="M12 4V2"/>',
+    sections:[
+      { key:"boys", color:"#6D4BFF", ar:"قسم البنين", en:"Boys' Section", stages:[
+        { key:"primary",   color:"#0E9F76", ar:"المرحلة الابتدائية", en:"Primary Stage",      sheet:"ابتدائي", grades:range(1,6) },
+        { key:"middle",    color:"#E8790A", ar:"المرحلة المتوسطة",  en:"Intermediate Stage", sheet:"متوسط",   grades:range(1,3) },
+        { key:"secondary", color:"#6D4BFF", ar:"المرحلة الثانوية",  en:"Secondary Stage",    sheet:"ثانوي",   grades:range(1,3) }
+      ]},
+      { key:"girls", color:"#E63E7C", ar:"قسم البنات", en:"Girls' Section", stages:[
+        { key:"primary",   color:"#E63E7C", ar:"المرحلة الابتدائية", en:"Primary Stage",      sheet:"ابتدائي", grades:range(1,5) }
+      ]}
+    ]},
+  { key:"american", color:"#0EA5D6", ar:"مسار الدبلوما الأمريكية", en:"American Diploma Track",
+    icon:'<path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5"/><path d="M22 9v6"/>',
+    sections:[
+      { key:"am", color:"#0EA5D6", ar:"", en:"", stages:[
+        { key:"g", color:"#0EA5D6", ar:"", en:"", grades:range(4,9) }
+      ]}
+    ]}
+];
+
+/* فهرس مسطّح لكل صف: id ← بياناته */
+const GRADES = {};
+SCHOOL.forEach(t=> t.sections.forEach(s=> s.stages.forEach(st=> st.grades.forEach(n=>{
+  const id = t.key === "american" ? `american-${n}` : `${s.key}-${st.key}-${n}`;
+  GRADES[id] = { id, n, track:t, section:s, stage:st, color:st.color, sec: t.key === "american" ? "american" : s.key, st: t.key === "american" ? "g" : st.key };
+}))));
+
+
+/* ==================================================================
+   2) النصوص (عربي / إنجليزي)
+   ================================================================== */
+const I18N = {
+  ar:{
+    meta:"التعليم عن بعد | مدارس دار الذكر",
+    home:"الرئيسية", pill:"حصص مباشرة لكل فصل", title:"التعليم عن بعد",
+    lead:"ادخل بحساب المدرسة لتصل إلى فصلك الافتراضي وجدول حصصك.", ssoBtn:"الدخول بحساب المدرسة",
+    how1:"ادخل بحساب المدرسة", how2:"اطّلع على جدول اليوم", how3:"اضغط «ادخل الفصل الافتراضي»",
+    loginT:"الدخول بحساب المدرسة", loginD:"استخدم حساب Google المدرسي (@althikr.edu.sa).", enter:"دخول", checking:"جارٍ التحقق…",
+    errInvalid:"الرمز غير صحيح. تأكد منه وحاول مرة أخرى.", errExpired:"تم تغيير رمز الفصل. أدخل الرمز الجديد الذي وصلكم من المدرسة.", errBusy:"محاولات خاطئة كثيرة. حاول مرة أخرى بعد ربع ساعة.",
+    loginNote:"تدخل مرة واحدة بحساب المدرسة، وتبقى مسجّلًا على هذا الجهاز. الطالب يختار فصله في أول دخول فقط.",
+    gHint:"بحساب المدرسة @althikr.edu.sa فقط", orCode:"", gChecking:"جارٍ التحقق من حسابك…",
+    errNoAccount:"حسابك {e} غير مسجّل في التعليم عن بعد بعد. تواصل مع إدارة المدرسة.", errDomain:"الدخول بحساب المدرسة فقط (@althikr.edu.sa). اختر حساب المدرسة وحاول مرة أخرى.",
+    errSession:"انتهت مدة الدخول على هذا الجهاز. ادخل بحساب المدرسة مرة أخرى.", errToken:"تعذّر التحقق من حساب Google. حاول مرة أخرى.", logout:"خروج",
+    bindT:"أهلًا {n}", bindD:"أول مرة بس: اكتب رمز فصلك علشان نربط حسابك بفصلك. بعد كده هتدخل بحساب المدرسة على طول من غير رمز.", bindBtn:"ربط الحساب", bindErr:"رمز الفصل غير صحيح. اكتب رمز فصلك اللي أخدته من المدرسة.", bindOther:"مش حسابك؟ اختار حساب تاني", bindNet:"تعذّر الاتصال. حاول مرة أخرى.", bindD2:"أول مرة بس: اربط حسابك بفصلك — اكتب رمز الفصل أو اختار فصلك من القائمة. بعد كده هتدخل بحساب المدرسة على طول.", bindTabCode:"عندي رمز الفصل", bindTabPick:"اختار فصلي", pickGrade:"اختار الصف", pickClass:"اختار الفصل", pickSure:"هيتربط حسابك بـ: {x}. اتأكد إنه فصلك — مش هتقدر تغيّره بنفسك بعد كده.", pickBtn:"تأكيد وربط الحساب", pickLoading:"جاري تحميل الفصول…", pickStale:"قائمة الفصول اتحدثت. اختار فصلك تاني.",
+    refresh:"تحديث", updated:"آخر تحديث: ", loading:"جارٍ التحميل…",
+    mapTitle:"اختر الصف",
+    pickT:"اختر صفك من الأعلى", pickD:"ستظهر هنا روابط فصول الصف وجدول حصصها.",
+    copy:"نسخ رابط هذا الصف", copied:"تم النسخ ✓",
+    join:"ادخل الفصل الافتراضي", noLink:"لم يُضف الرابط بعد",
+    today:"اليوم", tomorrow:"غدًا",
+    rpOpen:"التقرير اليومي", rpTitle:"التقرير اليومي للتعليم عن بعد", rpLoading:"جارٍ إعداد التقرير…", rpErr:"تعذّر تحميل التقرير، حاول مرة أخرى.",
+    rpAll:"كل المراحل", rpPartial:"تقرير مبدئي حتى الآن (يُعتمد بعد نهاية اليوم)", rpSrc:"مصدر الحضور:", rpSrcMeet:"سجل Google Meet",
+    rpSrcClicks:"ضغطات زر «الدخول إلى الحصة» (تقديري)", rpAt:"آخر تحديث", rpClicksNote:"الحصة تُحسب منفذة إذا دخل الفصلَ طالبٌ واحد على الأقل، وكل جهاز يُحسب طالبًا واحدًا. لحضور دقيق بالأسماء فعّل سجل Google Meet.",
+    rpPeriods:"الحصص المنفذة", rpPeriodsSub:"{p}% من المجدولة · حسب المادة", rpTeachers:"المعلمون المشاركون",
+    rpTeachersSub:"من المعلمين في جدول اليوم", rpStudents:"الطلاب الحضور", rpStudentsSub:"حسب الصف والفصل",
+    subjNone:"لا توجد حصص من موادك لهذا الصف في هذا اليوم.", tchNone:"لا توجد لك حصص في هذا الصف في هذا اليوم.", rpNone:"لا توجد بيانات.", rpEmpty:"لا توجد حصص مجدولة أو حضور في هذا اليوم.", rpRecalc:"إعادة الحساب الآن", rpPdf:"تصدير PDF", rpPdfHint:"اختر «حفظ بتنسيق PDF» (Save as PDF) من نافذة الطباعة.", rpFinal:"تقرير معتمد", rpDay:"اليوم", rpBySubject:"الحصص حسب المادة", rpByTeacher:"المعلمون", rpByGrade:"الطلاب الحضور حسب الصف والفصل", rpColSubject:"المادة", rpColTeacher:"المعلم", rpColGrade:"الصف", rpColDone:"المنفذة", rpColPlanned:"المجدولة", rpColPct:"النسبة", rpColStudents:"الطلاب", rpColClasses:"توزيع الفصول", rpPrinted:"أُنشئ في", rpBy:"بواسطة",
+    subjOwner:"تتبع: {s}", subjNoSup:"مادة بدون مشرف مادة", subjSaveAs:"ستُحفظ باسم «{n}»",
+    subjUnknown:"ليست في قائمة المواد — لن تظهر لأي مشرف مادة. اختر من الاقتراحات.",
+    subjConfirm:"هذه المواد غير موجودة في قائمة المواد ولن تظهر لأي مشرف مادة:\n{l}\n\nهل تريد الحفظ على أي حال؟",
+    edOpen:"إدخال الجداول والروابط", edTabPeriods:"حصص يوم محدد", edTabLinks:"روابط الفصول الثابتة",
+    lkHint:"الرابط الثابت هو رابط Google Meet الذي يدخل منه طلاب الفصل كل يوم. غيّر الرابط أو اسم المسؤول ثم اضغط «حفظ». رموز دخول الطلاب لا تتغير.",
+    lkAll:"كل الفصول ({n})", lkFilter:"عرض فصل:", lkLink:"رابط الفصل الثابت", lkOwner:"مسؤول الرابط", lkOwnerPh:"اسم المعلم (اختياري)", lkChanged:"معدَّل", lkTest:"تجربة الرابط الحالي",
+    lkSave:"لا توجد تعديلات", lkSaveN:"حفظ روابط {n} فصل", lkSaved:"تم حفظ روابط {n} فصل. تظهر للطلاب خلال دقيقة.", lkBad:"رابط غير صحيح في: {r} — يجب أن يبدأ بـ https://", edFilter:"عرض حصص فصل:", edFilterAll:"كل الفصول ({n} حصة)", edFilterClear:"عرض الكل", edFilterNone:"لا توجد حصص لهذا الفصل في هذا اليوم — اضغط «إضافة حصة» أو اختر «حصص يوم كامل لفصل».", edTitle:"إدخال جداول وروابط الحصص", edDate:"التاريخ",
+    edHint:"أدخل حصص اليوم المختار لكل فصل. الحصص المُدخلة لتاريخ تحل محل الجدول الأسبوعي للفصل في ذلك اليوم.",
+    edRoom:"الفصل", edPeriod:"الحصة", edFrom:"من", edTo:"إلى", edSubject:"المادة", edTeacher:"المعلم", edLink:"رابط الحصة (اختياري — وإلا يُستخدم رابط الفصل)",
+    edSubjectPh:"مثال: رياضيات", edTeacherPh:"اسم المعلم", edEmpty:"لا توجد حصص مُدخلة لهذا اليوم",
+    edAdd:"إضافة حصة", edOr:"أو", edFullPick:"إضافة كل حصص فصل…", edDup:"تكرار", edDel:"حذف",
+    edCopy:"نسخ نفس الحصص إلى أيام أخرى", edSave:"حفظ حصص هذا اليوم", edSaveN:"حفظ في {n} أيام", edCancel:"إغلاق",
+    edSaved:"تم الحفظ: {n} حصة في {d} يوم/أيام. تظهر للطلاب خلال دقيقة.", edNeed:"السطر {n}: اختر الفصل والحصة واكتب المادة.",
+    edBadLink:"السطر {n}: الرابط يجب أن يبدأ بـ https://", edRoomErr:"السطر {n}: هذا الفصل ليس ضمن صلاحيتك.",
+    edLoadErr:"تعذّر تحميل حصص هذا اليوم. تحقق من الاتصال.", edSaveErr:"تعذّر الحفظ. حاول مرة أخرى.", edBusy:"الخادم مشغول، حاول بعد لحظات.",
+    classes:"فصل", classesList:"الفصول:", liveCount:"{n} حصة جارية الآن", noLive:"لا حصص جارية", liveNowTitle:"الحصص الجارية الآن ({n})", gateDay:"عرض يوم:", planReady:"كل الفصول جاهزة · {n} حصة", planMissing:"{n} من {r} فصول بدون جدول", planNone:"لا توجد فصول",
+    planMissTitle:"فصول بدون جدول — {d} ({n})", planNoTT:"لم تُدخل حصص لهذا اليوم", planAllReady:"كل الفصول لها جدول — {d}", joinShort:"دخول", allClasses:"جميع الفصول", owner:"مسؤول الرابط",
+    live:"مباشر الآن", startsIn:"يبدأ بعد {m} د", dayOver:"انتهت حصص اليوم", brkNow:"فسحة",
+    nowP:"الآن: ", nextP:"التالي: ", brkUntil:"الفسحة حتى {t}", brkUntilX:"{n} حتى {t}", firstAt:"تبدأ الحصة الأولى {t}",
+    period:"الحصة {n}", brk:"الفسحة", now:"الآن", noTT:"لم يُضف جدول الحصص لهذا الفصل بعد.",
+    openNow:"متاح الآن", openUntil:"الرابط متاح حتى {t}", opensIn:"يُفتح بعد {m} د", opensAt:"يُتاح الرابط الساعة {t}",
+    winLine:"الرابط متاح طوال اليوم الدراسي: {d}، من {a} إلى {b}",
+    emptyT:"لا توجد روابط لهذا الصف بعد", emptyD:"ستظهر الروابط هنا فور إضافتها.",
+    setupT:"لم يتم ربط جدول الروابط بعد",
+    setupD:"ضع رابط خادم Apps Script في المتغير SCRIPT_URL داخل الملف online-learning.html. لمعاينة شكل الصفحة ببيانات وهمية أضف ‎?demo=1‎ لآخر الرابط.",
+    errT:"تعذّر الاتصال بالخادم", retrying:"الضغط عالٍ الآن — نعيد المحاولة تلقائيًا، لا تغلق الصفحة…", fbT:"رابط فصلك الاحتياطي", fbD:"الخادم مشغول الآن، فيظهر رابط الفصل فقط. يمكنك الدخول للحصة، وسيظهر الجدول تلقائيًا بعد قليل.",
+    errD:"تحقق من اتصالك بالإنترنت ثم أعد المحاولة.",
+    retry:"إعادة المحاولة",
+    demo:"وضع المعاينة — بيانات وهمية لعرض شكل الصفحة فقط.",
+    unmatched:"تنبيه للمشرف: {n} سطر/أسطر في الجدول لم يُتعرَّف على عمود «الصف» فيها: {list}",
+    pausedT:"التعليم الآن حضوري", pausedD:"تم إيقاف التعليم عن بعد. نراكم في المدرسة.", adminLogin:"دخول مدير النظام",
+    sysPause:"إيقاف التعليم عن بعد", sysResume:"إعادة تشغيل التعليم عن بعد",
+    sysPauseQ:"سيتوقف دخول جميع المستخدمين وتظهر لهم رسالة «التعليم الآن حضوري» بكامل الشاشة.\n\nمتأكد؟", sysResumeQ:"سيعود التعليم عن بعد لجميع المستخدمين.\n\nمتأكد؟",
+    sysPausedT:"التعليم عن بعد موقوف الآن", sysPausedD:"جميع المستخدمين يرون رسالة «التعليم الآن حضوري» ولا يمكنهم الدخول. أنت فقط ترى الصفحة كمدير النظام.", sysErr:"تعذّر تنفيذ الأمر. حاول مرة أخرى.",
+    footerName:"مدارس دار الذكر", footerBy:"إعداد و تصميم / مصطفى حسين - مشرف مهارات القرن 21", privacy:"سياسة الخصوصية وشروط الاستخدام",
+    days:["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس"], allDays:"كل الأيام",
+    am:"ص", pm:"م"
+  },
+  en:{
+    meta:"Remote Learning | Dar Al-Thikr Schools",
+    home:"Home", pill:"Live classes for every class", title:"Remote Learning",
+    lead:"Sign in with your school account to reach your virtual classroom and timetable.", ssoBtn:"Sign in with school account",
+    how1:"Sign in with your school account", how2:"Check today's timetable", how3:"Tap “Enter virtual class”",
+    loginT:"Sign in with your school account", loginD:"Use your school Google account (@althikr.edu.sa).", enter:"Sign in", checking:"Checking…",
+    errInvalid:"That code isn't right. Check it and try again.", errExpired:"Your class code has changed. Enter the new code from the school.", errBusy:"Too many wrong attempts. Please try again in 15 minutes.",
+    loginNote:"Sign in once with your school account and stay signed in on this device. Students pick their class on first sign-in only.",
+    gHint:"School accounts only (@althikr.edu.sa)", orCode:"", gChecking:"Checking your account…",
+    errNoAccount:"Your account {e} isn't registered for remote learning yet. Please contact the school.", errDomain:"Please sign in with your school account (@althikr.edu.sa).",
+    errSession:"Your sign-in on this device has expired. Please sign in with your school account again.", errToken:"Couldn't verify your Google account. Please try again.", logout:"Sign out",
+    bindT:"Welcome {n}", bindD:"First time only: enter your class code to link your account to your class. After that you'll sign in with your school account directly, no code needed.", bindBtn:"Link account", bindErr:"Incorrect class code. Enter the class code you got from the school.", bindOther:"Not you? Use another account", bindNet:"Connection failed. Please try again.", bindD2:"First time only: link your account to your class — enter the class code or pick your class from the list. After that you'll sign in with your school account directly.", bindTabCode:"I have the class code", bindTabPick:"Pick my class", pickGrade:"Choose grade", pickClass:"Choose class", pickSure:"Your account will be linked to: {x}. Make sure it's your class — you can't change it yourself later.", pickBtn:"Confirm and link", pickLoading:"Loading classes…", pickStale:"The class list was updated. Please pick your class again.",
+    refresh:"Refresh", updated:"Last updated: ", loading:"Loading…",
+    mapTitle:"Choose a grade",
+    pickT:"Choose your grade above", pickD:"Your grade's class links and timetables will appear here.",
+    copy:"Copy link to this grade", copied:"Copied ✓",
+    join:"Enter virtual class", noLink:"Link not added yet",
+    today:"Today", tomorrow:"Tomorrow",
+    rpOpen:"Daily report", rpTitle:"Remote learning — daily report", rpLoading:"Preparing the report…", rpErr:"Couldn't load the report, please try again.",
+    rpAll:"All stages", rpPartial:"Preliminary report so far (final after the school day)", rpSrc:"Attendance source:", rpSrcMeet:"Google Meet log",
+    rpSrcClicks:"“Join class” button taps (estimate)", rpAt:"Updated", rpClicksNote:"A period counts as held if at least one student joined the class; each device counts as one student. Enable the Google Meet log for exact, named attendance.",
+    rpPeriods:"Periods held", rpPeriodsSub:"{p}% of scheduled · by subject", rpTeachers:"Participating teachers",
+    rpTeachersSub:"of teachers on today's timetable", rpStudents:"Students attended", rpStudentsSub:"by grade and class",
+    subjNone:"No periods of your subjects for this grade on this day.", tchNone:"You have no periods in this grade on this day.", rpNone:"No data.", rpEmpty:"No scheduled periods or attendance on this day.", rpRecalc:"Recalculate now", rpPdf:"Export PDF", rpPdfHint:"Choose “Save as PDF” in the print dialog.", rpFinal:"Final report", rpDay:"Day", rpBySubject:"Periods by subject", rpByTeacher:"Teachers", rpByGrade:"Students attended by grade and class", rpColSubject:"Subject", rpColTeacher:"Teacher", rpColGrade:"Grade", rpColDone:"Held", rpColPlanned:"Scheduled", rpColPct:"Rate", rpColStudents:"Students", rpColClasses:"By class", rpPrinted:"Generated", rpBy:"By",
+    subjOwner:"Belongs to: {s}", subjNoSup:"No subject supervisor", subjSaveAs:"will be saved as “{n}”",
+    subjUnknown:"Not in the subjects list — no subject supervisor will see it. Pick a suggestion.",
+    subjConfirm:"These subjects are not in the subjects list and no subject supervisor will see them:\n{l}\n\nSave anyway?",
+    edOpen:"Enter timetables & links", edTabPeriods:"Periods for a day", edTabLinks:"Fixed class links",
+    lkHint:"The fixed link is the Google Meet room students join every day. Change the link or host name, then tap Save. Student access codes stay the same.",
+    lkAll:"All classes ({n})", lkFilter:"Show class:", lkLink:"Fixed class link", lkOwner:"Link host", lkOwnerPh:"Teacher name (optional)", lkChanged:"Edited", lkTest:"Test current link",
+    lkSave:"No changes", lkSaveN:"Save links for {n} classes", lkSaved:"Saved links for {n} classes. Students see them within a minute.", lkBad:"Invalid link for: {r} — it must start with https://", edFilter:"Show class:", edFilterAll:"All classes ({n} periods)", edFilterClear:"Show all", edFilterNone:"No periods for this class on this day — tap “Add period” or pick a full day for a class.", edTitle:"Enter class timetables & links", edDate:"Date",
+    edHint:"Enter the selected day's periods for each class. Dated periods replace the class's weekly timetable on that day.",
+    edRoom:"Class", edPeriod:"Period", edFrom:"From", edTo:"To", edSubject:"Subject", edTeacher:"Teacher", edLink:"Class link (optional — otherwise the class link is used)",
+    edSubjectPh:"e.g. Math", edTeacherPh:"Teacher name", edEmpty:"No periods entered for this day",
+    edAdd:"Add period", edOr:"or", edFullPick:"Add all periods for a class…", edDup:"Duplicate", edDel:"Delete",
+    edCopy:"Copy the same periods to other days", edSave:"Save this day", edSaveN:"Save to {n} days", edCancel:"Close",
+    edSaved:"Saved: {n} period(s) on {d} day(s). Students will see them within a minute.", edNeed:"Row {n}: choose class and period and enter the subject.",
+    edBadLink:"Row {n}: the link must start with https://", edRoomErr:"Row {n}: this class is outside your scope.",
+    edLoadErr:"Couldn't load this day's periods. Check your connection.", edSaveErr:"Couldn't save. Please try again.", edBusy:"Server busy, try again shortly.",
+    classes:"Class", classesList:"Classes:", liveCount:"{n} live now", noLive:"No live classes", liveNowTitle:"Live now ({n})", gateDay:"Show day:", planReady:"All classes ready · {n} periods", planMissing:"{n} of {r} classes without a timetable", planNone:"No classes",
+    planMissTitle:"Classes without a timetable — {d} ({n})", planNoTT:"No periods entered for this day", planAllReady:"Every class has a timetable — {d}", joinShort:"Join", allClasses:"All classes", owner:"Link host",
+    live:"Live now", startsIn:"Starts in {m} min", dayOver:"Done for today", brkNow:"Break",
+    nowP:"Now: ", nextP:"Next: ", brkUntil:"Break until {t}", brkUntilX:"{n} until {t}", firstAt:"First period at {t}",
+    period:"Period {n}", brk:"Break", now:"Now", noTT:"No timetable added for this class yet.",
+    openNow:"Open now", openUntil:"Link open until {t}", opensIn:"Opens in {m} min", opensAt:"Link opens at {t}",
+    winLine:"Link open all school day: {d}, {a} – {b}",
+    emptyT:"No links for this grade yet", emptyD:"Links will appear here as soon as they are added.",
+    setupT:"The links sheet is not connected yet",
+    setupD:"Put your Apps Script server URL in the SCRIPT_URL variable inside online-learning.html. To preview the layout with dummy data, add ?demo=1 to the URL.",
+    errT:"Couldn't reach the server", retrying:"High traffic right now — retrying automatically, please keep this page open…", fbT:"Your class backup link", fbD:"The server is busy, so only your class link is shown. You can join the class; the timetable will appear shortly.",
+    errD:"Check your internet connection and try again.",
+    retry:"Try again",
+    demo:"Preview mode — dummy data to show the layout only.",
+    unmatched:"Admin note: {n} row(s) have an unrecognised “Grade” value: {list}",
+    pausedT:"School is now in person", pausedD:"Remote learning has been switched off. See you at school.", adminLogin:"System admin sign-in",
+    sysPause:"Switch off remote learning", sysResume:"Switch remote learning back on",
+    sysPauseQ:"All users will be signed out and see a full-screen “School is now in person” message.\n\nAre you sure?", sysResumeQ:"Remote learning will come back for all users.\n\nAre you sure?",
+    sysPausedT:"Remote learning is switched off", sysPausedD:"Everyone sees “School is now in person” and can't sign in. Only you can see the page as system admin.", sysErr:"Couldn't complete that. Please try again.",
+    footerName:"Dar Al-Thikr Schools", footerBy:"Prepared & designed by Moustafa Hussein — 21st Century Skills Supervisor", privacy:"Privacy policy & terms",
+    days:["Sunday","Monday","Tuesday","Wednesday","Thursday"], allDays:"Every day",
+    am:"AM", pm:"PM"
+  }
+};
+
+const LS = {
+  get(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } },
+  set(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+};
+let LANG = "ar";
+const t = (k, vars={}) => String(I18N[LANG][k] ?? k).replace(/\{(\w+)\}/g, (_,v)=> vars[v] ?? "");
+const L = obj => obj ? (obj[LANG] || obj.ar) : "";
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const gradeName  = g => LANG === "ar" ? `الصف ${ORD_AR[g.n]}` : `Grade ${g.n}`;
+const gradeShort = g => g.track.key === "american" ? `Grade ${g.n}` : (LANG === "ar" ? ORD_AR[g.n] : ORD_EN[g.n]);
+
+
+/* ==================================================================
+   3) تفسير محتوى الجدول
+   ================================================================== */
+function norm(s){
+  return String(s ?? "").trim().toLowerCase()
+    .replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d))
+    .replace(/[۰-۹]/g, d => "۰۱۲۳۴۵۶۷۸۹".indexOf(d))
+    .replace(/[أإآ]/g,"ا").replace(/ة/g,"ه").replace(/ى/g,"ي").replace(/[ـًٌٍَُِّْ]/g,"")
+    .replace(/\s+/g," ");
+}
+const ORD_WORDS = [["الحادي عشر",11],["الثاني عشر",12],["العاشر",10],["تاسع",9],["ثامن",8],["سابع",7],["سادس",6],["خامس",5],["رابع",4],["ثالث",3],["ثاني",2],["اول",1]];
+function ordinalIn(s){ for (const [w,v] of ORD_WORDS){ if (s.includes(norm(w))) return v; } return null; }
+
+/* «ينطبق على» / «الصف»: يرجع قائمة معرّفات الصفوف المشمولة
+   يقبل: صفًا واحدًا، مرحلة كاملة، نطاقًا مثل (4-6)، أو «كل المدرسة» */
+function parseScope(raw){
+  const s = norm(raw);
+  const all = Object.keys(GRADES);
+  if (!s || /كل المدرس|الكل|جميع الصفوف|^all|whole school/.test(s)) return all;
+  const isAm = /امريك|american|diploma|دبلوم/.test(s);
+  const sec = isAm ? "american" : /بنات|girls/.test(s) ? "girls" : /بنين|boys/.test(s) ? "boys" : null;
+  const st  = isAm ? "g" : /ابتدا|primary|elementary/.test(s) ? "primary" : /متوسط|middle|intermediate/.test(s) ? "middle" : /ثانو|secondary|high/.test(s) ? "secondary" : null;
+  const rest = s.replace(/ثانوي|ثانويه/g," # ");                    // حتى لا تختلط «ثانوي» بـ«الثاني»
+  let nums = null;
+  const rg = rest.match(/(\d{1,2})\s*[-–—]\s*(\d{1,2})/);
+  if (rg) nums = range(Math.min(+rg[1],+rg[2]), Math.max(+rg[1],+rg[2]));
+  else {
+    const ds = rest.match(/\d{1,2}/g);
+    if (ds) nums = ds.map(Number);
+    else { const o = ordinalIn(rest.replace(/الصفوف|صفوف/g,"")); if (o) nums = [o]; }
+  }
+  return all.filter(id => {
+    const g = GRADES[id];
+    if (sec && g.sec !== sec) return false;
+    if (st && g.st !== st) return false;
+    if (!sec && !st && !nums) return false;
+    if (nums && !nums.includes(g.n)) return false;
+    return true;
+  });
+}
+/* «الصف» في ورقتي الروابط والجدول يجب أن يحدد صفًا واحدًا */
+function parseGrade(raw){ const ids = parseScope(raw); return ids.length === 1 ? ids[0] : null; }
+
+/* الفصول: «أ / ب» = «أ/ب» = «أ و ب» */
+function classKey(raw){
+  return norm(raw).replace(/\s+و\s*/g,"/").replace(/[^a-z0-9ء-ي]/g,"");
+}
+function classLabel(raw){
+  const parts = String(raw ?? "").split(/\s*[\/،,\-]\s*|\s+و\s*/).map(x=>x.trim()).filter(Boolean);
+  return parts.join(" / ");
+}
+
+/* رقم الحصة أو «فسحة» */
+/* اسم الاستراحة: الاسم المكتوب في ورقة التوقيت إن كان غير «الفسحة» (مثل صلاة الظهر) */
+const isPrayer = r => /صلا|prayer/i.test(norm(r?.label || ""));
+const brkName = r => (LANG === "ar" && r?.label && !/فسح/.test(norm(r.label))) ? r.label : (isPrayer(r) && LANG !== "ar" ? "Prayer" : t("brk"));
+function parsePeriod(raw){
+  const s = norm(raw);
+  if (!s) return null;
+  if (/فسح|استراح|راحه|صلاه|break|recess|prayer/.test(s)) return "break";
+  if (/دوام|اليوم الدراسي|متاح|اتاح|school day|available|window/.test(s)) return "window";   // رابط متاح طوال اليوم
+  const d = s.match(/\d{1,2}/);
+  if (d) return +d[0];
+  return ordinalIn(s);
+}
+
+/* اليوم: 0=الأحد … 4=الخميس، أو "all" */
+const DAY_KEYS = [["احد","sun"],["اثنين","mon"],["ثلاثا","tue"],["اربعا","wed"],["خميس","thu"]];
+function parseDay(raw){
+  const s = norm(raw).replace(/ء/g,"");
+  if (!s || /يومي|كل الايام|daily|every/.test(s)) return "all";
+  for (let i=0;i<DAY_KEYS.length;i++){ const [ar,en] = DAY_KEYS[i]; if (s.includes(ar) || s.startsWith(en)) return i; }
+  return "all";
+}
+
+/* الوقت ← دقائق منذ منتصف الليل */
+function parseTime(raw){
+  const s = norm(raw);
+  if (!s) return null;
+  const m = s.match(/(\d{1,2})(?:[:.٫](\d{2}))?/);
+  if (!m) return null;
+  let h = +m[1], min = +(m[2] || 0);
+  const pm = /(\bpm\b|p\.m|مساء|(^|\s|\d)م(\s|$))/.test(s);
+  const am = /(\bam\b|a\.m|صباح|(^|\s|\d)ص(\s|$))/.test(s);
+  if (pm && h < 12) h += 12;
+  if (am && h === 12) h = 0;
+  if (!pm && !am && h >= 1 && h <= 5) h += 12;    // بدون ص/م: 1–5 تُفهم بعد الظهر
+  if (h > 23 || min > 59) return null;
+  return h*60 + min;
+}
+function fmtTime(mins){
+  if (mins == null) return "";
+  let h = Math.floor(mins/60); const m = mins % 60;
+  const suf = h >= 12 ? t("pm") : t("am");
+  h = h % 12 || 12;
+  return `${h}:${String(m).padStart(2,"0")} ${suf}`;
+}
+function fixUrl(u){
+  u = String(u ?? "").trim();
+  if (!u) return "";
+  if (!/^https?:\/\//i.test(u)){
+    if (/^[\w.-]+\.[a-z]{2,}(\/|$)/i.test(u)) u = "https://" + u; else return "";
+  }
+  // روابط Meet المنسوخة من داخل حساب (مثل /meet/abc-defg-hij?authuser=0) ← الرابط المختصر
+  const m = u.match(/^https?:\/\/meet\.google\.com\/(?:meet\/)?([a-z]{3}-[a-z]{4}-[a-z]{3})/i);
+  return m ? "https://meet.google.com/" + m[1].toLowerCase() : u;
+}
+/* مفتاح المادة للمطابقة: بلا «ال» ولا أرقام ولا أقواس — «الرياضيات (1-1)» = «رياضيات» */
+const stripAl = w => w.replace(/^(وال|بال|لل|ال)(?=..)/, "");
+function subjectKey(s){ return norm(s).replace(/\([^)]*\)/g," ").split(/[^a-z\u0621-\u064A]+/).filter(Boolean).map(stripAl).join(" "); }
+const findSubject = s => SUBJ_MAP.get(subjectKey(s)) || null;
+
+/* التاريخ ← yyyy-mm-dd */
+function normDate(raw){
+  const s = norm(raw).replace(/\//g,"-");
+  let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (m) return `${m[1]}-${m[2].padStart(2,"0")}-${m[3].padStart(2,"0")}`;
+  m = s.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+  if (m) return `${m[3]}-${m[2].padStart(2,"0")}-${m[1].padStart(2,"0")}`;
+  return "";
+}
+const dsOf = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+const dateOf = ds => { const [y,m,d] = ds.split("-").map(Number); return new Date(y, m-1, d); };
+const todayDs = () => dsOf(new Date());
+/* الأيام الدراسية القادمة (الأحد–الخميس) بدءًا من اليوم */
+function schoolDays(n, from){
+  const out = []; const d = from ? dateOf(from) : new Date(); d.setHours(12,0,0,0);
+  while (out.length < n){ if (d.getDay() <= 4) out.push(dsOf(d)); d.setDate(d.getDate()+1); }
+  return out;
+}
+function dayLabel(ds){
+  const td = todayDs(), tm = dsOf(new Date(Date.now()+86400000));
+  if (ds === td) return t("today");
+  if (ds === tm) return t("tomorrow");
+  const d = dateOf(ds);
+  const wd = LANG === "ar" ? ["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"][d.getDay()] : d.toLocaleDateString("en-US",{weekday:"short"});
+  return `${wd} ${d.getDate()}/${d.getMonth()+1}`;
+}
+
+function telHref(p){ const d = norm(p).replace(/[^\d+]/g,""); return d ? "tel:" + d : ""; }
+
+/* أعمدة كل ورقة — نتعرف عليها بالاسم لا بالترتيب */
+const COLS = {
+  scope:   ["ينطبق علي","الصف","المرحله","الفئه","grade","applies to"],
+  cls:     ["الفصول","الفصل","الشعبه","classes","class","section"],
+  link:    ["رابط الحصه","رابط الفصل","الرابط","link","url"],
+  owner:   ["مسؤول الرابط","المسؤول","host","owner"],
+  note:    ["ملاحظات","ملاحظه","notes","note"],
+  period:  ["الحصه","رقم الحصه","period"],
+  subject: ["الماده","subject"],
+  teacher: ["المعلم","المعلمه","teacher"],
+  day:     ["اليوم","day"],
+  start:   ["من","وقت البدايه","البدايه","start","from"],
+  end:     ["الي","وقت النهايه","النهايه","end","to"],
+  role:    ["المسمي","الصفه","role","title"],
+  name:    ["الاسم","name"],
+  phone:   ["الجوال","رقم الجوال","الهاتف","التواصل","phone","mobile"],
+  date:    ["التاريخ","date"]
+};
+function reader(table){
+  const H = table.headers.map(norm);
+  const idx = {};
+  for (const [k, names] of Object.entries(COLS)){
+    const nn = names.map(norm);
+    let i = H.findIndex(h => nn.includes(h));
+    if (i < 0) i = H.findIndex(h => nn.some(n => n.length > 3 && h.includes(n)));
+    idx[k] = i;
+  }
+  const has = (...ks) => ks.every(k => idx[k] >= 0);
+  const rows = table.rows.filter(r => r.some(c => String(c ?? "").trim()))
+    .map(r => new Proxy({}, { get: (_,k) => idx[k] >= 0 ? String(r[idx[k]] ?? "").trim() : "" }));
+  return { has, rows };
+}
+
+/* ---------- البيانات بعد التفسير ---------- */
+let GROUPS = [];        // [{grade, key, label, link, owner, note, periods:[{p, day, subject, teacher}]}]
+let TIMING = [];        // [{ids:Set, size, p, start, end}]
+let SUPS = [];          // [{ids:Set, size, role, name, phone}]
+let UNMATCHED = [];
+let LAST_LOAD = null;
+let LOAD_STATE = "idle"; // idle | login | loading | ok | error | setup | demo
+
+function buildData(D){
+  const groups = new Map(); const bad = [];
+  const getGroup = (gid, clsRaw) => {
+    const key = gid + "|" + classKey(clsRaw);
+    if (!groups.has(key)) groups.set(key, { grade:gid, key, label:classLabel(clsRaw), link:"", owner:"", note:"", periods:[], dated:{} });
+    return groups.get(key);
+  };
+
+  const Lk = reader(D.links || {headers:[],rows:[]});
+  if (Lk.has("scope","link")) Lk.rows.forEach(r=>{
+    const gid = parseGrade(r.scope); if (!gid){ bad.push(r.scope); return; }
+    const g = getGroup(gid, r.cls);
+    g.fixed = true; g.link = fixUrl(r.link) || g.link; g.owner = r.owner || g.owner; g.note = r.note || g.note;
+  });
+
+  const Sc = reader(D.schedule || {headers:[],rows:[]});
+  if (Sc.has("scope","period","subject")) Sc.rows.forEach(r=>{
+    const gid = parseGrade(r.scope); if (!gid){ bad.push(r.scope); return; }
+    const p = parsePeriod(r.period); if (typeof p !== "number") return;
+    const g = getGroup(gid, r.cls); g.fixed = true;
+    g.periods.push({ p, day:parseDay(r.day), subject:r.subject, teacher:r.teacher });
+  });
+
+  // حصص مُدخلة بتاريخ محدد (تحل محل الجدول الأسبوعي في ذلك اليوم)
+  const Dt = reader(D.dated || {headers:[],rows:[]});
+  if (Dt.has("date","scope","period","subject")) Dt.rows.forEach(r=>{
+    const gid = parseGrade(r.scope); if (!gid) return;
+    const ds = normDate(r.date); const p = parsePeriod(r.period);
+    if (!ds || typeof p !== "number") return;
+    const g = getGroup(gid, r.cls);
+    (g.dated[ds] = g.dated[ds] || []).push({ p, subject:r.subject, teacher:r.teacher, start:parseTime(r.start), end:parseTime(r.end), link:fixUrl(r.link) });
+  });
+  // مشرف المادة: أيام لها جدول خاص بالتاريخ لهذا الفصل (ولو بدون حصص من مواده) — لا نعرض فيها الجدول الأسبوعي
+  (D.datedDays || []).forEach(([sc, cls, d]) => {
+    const gid = parseGrade(sc), ds = normDate(d); if (!gid || !ds) return;
+    const key = gid + "|" + classKey(cls); if (!groups.has(key)) return;
+    const g = groups.get(key); g.dated[ds] = g.dated[ds] || [];
+  });
+
+  const Tm = reader(D.timing || {headers:[],rows:[]});
+  TIMING = Tm.has("scope","period","start") ? Tm.rows.map(r=>{
+    const ids = parseScope(r.scope);
+    const p = parsePeriod(r.period);
+    // اسم الاستراحة كما في الجدول (الفسحة / صلاة الظهر) — يظهر في جدول الفصل
+    return { ids:new Set(ids), size:ids.length, p, label: p === "break" ? String(r.period || "").trim() : "", start:parseTime(r.start), end:parseTime(r.end) };
+  }).filter(x => x.size && x.p != null && x.start != null) : [];
+
+  const Sp = reader(D.supervisors || {headers:[],rows:[]});
+  SUPS = Sp.has("name") && !Sp.has("link") && !Sp.has("subject") ? Sp.rows.map(r=>{
+    const ids = parseScope(r.scope);
+    return { ids:new Set(ids), size:ids.length, role:r.role, name:r.name, phone:r.phone };
+  }).filter(x => x.size && x.name) : [];
+
+  GROUPS = [...groups.values()].sort((a,b)=> a.grade.localeCompare(b.grade) || a.label.localeCompare(b.label, "ar"));
+  UNMATCHED = [...new Set(bad)];
+}
+
+/* توقيت حصص صف معيّن: لكل حصة نأخذ أدق نطاق ينطبق عليه */
+function timingFor(gid){
+  const best = new Map();
+  const mine = TIMING.filter(x => x.ids.has(gid));
+  mine.filter(x => x.p !== "break").forEach(x=>{
+    const k = String(x.p), cur = best.get(k);
+    if (!cur || x.size < cur.size) best.set(k, x);
+  });
+  // الاستراحات (الفسحة، صلاة الظهر…): كلها من أدق نطاق فيه استراحات لهذا الصف
+  const brks = mine.filter(x => x.p === "break");
+  const sz = Math.min(...brks.map(x => x.size));
+  return [...best.values(), ...brks.filter(x => x.size === sz)].sort((a,b)=> a.start - b.start);
+}
+function supsFor(gid){
+  const list = SUPS.filter(s => s.ids.has(gid));
+  if (!list.length) return [];
+  const min = Math.min(...list.map(s => s.size));
+  return list.filter(s => s.size === min);
+}
+
+/* ---------- التحميل من الخادم بالرمز (JSONP — لا تعترضه قيود CORS) ---------- */
+let CODE = LS.get("ol-code") || "";
+let PEND = LS.get("ol-pend") || "", PEND_NAME = LS.get("ol-pend-n") || "", BIND_ERR = "", BIND_BUSY = false;
+let BIND_MODE = "code", CLASSES = null, CLASSES_BUSY = false, PICK_G = "", PICK_I = "";   // طالب دخل بجوجل ولم يُربط بفصله بعد
+let ALLOWED = [];        // الصفوف المسموحة لصاحب الرمز
+let WHO = "";            // اسم المشرف إن كان الرمز رمز مشرف
+let MODE = "";           // class | stage | subject | teacher
+const partialMode = () => MODE === "subject" || MODE === "teacher";   // يرى جزءًا من حصص الفصل (مواده أو حصصه هو)
+let EDITOR = false;      // هل يملك صلاحية إدخال الجداول (مديرو المراحل ومدير التعليم)
+let SUBJECTS = [];       // قائمة المواد الموحّدة من ورقة «المواد» (للمديرين)
+let SUBJ_MAP = new Map();
+let LOGIN_ERR = "";
+/* إيقاف التعليم عن بعد: الحالة من الخادم (وتُحفظ على الجهاز لتظهر الشاشة فورًا عند الفتح) */
+let PAUSED = LS.get("ol-paused") === "1";
+let SYS_ADMIN = false, SYS_BUSY = false, PAUSE_ADMIN = false, PAUSE_TIMER = null;
+const setPaused = v => { PAUSED = !!v; LS.set("ol-paused", PAUSED ? "1" : ""); };
+const pausedView = () => PAUSED && !SYS_ADMIN && !isDemo();
+
+async function callServer(code, query){
+  const ctl = new AbortController(); const tm = setTimeout(()=> ctl.abort(), 20000);
+  try{
+    const r = await fetch(`${SCRIPT_URL}?${query || "gate=1"}&_=${Date.now()}`, { headers: await authHeaders(), signal: ctl.signal });
+    return await r.json();
+  } catch(e){ throw new Error(e && e.name === "AbortError" ? "timeout" : "network"); }
+  finally { clearTimeout(tm); }
+}
+
+/* بيانات تجريبية وهمية للمعاينة فقط (?demo=1) — لا تحتوي أي روابط أو أسماء حقيقية */
+function demoData(){
+  const P = ["القرآن الكريم","لغتي","رياضيات","علوم","إنجليزي","مهارات رقمية"];
+  const sch = [];
+  [["أ / ب","أ. معلم 1"],["ج / د","أ. معلم 2"]].forEach(([c,tch],k) =>
+    P.forEach((sub,i) => sch.push(["بنين - ابتدائي - الصف الرابع", c, String(i+1), P[(i+k)%P.length], tch, ""])));
+  return { ok:true, grades:["boys-primary-4"], label:"",
+    links:{ headers:["الصف","الفصول","رابط الحصة","مسؤول الرابط","ملاحظات"], rows:[
+      ["بنين - ابتدائي - الصف الرابع","أ / ب","https://meet.google.com/aaa-bbbb-ccc","أ. معلم 1",""],
+      ["بنين - ابتدائي - الصف الرابع","ج / د","https://meet.google.com/ddd-eeee-fff","أ. معلم 2",""]]},
+    schedule:{ headers:["الصف","الفصول","الحصة","المادة","المعلم","اليوم"], rows:sch },
+    timing:{ headers:["ينطبق على","الحصة","من","إلى"], rows:[
+      ["بنين - ابتدائي - الصفوف العليا (4-6)","1","7:00 ص","7:30 ص"],["بنين - ابتدائي - الصفوف العليا (4-6)","2","7:35 ص","8:05 ص"],
+      ["بنين - ابتدائي - الصفوف العليا (4-6)","3","8:10 ص","8:40 ص"],["بنين - ابتدائي - الصفوف العليا (4-6)","الفسحة","8:40 ص","9:00 ص"],
+      ["بنين - ابتدائي - الصفوف العليا (4-6)","4","9:05 ص","9:35 ص"],["بنين - ابتدائي - الصفوف العليا (4-6)","5","9:40 ص","10:10 ص"],
+      ["بنين - ابتدائي - الصفوف العليا (4-6)","6","10:15 ص","10:45 ص"]]},
+    supervisors:{ headers:["ينطبق على","المسمى","الاسم","الجوال"], rows:[["بنين - ابتدائي (كل الصفوف)","المشرف العام","أ. مشرف تجريبي",""]] }
+  };
+}
+
+const isDemo = () => new URLSearchParams(location.search).has("demo");
+let REFRESHING = false, RETRYING = false, FALLBACK = false, REFRESH_AGAIN = false;
+/* ---- الدخول بحساب المدرسة (Google) ---- */
+const GOOGLE_CLIENT_ID = "671363806838-cmjkkjv91v0nuqar7gn7i1q6mmlnu4qc.apps.googleusercontent.com";
+let G_READY = null, G_BUSY = false, LOGIN_EMAIL = "";
+const isSessionCode = c => String(c || "") === "SSO";
+function loadGoogle(){ return Promise.resolve(); }
+async function renderGoogleButton(el){
+  if (!el || isDemo()) return;
+  el.innerHTML = `<a class="sso-btn" href="${LMS_LOGIN}"><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2c-2 1.5-4.5 2.4-7.2 2.4-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg><span>${esc(t("ssoBtn"))}</span></a>`;
+}
+async function onGoogleCredential(resp){
+  if (!resp?.credential || G_BUSY) return;
+  G_BUSY = true; LOGIN_ERR = ""; renderGate();
+  try{
+    let r; for (let i = 0; i < 3; i++){ try{ r = await postServer({ action:"gsignin", credential:resp.credential }); break; }catch(e){ await new Promise(z => setTimeout(z, 1500 + Math.random() * 2500)); } }
+    if (r && r.error === "paused"){ G_BUSY = false; setPaused(true); LOGIN_ERR = PAUSE_ADMIN ? "notAdmin" : ""; renderAll(); return; }
+    if (r && r.ok && r.session && r.needBind){ G_BUSY = false; setPending(r.session, r.name || r.email || ""); return; }
+    if (r && r.ok && r.session){ G_BUSY = false; LOGIN_EMAIL = r.email || ""; setPending(""); await login(r.session); return; }
+    LOGIN_EMAIL = r?.email || ""; LOGIN_ERR = r?.error === "noaccount" ? "noaccount" : r?.error === "domain" ? "domain" : "token";
+  }catch(e){ console.error(e); LOGIN_ERR = "token"; }
+  G_BUSY = false; renderGate();
+}
+function setPending(sess, name){
+  PEND = sess || ""; PEND_NAME = PEND ? (name || "") : ""; BIND_ERR = ""; BIND_BUSY = false;
+  BIND_MODE = "code"; CLASSES = null; PICK_G = ""; PICK_I = "";
+  LS.set("ol-pend", PEND); LS.set("ol-pend-n", PEND_NAME);
+  if (PEND){ CODE = ""; LS.set("ol-code", ""); LS.set("ol-cache", ""); GROUPS = []; ALLOWED = []; SEL = null; LOAD_STATE = "login"; }
+  renderAll();
+}
+async function bindAccount(code, pick){
+  if (pick){ if (BIND_BUSY || !PEND) return; }
+  else { code = normCode(code); if (!code || BIND_BUSY || !PEND) return; }
+  BIND_BUSY = true; BIND_ERR = ""; renderGate();
+  const body = pick ? { action:"bind", session:PEND, pick:pick.i, g:pick.g, c:pick.c } : { action:"bind", session:PEND, code };
+  let r = null;
+  for (let i = 0; i < 3 && !r; i++){
+    try{ r = await postServer(body); }
+    catch(e){ await new Promise(z => setTimeout(z, 1500 + Math.random() * 2500)); }
+  }
+  BIND_BUSY = false;
+  if (r && r.ok){ const s = PEND; setPending(""); await login(s); return; }
+  if (r && (r.error === "session" || r.error === "noaccount")){ setPending(""); LOGIN_ERR = r.error; LOGIN_EMAIL = r.email || ""; renderAll(); return; }
+  if (r && r.error === "stale"){ CLASSES = null; PICK_G = ""; PICK_I = ""; BIND_ERR = "pickStale"; loadClasses(); return; }
+  BIND_ERR = !r ? "bindNet" : r.error === "busy" ? "errBusy" : "bindErr";
+  renderGate();
+}
+async function loadClasses(){
+  if (CLASSES || CLASSES_BUSY || !PEND) return;
+  CLASSES_BUSY = true; renderGate();
+  let r = null;
+  for (let i = 0; i < 3 && !r; i++){
+    try{ r = await postServer({ action:"classes", session:PEND }); }
+    catch(e){ await new Promise(z => setTimeout(z, 1500 + Math.random() * 2500)); }
+  }
+  CLASSES_BUSY = false;
+  if (r && r.ok){
+    const order = Object.keys(GRADES);
+    CLASSES = (r.classes || []).map(x => ({ ...x, gid: parseGrade(x.g) })).filter(x => x.gid && GRADES[x.gid])
+      .sort((a,b)=> order.indexOf(a.gid) - order.indexOf(b.gid) || a.c.localeCompare(b.c, "ar"));
+  } else if (r && (r.error === "session" || r.error === "noaccount")){ setPending(""); LOGIN_ERR = r.error; renderAll(); return; }
+  else BIND_ERR = "bindNet";
+  renderGate();
+}
+/* حالة النظام لمن لم يدخل بعد (هل التعليم عن بعد موقوف؟) */
+async function checkStatus(){
+  if (!SCRIPT_URL || isDemo()) return;
+  try{ const r = await callServer("", "status=1"); if (r && r.ok){ const was = PAUSED; setPaused(r.paused); if (was !== PAUSED) renderAll(); } }catch(e){}
+}
+/* أثناء الإيقاف: إعادة فحص كل دقيقتين تقريبًا حتى تعود الصفحة فور إعادة التشغيل */
+function schedulePausePoll(){
+  clearTimeout(PAUSE_TIMER); PAUSE_TIMER = null;
+  if (!pausedView()) return;
+  PAUSE_TIMER = setTimeout(()=>{ if (document.hidden) return schedulePausePoll(); (CODE ? refresh() : checkStatus().then(schedulePausePoll)); }, 120000 * (0.7 + Math.random() * 0.6));
+}
+async function sysToggle(){
+  if (!SYS_ADMIN || SYS_BUSY) return;
+  if (!confirm(t(PAUSED ? "sysResumeQ" : "sysPauseQ"))) return;
+  SYS_BUSY = true; renderGate();
+  let r = null;
+  try{ r = await postServer({ action:"setPause", code:CODE, paused:!PAUSED }); }catch(e){}
+  SYS_BUSY = false;
+  if (r && r.ok) setPaused(r.paused); else alert(t("sysErr"));
+  renderAll();
+}
+
+const classTitle = x => `${gradeFull(GRADES[x.gid])}${x.c ? " · " + x.c : ""}`;   // REFRESHING = الرمز الجاري تحميله
+const normCode = c => norm(c).toUpperCase().replace(/[^A-Z0-9]/g, "");   // نفس تطبيع الخادم (الأرقام العربية ← لاتينية)
+
+async function refresh(){
+  const btn = document.getElementById("refreshBtn");
+  if (isDemo()){
+    applyResponse(demoData()); LOAD_STATE = "demo"; LAST_LOAD = new Date(); renderAll(); return;
+  }
+  if (!SCRIPT_URL){ LOAD_STATE = "setup"; renderAll(); return; }
+  if (!CODE){ LOAD_STATE = "login"; renderAll(); checkStatus().then(schedulePausePoll); return; }
+  if (REFRESHING === CODE){ REFRESH_AGAIN = true; return; }   // نفس الرمز قيد التحميل: نحدّث مرة أخرى بعده (مثلًا بعد حفظ تعديل)
+  const myCode = CODE; REFRESHING = CODE;
+  if (!GROUPS.length) LOAD_STATE = "loading";
+  btn.classList.add("spin"); renderAll();
+  try{
+    // عند الضغط العالي: نعيد المحاولة تلقائيًا بفواصل عشوائية متزايدة حتى لا ترجع كل الأجهزة في نفس اللحظة
+    const waits = GROUPS.length && !FALLBACK ? [0, 3000] : [0, 2500, 6000, 12000, 20000];
+    let res, lastErr;
+    for (let i = 0; i < waits.length; i++){
+      if (waits[i]){ RETRYING = true; renderGate(); await new Promise(r => setTimeout(r, waits[i] * (0.6 + Math.random() * 0.8))); }
+      try { res = await callServer(CODE); if (res && (res.ok || ["invalid","busy","session","noaccount","unbind","paused"].includes(res.error))) break; }
+      catch(e){ lastErr = e; res = null; }
+    }
+    RETRYING = false;
+    if (CODE !== myCode) return;   // تغيّر الرمز أثناء التحميل (دخول برمز آخر): نتجاهل هذا الرد
+    if (!res) throw lastErr || new Error("no response");
+    if (res && res.error === "paused"){
+      // التعليم عن بعد موقوف: نخفي كل البيانات (ويبقى الرمز محفوظًا فتعود الصفحة وحدها بعد إعادة التشغيل)
+      setPaused(true); SYS_ADMIN = false; FALLBACK = false;
+      GROUPS = []; ALLOWED = []; SEL = null; LS.set("ol-cache", ""); closeEditor(); closeReport();
+      LOAD_STATE = "login";
+    } else if (res && res.ok){
+      FALLBACK = false;
+      applyResponse(res); LOAD_STATE = "ok"; LAST_LOAD = new Date(); LOGIN_ERR = "";
+      LS.set("ol-cache", JSON.stringify({ code:CODE, at:LAST_LOAD.getTime(), res }));
+      flushJoins();
+    } else if (res && res.error === "invalid"){
+      logout(isSessionCode(myCode) ? "noaccount" : GROUPS.length ? "expired" : "invalid"); return;
+    } else if (res && res.error === "unbind"){
+      setPending(myCode, res.name || res.email || ""); return;   // الإدارة مسحت ربطه: يكتب رمز فصله من جديد
+    } else if (res && (res.error === "session" || res.error === "noaccount")){
+      LOGIN_EMAIL = res.email || LOGIN_EMAIL; logout(res.error); return;
+    } else if (res && res.error === "busy"){
+      // محاولات خاطئة كثيرة على الخادم: من دخل سابقًا تبقى بياناته ظاهرة
+      if (!GROUPS.length){ CODE = ""; LS.set("ol-code", ""); LOGIN_ERR = "busy"; LOAD_STATE = "login"; }
+    } else {
+      throw new Error(res && res.error || "bad response");
+    }
+  }catch(e){
+    console.error("[online-learning]", e);
+    if (CODE !== myCode) return;
+    if (PAUSED && !SYS_ADMIN){ LOAD_STATE = "login"; }   // موقوف: لا روابط احتياطية
+    else if (!GROUPS.length || FALLBACK){
+      // الخادم لا يرد ولا توجد بيانات محفوظة: رابط الفصل الاحتياطي (مشفّر برمز الفصل)
+      if (await tryFallback()){ LOAD_STATE = "ok"; FALLBACK = true; setTimeout(refresh, 60000 * (0.7 + Math.random() * 0.6)); }
+      else LOAD_STATE = "error";
+    }
+  }finally{
+    if (REFRESHING === myCode) REFRESHING = false;
+    RETRYING = false;
+    if (REFRESH_AGAIN && CODE === myCode){ REFRESH_AGAIN = false; setTimeout(refresh, 0); }
+    btn.classList.remove("spin");
+    renderAll();
+    schedulePausePoll();
+  }
+}
+
+/* روابط احتياطية ثابتة على GitHub (بدون الخادم): كل رابط مشفّر برمز فصله، فلا يُفتح إلا بالرمز الصحيح */
+async function tryFallback(){
+  return false;
+  try{
+    if (!crypto?.subtle) return false;
+    const F = await fetch("online-learning-fallback.json?v=" + Math.floor(Date.now() / 3600000), { cache:"no-cache" }).then(r => r.json());
+    const enc = new TextEncoder(), code = normCode(CODE);
+    const hex = b => [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, "0")).join("");
+    const id = hex(await crypto.subtle.digest("SHA-256", enc.encode(F.salt + ":" + code))).slice(0, 24);
+    const it = F.items[id]; if (!it) return false;
+    const base = await crypto.subtle.importKey("raw", enc.encode(code), "PBKDF2", false, ["deriveKey"]);
+    const key = await crypto.subtle.deriveKey({ name:"PBKDF2", salt:enc.encode(F.salt), iterations:F.iter, hash:"SHA-256" }, base, { name:"AES-GCM", length:256 }, false, ["decrypt"]);
+    const b64 = x => Uint8Array.from(atob(x), c => c.charCodeAt(0));
+    const plain = JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({ name:"AES-GCM", iv:b64(it.iv) }, key, b64(it.ct))));
+    applyResponse({ ok:true, mode:"class", label:"", grades:[], editor:false,
+      links:{ headers:["الصف","الفصول","رابط الحصة","مسؤول الرابط","ملاحظات"], rows:[[plain.g, plain.c, plain.l, "", ""]] },
+      schedule:{ headers:[], rows:[] }, timing:{ headers:[], rows:[] }, supervisors:{ headers:[], rows:[] }, dated:{ headers:[], rows:[] } });
+    const gid = parseGrade(plain.g); ALLOWED = gid ? [gid] : []; SEL = ALLOWED[0] || null;
+    return !!ALLOWED.length;
+  }catch(e){ console.error("[fallback]", e); return false; }
+}
+
+function applyResponse(res){
+  buildData(res);
+  // أي رد ناجح من الخادم معناه أن النظام يعمل — إلا لمدير النظام فيصله وضع الإيقاف الحقيقي
+  SYS_ADMIN = !!res.sysAdmin;
+  if (!isDemo() && res.mode) setPaused(SYS_ADMIN ? !!res.paused : false);
+  WHO = res.label || "";
+  MODE = res.mode || "";
+  EDITOR = !!res.editor;
+  SUBJECTS = Array.isArray(res.subjects) ? res.subjects : [];
+  SUBJ_MAP = new Map();
+  SUBJECTS.forEach(x => [x.name, ...(x.aliases || [])].forEach(n => { const k = subjectKey(n); if (k && !SUBJ_MAP.has(k)) SUBJ_MAP.set(k, x); }));
+  ALLOWED = (res.grades || []).filter(id => GRADES[id]);
+  // ترتيب الصفوف حسب ترتيبها في هيكل المدرسة
+  const order = Object.keys(GRADES);
+  ALLOWED.sort((a,b)=> order.indexOf(a) - order.indexOf(b));
+  if (!ALLOWED.includes(SEL)) { SEL = ALLOWED[0] || null; DAY = null; }
+}
+
+async function login(code){
+  CODE = String(code || "").trim();
+  if (!CODE) return;
+  if (PEND && CODE !== PEND){ PEND = ""; PEND_NAME = ""; LS.set("ol-pend", ""); LS.set("ol-pend-n", ""); }
+  LOGIN_ERR = "";
+  LS.set("ol-code", CODE);
+  GROUPS = []; ALLOWED = []; SEL = null;
+  await refresh();
+}
+function logout(reason){
+  if (!reason){ try{ SB.auth.signOut().finally(()=>{ location.href = LMS_LOGIN; }); }catch(e){ location.href = LMS_LOGIN; } }
+  CODE = ""; LS.set("ol-code", ""); LS.set("ol-cache", "");
+  GROUPS = []; TIMING = []; SUPS = []; ALLOWED = []; SEL = null; WHO = ""; EDITOR = false; SYS_ADMIN = false; closeEditor(); closeReport(); RP.data = null;
+  LOGIN_ERR = reason || "";
+  LOAD_STATE = SCRIPT_URL ? "login" : "setup";
+  renderAll();
+}
+
+
+/* ==================================================================
+   4) العرض
+   ================================================================== */
+const ICONS = {
+  download:'<path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 20h16"/>',
+  user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>',
+  video:'<rect x="2" y="6" width="14" height="12" rx="3"/><path d="M16 10l6-3v10l-6-3"/>',
+  copy:'<rect x="8" y="8" width="13" height="13" rx="3"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/>',
+  info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><path d="M12 7.5v.5"/>',
+  alert:'<path d="M12 3l10 18H2z"/><path d="M12 10v5"/><path d="M12 18v.5"/>',
+  hand:'<path d="M9 11V5a1.5 1.5 0 0 1 3 0v6"/><path d="M12 10V4a1.5 1.5 0 0 1 3 0v7"/><path d="M15 10.5V6a1.5 1.5 0 0 1 3 0v8a7 7 0 0 1-7 7h-.5a6 6 0 0 1-4.8-2.4L3 14.5a1.6 1.6 0 0 1 2.4-2L9 15V8a1.5 1.5 0 0 1 3 0"/>',
+  cal:'<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18"/><path d="M8 3v4"/><path d="M16 3v4"/>',
+  phone:'<path d="M5 3h4l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v4a2 2 0 0 1-2 2A17 17 0 0 1 3 5a2 2 0 0 1 2-2z"/>',
+  lock:'<rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.5" r="1.4"/>',
+  logout:'<path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 16l-4-4 4-4"/><path d="M6 12h10"/>',
+  edit:'<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/>',
+  plus:'<path d="M12 5v14"/><path d="M5 12h14"/>',
+  trash:'<path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6 7l1 13h10l1-13"/>',
+  copy2:'<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/>',
+  x:'<path d="M6 6l12 12"/><path d="M18 6L6 18"/>',
+  chart:'<path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/>',
+  book:'<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/><path d="M8 7h7"/>',
+  users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 3-5.5 6.5-5.5s6.5 1.9 6.5 5.5"/><circle cx="17" cy="9" r="2.6"/><path d="M16 14.6c3 .1 5.5 1.8 5.5 5.4"/>',
+  chev:'<path d="M6 9l6 6 6-6"/>',
+  cup:'<path d="M4 9h13v5a6 6 0 0 1-6 6h-1a6 6 0 0 1-6-6z"/><path d="M17 11h1.5a2.5 2.5 0 0 1 0 5H17"/><path d="M8 3v3"/><path d="M12 3v3"/>'
+};
+const svg = k => `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONS[k]}</svg>`;
+
+let SEL = null;    // الصف المختار
+let GATE_DS = null; // اليوم المختار في الصفحة الرئيسية للمشرفين (null = اليوم)
+let DAY = null;    // التاريخ المختار yyyy-mm-dd (أزرار الأيام تظهر عند وجود جدول يختلف من يوم لآخر أو حصص بالتاريخ)
+
+const todayIdx = () => { const d = new Date().getDay(); return d <= 4 ? d : null; };   // الجمعة والسبت: لا دوام
+const nowMin = () => { const n = new Date(); return n.getHours()*60 + n.getMinutes(); };
+const hasDays = gid => GROUPS.some(g => g.grade === gid && (g.periods.some(p => p.day !== "all") || Object.keys(g.dated).length));
+/* التاريخ الافتراضي: اليوم إن كان يوم دراسة أو فيه حصص بالتاريخ، وإلا أول يوم دراسي قادم */
+function defaultDs(gid){
+  const td = todayDs();
+  if (dateOf(td).getDay() <= 4 || GROUPS.some(g => g.grade === gid && g.dated[td])) return td;
+  return schoolDays(1)[0];
+}
+
+/* صفوف جدول فصل ما لليوم المختار، مع الفسحة، مرتبة بالوقت */
+function timetable(group, ds){
+  const T = timingFor(group.grade);
+  const tmap = new Map(T.filter(x => typeof x.p === "number").map(x => [x.p, x]));
+  let rows;
+  if (group.dated[ds]){
+    // حصص مُدخلة لهذا التاريخ: تحل محل الجدول الأسبوعي (ولكل حصة رابطها إن وُجد)
+    rows = group.dated[ds].map(p => ({ kind:"p", p:p.p, subject:p.subject, teacher:p.teacher, link:p.link,
+      start: p.start ?? tmap.get(p.p)?.start ?? null, end: p.end ?? tmap.get(p.p)?.end ?? null }));
+  } else {
+    const wd = dateOf(ds).getDay();
+    if (wd > 4) return [];
+    const per = group.periods.filter(p => p.day === "all" || p.day === wd);
+    const byP = new Map(); per.forEach(p => { if (!byP.has(p.p) || p.day !== "all") byP.set(p.p, p); });
+    rows = [...byP.values()].map(p => ({ kind:"p", p:p.p, subject:p.subject, teacher:p.teacher, start:tmap.get(p.p)?.start ?? null, end:tmap.get(p.p)?.end ?? null }));
+  }
+  // الفسحة تظهر في جدول الفصل الكامل فقط، لا في عرض مشرف المادة (حصص مادته فقط)
+  if (rows.length && !partialMode()) T.filter(x => x.p === "break").forEach(b => rows.push({ kind:"b", label:b.label, start:b.start, end:b.end }));
+  return rows.sort((a,b)=> (a.start ?? (a.p ?? 0)*1000) - (b.start ?? (b.p ?? 0)*1000) || (a.p ?? 0) - (b.p ?? 0));
+}
+
+const windowFor = gid => timingFor(gid).find(x => x.p === "window") || null;
+
+/* حالة الفصل الآن */
+function groupNow(rows, ds, gid){
+  if (ds !== todayDs()) return null;
+  if (!rows.length && dateOf(ds).getDay() > 4) return null;
+  const n = nowMin();
+  const timed = rows.filter(r => r.start != null);
+  if (!timed.length){
+    // لا يوجد جدول حصص: نعتمد على فترة إتاحة الرابط (مثل 6:30 ص – 2:30 م)
+    const w = gid ? windowFor(gid) : null;
+    if (!w) return null;
+    const wEnd = w.end ?? 24*60;
+    if (n >= w.start && n < wEnd) return { k:"open", w };
+    if (n < w.start) return { k:"opens", m:w.start - n, w };
+    return { k:"over" };
+  }
+  const cur = timed.find(r => n >= r.start && n < (r.end ?? r.start + 30));
+  if (cur) return cur.kind === "b" ? { k:"brk", row:cur, next: timed.find(r => r.start >= (cur.end ?? 0) && r.kind === "p") } : { k:"live", row:cur };
+  const first = timed[0], last = timed[timed.length-1];
+  if (n < first.start) return { k:"before", m:first.start - n, row:first };
+  if (n >= (last.end ?? last.start + 30)) return { k:"over" };
+  const next = timed.find(r => r.start > n);
+  return next ? { k:"gap", row:next, m:next.start - n } : null;
+}
+
+function renderNotices(){
+  const box = document.getElementById("notices");
+  const parts = [];
+  if (LOAD_STATE === "setup") parts.push(notice("info", t("setupT"), t("setupD"), "#0EA5D6"));
+  if (LOAD_STATE === "error") parts.push(notice("alert", t("errT"), t("errD"), "#E5383B", true));
+  if (LOAD_STATE === "demo")  parts.push(notice("info", t("demo"), "", "#E8790A"));
+  if (FALLBACK && LOAD_STATE === "ok") parts.push(notice("info", t("fbT"), t("fbD"), "#E8790A", true));
+  if (SYS_ADMIN && PAUSED) parts.push(notice("alert", t("sysPausedT"), t("sysPausedD"), "#E5383B"));
+  box.innerHTML = parts.join("");
+  box.querySelector("[data-retry]")?.addEventListener("click", refresh);
+}
+function notice(icon, title, desc, c, retry){
+  return `<div class="notice" style="--c:${c}">${svg(icon)}<div><b>${esc(title)}</b>${desc ? `<p>${esc(desc)}</p>` : ""}${retry ? `<button type="button" data-retry>${esc(t("retry"))}</button>` : ""}</div></div>`;
+}
+function renderStatus(){
+  const el = document.getElementById("updated");
+  const signedIn = LOAD_STATE === "ok" || LOAD_STATE === "demo";
+  if (LOAD_STATE === "loading") el.textContent = t("loading");
+  else if (signedIn && LAST_LOAD) el.textContent = t("updated") + LAST_LOAD.toLocaleTimeString(LANG === "ar" ? "ar-SA-u-nu-latn" : "en-US", {hour:"numeric", minute:"2-digit"});
+  else el.textContent = "";
+  document.getElementById("refreshBtn").hidden = !signedIn;
+  document.getElementById("logoutBtn").hidden = !(signedIn && CODE);
+}
+
+/* كل الفصول التي فيها حصة جارية الآن (لمن يرى أكثر من صف) */
+function liveNow(){
+  const td = todayDs();
+  const out = [];
+  GROUPS.forEach(g=>{
+    if (!ALLOWED.includes(g.grade)) return;
+    const st = groupNow(timetable(g, td), td, g.grade);
+    if (st && (st.k === "live" || st.k === "open")) out.push({ g, row: st.k === "live" ? st.row : null });
+  });
+  const order = Object.keys(GRADES);
+  return out.sort((a,b)=> order.indexOf(a.g.grade) - order.indexOf(b.g.grade) || a.g.label.localeCompare(b.g.label, "ar"));
+}
+/* «الصف الأول الثانوي» / «Grade 7» — لتمييز الصفوف المتشابهة في قائمة الحصص الجارية */
+function gradeFull(g){
+  if (g.track.key === "american") return LANG === "ar" ? `${gradeName(g)} (Grade ${g.n})` : `Grade ${g.n}`;
+  const adj = { primary:["الابتدائي","Primary"], middle:["المتوسط","Intermediate"], secondary:["الثانوي","Secondary"] }[g.stage.key] || ["",""];
+  const sec = g.section.key === "girls" ? (LANG === "ar" ? " (بنات)" : " (Girls)") : "";
+  return LANG === "ar" ? `${gradeName(g)} ${adj[0]}${sec}` : `${gradeName(g)} ${adj[1]}${sec}`;
+}
+/* صياغة العدد بالعربية: حصة واحدة / حصتان / 3 حصص / 11 حصة */
+function liveCountText(n){
+  if (LANG !== "ar") return t("liveCount",{n});
+  if (n === 1) return "حصة واحدة جارية الآن";
+  if (n === 2) return "حصتان جاريتان الآن";
+  if (n % 100 >= 3 && n % 100 <= 10) return `${n} حصص جارية الآن`;
+  return `${n} حصة جارية الآن`;
+}
+function groupTitlePlain(label){
+  const m = label.match(/^([^:]+):\s*(.+)$/);
+  return esc(m ? m[1].trim() : `${t("classes")} ${label}`);
+}
+
+/* بوابة الدخول: نموذج الرمز، أو (بعد الدخول) أزرار الصفوف المسموحة فقط */
+function renderGate(){
+  const box = document.getElementById("gate");
+  const loginState = LOAD_STATE === "login" || (LOAD_STATE === "loading" && !GROUPS.length);
+  if (loginState && PEND && !CODE){
+    const pickMode = BIND_MODE === "pick";
+    const gids = CLASSES ? [...new Set(CLASSES.map(x => x.gid))] : [];
+    const inGrade = CLASSES ? CLASSES.filter(x => x.gid === PICK_G) : [];
+    const chosen = CLASSES && PICK_I !== "" ? CLASSES.find(x => String(x.i) === String(PICK_I)) : null;
+    box.innerHTML = `
+      <form class="login" id="bindForm" autocomplete="off">
+        <span class="lock">${svg("lock")}</span>
+        <h2>${esc(t("bindT", {n:PEND_NAME}))}</h2>
+        <p>${esc(t("bindD2"))}</p>
+        <div class="bind-tabs" role="group">
+          <button type="button" data-mode="code" aria-pressed="${!pickMode}">${esc(t("bindTabCode"))}</button>
+          <button type="button" data-mode="pick" aria-pressed="${pickMode}">${esc(t("bindTabPick"))}</button>
+        </div>
+        ${!pickMode ? `
+        <div class="code-row">
+          <input id="bindInput" inputmode="numeric" autocomplete="off" spellcheck="false" dir="ltr" maxlength="12"
+            placeholder="• • • •" aria-label="${esc(t("bindBtn"))}" ${BIND_BUSY ? "disabled" : ""}>
+          <button type="submit" ${BIND_BUSY ? "disabled" : ""}>${esc(BIND_BUSY ? t("checking") : t("bindBtn"))}</button>
+        </div>` : !CLASSES ? `<p class="login-note">${esc(t("pickLoading"))}</p>` : `
+        <div class="pick-box">
+          <select id="pickGrade" aria-label="${esc(t("pickGrade"))}" ${BIND_BUSY ? "disabled" : ""}>
+            <option value="">${esc(t("pickGrade"))}</option>
+            ${gids.map(g => `<option value="${esc(g)}" ${g === PICK_G ? "selected" : ""}>${esc(gradeFull(GRADES[g]))}</option>`).join("")}
+          </select>
+          ${PICK_G ? `<select id="pickClass" aria-label="${esc(t("pickClass"))}" ${BIND_BUSY ? "disabled" : ""}>
+            <option value="">${esc(t("pickClass"))}</option>
+            ${inGrade.map(x => `<option value="${esc(String(x.i))}" ${String(x.i) === String(PICK_I) ? "selected" : ""}>${esc(x.c || gradeFull(GRADES[x.gid]))}</option>`).join("")}
+          </select>` : ""}
+          ${chosen ? `<div class="pick-confirm">${esc(t("pickSure", {x:classTitle(chosen)}))}</div>` : ""}
+          <button type="button" class="pick-btn" id="pickGo" ${!chosen || BIND_BUSY ? "disabled" : ""}>${esc(BIND_BUSY ? t("checking") : t("pickBtn"))}</button>
+        </div>`}
+        ${BIND_ERR ? `<p class="login-err">${esc(t(BIND_ERR))}</p>` : ""}
+        <p class="login-note"><a href="#" id="bindOther">${esc(t("bindOther"))}</a></p>
+      </form>`;
+    box.querySelectorAll(".bind-tabs button").forEach(b => b.addEventListener("click", () => {
+      BIND_MODE = b.dataset.mode; BIND_ERR = ""; renderGate(); if (BIND_MODE === "pick") loadClasses();
+    }));
+    box.querySelector("#bindForm").addEventListener("submit", ev => { ev.preventDefault(); if (!pickMode) bindAccount(box.querySelector("#bindInput").value); });
+    box.querySelector("#pickGrade")?.addEventListener("change", ev => { PICK_G = ev.target.value; PICK_I = ""; BIND_ERR = ""; renderGate(); });
+    box.querySelector("#pickClass")?.addEventListener("change", ev => { PICK_I = ev.target.value; BIND_ERR = ""; renderGate(); });
+    box.querySelector("#pickGo")?.addEventListener("click", () => { if (chosen) bindAccount("", chosen); });
+    box.querySelector("#bindOther").addEventListener("click", async ev => { ev.preventDefault(); try{ await SB.auth.signOut(); }catch(e){} location.href = LMS_LOGIN; });
+    if (!pickMode && !BIND_BUSY) setTimeout(()=> box.querySelector("#bindInput")?.focus({preventScroll:true}), 0);
+    return;
+  }
+  if (loginState){
+    const busy = LOAD_STATE === "loading";
+    box.innerHTML = `
+      <form class="login" id="loginForm" autocomplete="off">
+        <span class="lock">${svg("lock")}</span>
+        <h2>${esc(t("loginT"))}</h2>
+        <div class="g-signin"><div id="gBtn"></div><small>${esc(t("gHint"))}</small></div>
+        ${busy ? `<p class="login-note">${esc(t("checking"))}</p>` : ""}
+        ${busy && RETRYING ? `<p class="login-note">${esc(t("retrying"))}</p>` : ""}
+        ${G_BUSY ? `<p class="login-note">${esc(t("gChecking"))}</p>` : ""}
+        ${LOGIN_ERR ? `<p class="login-err">${esc(t({expired:"errExpired", busy:"errBusy", noaccount:"errNoAccount", domain:"errDomain", session:"errSession", token:"errToken"}[LOGIN_ERR] || "errInvalid", {e:LOGIN_EMAIL}))}</p>` : ""}
+        <p class="login-note">${esc(t("loginNote"))}</p>
+      </form>`;
+    box.querySelector("#loginForm").addEventListener("submit", ev => ev.preventDefault());
+    renderGoogleButton(box.querySelector("#gBtn"));
+    return;
+  }
+  if (ALLOWED.length > 1){
+    // تجميع الصفوف المسموحة حسب المسار/القسم/المرحلة، بأزرار صغيرة
+    const groups = [];
+    ALLOWED.forEach(id=>{
+      const g = GRADES[id];
+      const key = g.track.key + "|" + g.section.key + "|" + g.stage.key;
+      let grp = groups.find(x => x.key === key);
+      if (!grp){
+        grp = { key, color:g.color, label: g.track.key === "american" ? L(g.track) : `${L(g.section)} · ${L(g.stage)}`, ids:[] };
+        groups.push(grp);
+      }
+      grp.ids.push(id);
+    });
+    // اختيار اليوم: اليوم الحالي (الحصص الجارية الآن) أو يوم قادم (مراجعة الجداول المُدخلة)
+    const td = todayDs();
+    if (GATE_DS && GATE_DS < td) GATE_DS = null;
+    const gds = GATE_DS || td, isToday = gds === td;
+    const gChips = [...new Set([td, ...schoolDays(6).filter(d => d > td), gds])].sort().slice(0, 7);
+    const dayBar = `<div class="gate-days"><span class="gd-l">${svg("cal")}${esc(t("gateDay"))}</span>
+      <div class="gd-chips">${gChips.map(d => `<button type="button" class="chip${d === gds ? " on" : ""}${d === td ? " today" : ""}" data-gd="${d}">${esc(dayLabel(d))}</button>`).join("")}
+      <input type="date" id="gateDate" value="${esc(gds)}" min="${esc(td)}" aria-label="${esc(t("gateDay"))}"></div></div>`;
+    // الحصص الجارية الآن (لكل مرحلة ولكل صف)
+    const live = isToday ? liveNow() : [];
+    const liveIn = ids => live.filter(x => ids.includes(x.g.grade)).length;
+    // مراجعة يوم قادم: لكل صف كم فصلًا له جدول في ذلك اليوم
+    const plan = {}; const missing = [];
+    if (!isToday) GROUPS.forEach(g => {
+      if (!ALLOWED.includes(g.grade) || !(g.fixed || g.dated[gds])) return;
+      const n = timetable(g, gds).filter(r => r.kind === "p").length;
+      const P = plan[g.grade] = plan[g.grade] || { rooms:0, ready:0, periods:0, dated:0 };
+      P.rooms++; P.periods += n; if (n) P.ready++; if (g.dated[gds]) P.dated++;
+      if (!n) missing.push(g);
+    });
+    const planOf = ids => ids.reduce((a, id) => { const P = plan[id]; if (P){ a.rooms += P.rooms; a.ready += P.ready; a.periods += P.periods; a.dated += P.dated; } return a; }, { rooms:0, ready:0, periods:0, dated:0 });
+    const stageBadge = ids => {
+      const P = planOf(ids);
+      if (!P.rooms) return `<span class="live-badge none">${esc(t("planNone"))}</span>`;
+      if (P.ready === P.rooms) return `<span class="plan-badge ok">${esc(t("planReady",{n:P.periods}))}</span>`;
+      return `<span class="plan-badge miss">${esc(t("planMissing",{n:P.rooms - P.ready, r:P.rooms}))}</span>`;
+    };
+    const gradeBadge = id => {
+      const P = plan[id]; if (!P || !P.rooms) return "";
+      return P.ready === P.rooms ? `<span class="n plan-n">${P.periods}</span>` : `<span class="n miss-n" title="${esc(t("planMissing",{n:P.rooms - P.ready, r:P.rooms}))}">!</span>`;
+    };
+    box.innerHTML = `<div class="picker"><div class="picker-top">${WHO ? `<div class="who">${svg("user")}<bdi>${esc(WHO)}</bdi></div>` : ""}
+      ${EDITOR || SYS_ADMIN ? `<div class="pt-btns">${EDITOR ? `<button type="button" class="ed-open rp-open" id="rpOpen">${svg("chart")}<span>${esc(t("rpOpen"))}</span></button><button type="button" class="ed-open" id="edOpen">${svg("edit")}<span>${esc(t("edOpen"))}</span></button>` : ""}${SYS_ADMIN ? `<button type="button" class="ed-open sys-btn${PAUSED ? " resume" : ""}" id="sysToggle" ${SYS_BUSY ? "disabled" : ""}>${svg(PAUSED ? "video" : "lock")}<span>${esc(SYS_BUSY ? t("checking") : t(PAUSED ? "sysResume" : "sysPause"))}</span></button>` : ""}</div>` : ""}</div>
+      ${dayBar}
+      <div class="pgroups">${groups.map(grp=>{ const n = liveIn(grp.ids); return `
+        <div class="pgroup${n ? " has-live" : ""}" style="--c:${grp.color}">
+          <div class="pg-name"><i aria-hidden="true"></i>${esc(grp.label)}
+            ${isToday ? `<span class="live-badge${n ? "" : " none"}">${esc(n ? liveCountText(n) : t("noLive"))}</span>` : stageBadge(grp.ids)}</div>
+          <div class="grades">${grp.ids.map(id=>{ const k = liveIn([id]); return `<button type="button" class="grade${SEL === id ? " on" : ""}" data-g="${id}" style="--c:${GRADES[id].color}" aria-pressed="${SEL === id}">${esc(gradeShort(GRADES[id]))}${isToday ? (k ? `<span class="n live-n">${k}</span>` : "") : gradeBadge(id)}</button>`; }).join("")}</div>
+        </div>`; }).join("")}
+      </div>
+      ${!isToday ? (missing.length ? `<div class="now-list miss-list"><div class="now-h">${svg("alert")}${esc(t("planMissTitle",{d:dayLabel(gds), n:missing.length}))}</div>
+        ${missing.sort((a,b)=> Object.keys(GRADES).indexOf(a.grade) - Object.keys(GRADES).indexOf(b.grade) || a.label.localeCompare(b.label,"ar")).map(x=>{ const g = GRADES[x.grade]; return `<div class="now-item" style="--c:${g.color}">
+          <button type="button" class="now-main" data-g="${g.id}"><b>${esc(gradeFull(g))}</b>${x.label ? ` · ${groupTitlePlain(x.label)}` : ""}<span>${esc(t("planNoTT"))}</span></button></div>`; }).join("")}</div>`
+        : `<div class="now-list ok-list"><div class="now-h">${esc(t("planAllReady",{d:dayLabel(gds)}))}</div></div>`) : ""}
+      ${live.length ? `<div class="now-list"><div class="now-h"><i class="dot" aria-hidden="true"></i>${esc(t("liveNowTitle",{n:live.length}))}</div>
+        ${live.map(x=>{ const g = GRADES[x.g.grade]; return `<div class="now-item" style="--c:${g.color}">
+          <button type="button" class="now-main" data-g="${g.id}"><b>${esc(gradeFull(g))}</b>${x.g.label ? ` · ${groupTitlePlain(x.g.label)}` : ""}
+            <span>${x.row ? `${esc(t("period",{n:x.row.p}))} — <bdi>${esc(x.row.subject || "")}</bdi>${x.row.teacher ? ` · <bdi>${esc(x.row.teacher)}</bdi>` : ""}` : esc(t("openNow"))}</span></button>
+          ${(x.row?.link || x.g.link) ? `<a class="now-join" href="${esc(x.row?.link || x.g.link)}" target="_blank" rel="noopener">${svg("video")}<span>${esc(t("joinShort"))}</span></a>` : ""}
+        </div>`; }).join("")}</div>` : ""}
+      </div>`;
+    box.querySelector("#edOpen")?.addEventListener("click", openEditor);
+    box.querySelector("#sysToggle")?.addEventListener("click", sysToggle);
+    box.querySelector("#rpOpen")?.addEventListener("click", openReport);
+    box.querySelectorAll("[data-gd]").forEach(b => b.addEventListener("click", ()=>{ GATE_DS = b.dataset.gd === td ? null : b.dataset.gd; DAY = GATE_DS; renderGate(); renderPanel(); }));
+    box.querySelector("#gateDate")?.addEventListener("change", e => { const v = normDate(e.target.value); if (v && v >= td){ GATE_DS = v === td ? null : v; DAY = GATE_DS; renderGate(); renderPanel(); } });
+    box.querySelectorAll("[data-g]").forEach(b => b.addEventListener("click", ()=>{
+      SEL = b.dataset.g; DAY = GATE_DS; renderGate(); renderPanel();
+      document.getElementById("panel").scrollIntoView({ behavior:"smooth", block:"start" });
+    }));
+  } else box.innerHTML = "";
+}
+
+function renderPanel(){
+  const p = document.getElementById("panel");
+  p.hidden = !SEL || !GRADES[SEL];
+  if (p.hidden){ p.innerHTML = ""; return; }
+  const g = GRADES[SEL];
+  p.style.setProperty("--c", g.color);
+  const mine = GROUPS.filter(x => x.grade === SEL);
+  const td = todayDs();
+  const multiDay = hasDays(SEL);
+  const day = DAY || defaultDs(SEL);
+  // أزرار الأيام: 5 أيام دراسية قادمة + أي تاريخ فيه حصص مُدخلة
+  const extra = [...new Set(mine.flatMap(x => Object.keys(x.dated)))].filter(d => d >= td);
+  const chips = [...new Set([...schoolDays(5, day < td ? day : td), ...extra, day])].sort();
+  const crumbs = [L(g.track), L(g.section), L(g.stage)].filter(Boolean);
+  const sups = supsFor(SEL);
+
+  p.innerHTML = `
+    <div class="p-head">
+      <div><div class="crumbs">${crumbs.map(esc).join(' <i>›</i> ')}</div><h2>${esc(gradeName(g))}</h2></div>
+    </div>
+    ${sups.length ? `<div class="contacts">${sups.map(s => `<div class="contact">${svg(s.phone ? "phone" : "user")}<span><bdi>${esc(s.role || "")}</bdi></span><b><bdi>${esc(s.name)}</bdi></b>${s.phone ? `<a href="${esc(telHref(s.phone))}">${esc(norm(s.phone))}</a>` : ""}</div>`).join("")}</div>` : ""}
+    ${multiDay ? `<div class="chips" role="group">${chips.map(d=>`<button type="button" class="chip${day === d ? " on" : ""}${td === d ? " today" : ""}${mine.some(x => x.dated[d]) ? " has-dated" : ""}" data-day="${d}">${esc(dayLabel(d))}</button>`).join("")}</div>` : ""}
+    ${mine.length ? `<div class="groups" id="groups"></div>` : `<div class="empty-state">${svg("cal")}<b>${esc(t("emptyT"))}</b><p>${esc(t("emptyD"))}</p></div>`}
+  `;
+  p.querySelectorAll("[data-day]").forEach(b => b.addEventListener("click", ()=>{ DAY = b.dataset.day; renderPanel(); }));
+  renderGroups(day);
+}
+
+/* عنوان بطاقة الفصل: «أ / ب» ← «فصل أ / ب»، و«مستوى B: 1 / 2 / 3» ← «مستوى B» وتحته «الفصول: 1، 2، 3» */
+function groupTitle(label){
+  if (!label) return esc(t("allClasses"));
+  const m = label.match(/^([^:]+):\s*(.+)$/);
+  const list = parts => parts.split(/\s*\/\s*/).filter(Boolean).map(x => `<bdi>${esc(x)}</bdi>`).join("، ");
+  if (m) return `<bdi>${esc(m[1].trim())}</bdi><small>${esc(t("classesList"))} ${list(m[2])}</small>`;
+  return `${esc(t("classes"))} ${list(label).replace(/، /g, " / ")}`;
+}
+
+function renderGroups(dayArg){
+  const box = document.getElementById("groups");
+  if (!box) return;
+  const td = todayDs();
+  const day = dayArg || DAY || defaultDs(SEL);
+  const n = nowMin();
+  const g = GRADES[SEL];
+
+  // فصل لم يعد موجودًا (ليس في الروابط ولا الجدول الأسبوعي) يظهر فقط في الأيام التي له فيها حصص مُدخلة
+  box.innerHTML = GROUPS.filter(x => x.grade === SEL && (x.fixed || (x.dated[day] && x.dated[day].length)) && (!partialMode() || timetable(x, day).length)).map(gr=>{
+    const rows = timetable(gr, day);
+    const st = groupNow(rows, day, gr.grade);
+    const win = windowFor(gr.grade);
+    const isToday = day === td;
+    let badge = "", line = "";
+    // الحصص المتوازية (نفس رقم الحصة — مثل المسارات الاختيارية) تظهر كلها
+    const par = row => row ? rows.filter(r => r.kind !== "b" && r.p === row.p && r.start === row.start) : [];
+    // مع الحصص المتوازية يبقى الزر الكبير على رابط الفصل الثابت، ولكل مادة زر «دخول» خاص بها
+    const joinLink = (st?.k === "live" && par(st.row).length < 2 && st.row.link) || gr.link;
+    // وقت الحصص المتوازية: يتقسم الزر الكبير لزر لكل مادة (برابطها، أو رابط الفصل إن لم يكن لها رابط)
+    const liveSplit = st?.k === "live" ? par(st.row).filter(r => r.link || gr.link) : [];
+    const subjs = row => { const l = par(row); return (l.length ? l : [row]).map(r => esc(r.subject || "")).join(" / "); };
+    if (st?.k === "live"){
+      badge = `<span class="badge live">${esc(t("live"))}</span>`;
+      const ps = par(st.row);
+      line = ps.length > 1
+        ? `${esc(t("nowP"))}<b>${esc(t("period",{n:st.row.p}))}</b>${ps.map(r => `<span class="now-par"><b><bdi>${esc(r.subject || "—")}</bdi></b>${r.teacher ? ` · <bdi>${esc(r.teacher)}</bdi>` : ""}</span>`).join("")}`
+        : `${esc(t("nowP"))}<b>${esc(t("period",{n:st.row.p}))} — <bdi>${esc(st.row.subject)}</bdi></b>${st.row.teacher ? ` · <bdi>${esc(st.row.teacher)}</bdi>` : ""}`;
+    } else if (st?.k === "brk"){
+      badge = `<span class="badge brk">${esc(isPrayer(st.row) ? brkName(st.row) : t("brkNow"))}</span>`;
+      line = esc(isPrayer(st.row) ? t("brkUntilX",{n:brkName(st.row), t:fmtTime(st.row.end)}) : t("brkUntil",{t:fmtTime(st.row.end)})) + (st.next ? ` · ${esc(t("nextP"))}<b>${subjs(st.next)}</b>` : "");
+    } else if (st?.k === "before"){
+      if (st.m <= 60) badge = `<span class="badge soon">${esc(t("startsIn",{m:st.m}))}</span>`;
+      line = esc(t("firstAt",{t:fmtTime(st.row.start)})) + ` — <b>${subjs(st.row)}</b>`;
+    } else if (st?.k === "gap"){
+      badge = `<span class="badge soon">${esc(t("startsIn",{m:st.m}))}</span>`;
+      line = `${esc(t("nextP"))}<b>${subjs(st.row)}</b>`;
+    } else if (st?.k === "open"){
+      badge = `<span class="badge live">${esc(t("openNow"))}</span>`;
+      line = esc(t("openUntil",{t:fmtTime(st.w.end)}));
+    } else if (st?.k === "opens"){
+      if (st.m <= 60) badge = `<span class="badge soon">${esc(t("opensIn",{m:st.m}))}</span>`;
+      line = esc(t("opensAt",{t:fmtTime(st.w.start)}));
+    } else if (st?.k === "over"){
+      badge = `<span class="badge">${esc(t("dayOver"))}</span>`;
+    }
+
+    const tt = rows.length ? `<ol class="tt">${rows.map(r=>{
+      const end = r.end ?? (r.start != null ? r.start + 30 : null);
+      const cls = isToday && r.start != null ? (n >= end ? " past" : (n >= r.start ? " cur" : "")) : "";
+      const tm = r.start != null ? `${fmtTime(r.start)}${r.end != null ? `<br>${fmtTime(r.end)}` : ""}` : "";
+      return r.kind === "b"
+        ? `<li class="brk${cls}"><span class="pn">${svg("cup")}</span><span class="sub"><b>${esc(brkName(r))}</b></span><span class="tm" data-now="${esc(t("now"))}">${tm}</span></li>`
+        : `<li class="${cls.trim()}"><span class="pn">${r.p}</span><span class="sub"><b>${esc(r.subject || "—")}</b>${r.teacher ? `<span>${esc(r.teacher)}</span>` : ""}${r.link && r.link !== gr.link ? `<a class="row-link" data-room="${esc(gr.key)}" href="${esc(r.link)}" target="_blank" rel="noopener">${svg("video")}${esc(t("joinShort"))}</a>` : ""}</span><span class="tm" data-now="${esc(t("now"))}">${tm}</span></li>`;
+    }).join("")}</ol>`
+      : (win && dateOf(day).getDay() <= 4) ? `<p class="tt-empty tt-win">${svg("cal")}<span>${esc(t("winLine",{d:`${I18N[LANG].days[0]} – ${I18N[LANG].days[4]}`, a:fmtTime(win.start), b:fmtTime(win.end)}))}</span></p>`
+      : `<p class="tt-empty">${esc(t("noTT"))}</p>`;
+
+    return `<article class="group${["live","open"].includes(st?.k) ? " is-live" : ""}" style="--c:${g.color}">
+      <div class="g-head">
+        <div class="g-top"><h3 class="g-title">${groupTitle(gr.label)}</h3>${badge}</div>
+        ${line ? `<p class="now-line">${line}</p>` : ""}
+        ${gr.owner ? `<div class="meta"><span>${svg("user")}${esc(t("owner"))}: <bdi>${esc(gr.owner)}</bdi></span></div>` : ""}
+        ${gr.note ? `<p class="note">${esc(gr.note)}</p>` : ""}
+        ${liveSplit.length > 1
+          ? `<div class="joins" style="--n:${Math.min(liveSplit.length,4)}">${liveSplit.map(r => `<a class="join" data-room="${esc(gr.key)}" href="${esc(r.link || gr.link)}" target="_blank" rel="noopener" title="${esc(r.teacher || "")}">${svg("video")}<bdi>${esc(r.subject || t("join"))}</bdi></a>`).join("")}</div>`
+          : joinLink
+          ? `<a class="join" data-room="${esc(gr.key)}" href="${esc(joinLink)}" target="_blank" rel="noopener">${svg("video")}${esc(t("join"))}</a>`
+          : `<span class="join off">${esc(t("noLink"))}</span>`}
+      </div>
+      ${tt}
+    </article>`;
+  }).join("") || (partialMode() ? `<div class="empty-state">${svg("cal")}<b>${esc(t(MODE === "teacher" ? "tchNone" : "subjNone"))}</b></div>` : "");
+}
+
+/* شاشة «التعليم الآن حضوري» بكامل الشاشة — مع رابط صغير لدخول مدير النظام فقط */
+function renderPause(){
+  const el = document.getElementById("pauseScreen");
+  const on = pausedView();
+  el.hidden = !on; document.body.classList.toggle("paused-lock", on);
+  if (!on){ PAUSE_ADMIN = false; return; }
+  closeEditor(); closeReport();
+  const box = document.getElementById("pauseAdmin");
+  box.innerHTML = PAUSE_ADMIN
+    ? `<div id="gBtnPause"></div>${G_BUSY ? `<small>${esc(t("gChecking"))}</small>` : ""}${LOGIN_ERR === "notAdmin" ? `<p class="login-err">${esc(t("pausedT"))}</p>` : ""}`
+    : `<button type="button" id="pauseAdminBtn">${esc(t("adminLogin"))}</button>`;
+  box.querySelector("#pauseAdminBtn")?.addEventListener("click", ()=>{ PAUSE_ADMIN = true; LOGIN_ERR = ""; renderPause(); });
+  if (PAUSE_ADMIN) renderGoogleButton(box.querySelector("#gBtnPause"));
+}
+function renderAll(){ renderNotices(); renderStatus(); renderGate(); renderPanel(); renderPause(); }
+
+/* ==================================================================
+   نموذج إدخال الجداول والروابط (مديرو المراحل ومدير التعليم)
+   ================================================================== */
+const ED = { date:"", rows:[], loaded:new Set(), copy:new Set(), busy:false, msg:"", err:"", filter:"", tab:"periods", links:null };
+
+async function postServer(body){
+  const r = await fetch(SCRIPT_URL, { method:"POST", headers:{ ...(await authHeaders()), "Content-Type":"application/json" }, body: JSON.stringify(body) });
+  return r.json();
+}
+// فصول المحرر: الفصول الثابتة (لها رابط أو جدول أسبوعي) + أي فصل له حصص مُدخلة في اليوم المفتوح في المحرر
+// (الفصول المدموجة القديمة مثل «أ / ب» لا تظهر إلا في الأيام التي أُدخلت لها حصص فعلًا)
+const edRooms = () => GROUPS.filter(g => ALLOWED.includes(g.grade) && (g.fixed || (ED.tab !== "links" && ED.date && g.dated[ED.date]?.length)))
+  .sort((a,b)=> Object.keys(GRADES).indexOf(a.grade) - Object.keys(GRADES).indexOf(b.grade) || a.label.localeCompare(b.label,"ar"));
+const roomName = g => `${gradeFull(GRADES[g.grade])}${g.label ? " · " + (g.label.match(/^([^:]+):/)?.[1] || g.label) : ""}`;
+const hhmm = m => m == null ? "" : `${String(Math.floor(m/60)).padStart(2,"0")}:${String(m%60).padStart(2,"0")}`;
+
+function openEditor(){
+  ED.date = ED.date || defaultDs(ALLOWED[0]); ED.copy = new Set(); ED.msg = ""; ED.err = "";
+  document.getElementById("editor").hidden = false; document.body.classList.add("ed-lock");
+  loadDay(ED.date);
+}
+function closeEditor(){
+  const e = document.getElementById("editor"); if (!e) return;
+  e.hidden = true; document.body.classList.remove("ed-lock");
+}
+async function loadDay(ds){
+  ED.date = ds; ED.busy = true; ED.rows = []; ED.loaded = new Set(); ED.err = ""; renderEditor();
+  try{
+    const r = await postServer({ action:"listDay", code:CODE, date:ds });
+    if (!r.ok) throw new Error(r.error || "server");
+    ED.rows = r.entries.map(x => ({ ...x }));
+    ED.loaded = new Set(r.entries.map(x => x.room));
+    ED.rows.sort((a,b)=> a.room.localeCompare(b.room) || (+a.p) - (+b.p));
+  }catch(e){ ED.err = t("edLoadErr"); }
+  ED.busy = false; renderEditor();
+}
+function defaultTimes(room, p){
+  const g = GROUPS.find(x => x.key === room); if (!g) return {};
+  const tm = timingFor(g.grade).find(x => x.p === +p);
+  return tm ? { start:hhmm(tm.start), end:hhmm(tm.end) } : {};
+}
+function addRow(room){
+  const rooms = edRooms(); room = room || ED.rows.at(-1)?.room || rooms[0]?.key || "";
+  const used = ED.rows.filter(r => r.room === room).map(r => +r.p);
+  const p = String(Math.max(0, ...used) + 1);
+  ED.rows.push({ room, p, ...defaultTimes(room, p), subject:"", teacher:"", link:"" });
+  renderEditor(); setTimeout(()=> { const rs = document.querySelectorAll(".ed-row"); rs[rs.length-1]?.querySelector("[data-f=subject]")?.focus(); }, 0);
+}
+/* إضافة كل حصص فصل دفعة واحدة حسب توقيت مرحلته */
+function addFullDay(room){
+  const g = GROUPS.find(x => x.key === room); if (!g) return;
+  const periods = timingFor(g.grade).filter(x => typeof x.p === "number").map(x => x.p).sort((a,b)=>a-b);
+  const list = periods.length ? periods : [1,2,3,4,5,6,7];
+  const have = new Set(ED.rows.filter(r => r.room === room).map(r => +r.p));
+  list.forEach(p => { if (!have.has(p)) ED.rows.push({ room, p:String(p), ...defaultTimes(room, p), subject:"", teacher:"", link:"" }); });
+  ED.rows.sort((a,b)=> a.room.localeCompare(b.room) || (+a.p) - (+b.p));
+  if (ED.filter) ED.filter = room;
+  renderEditor();
+}
+
+function edTabs(){
+  return `<div class="rp-tabs ed-tabs" role="tablist">
+    <button type="button" class="rp-tab${ED.tab === "periods" ? " on" : ""}" data-tab="periods">${esc(t("edTabPeriods"))}</button>
+    <button type="button" class="rp-tab${ED.tab === "links" ? " on" : ""}" data-tab="links">${esc(t("edTabLinks"))}</button></div>`;
+}
+function bindTabs(box){
+  box.querySelectorAll("[data-tab]").forEach(b => b.addEventListener("click", ()=>{
+    ED.tab = b.dataset.tab; ED.msg = ""; ED.err = "";
+    if (ED.tab === "links") ED.links = null;   // نبدأ من الروابط الحالية
+    renderEditor();
+  }));
+}
+/* ---- روابط الفصول الثابتة ---- */
+function renderLinks(box){
+  const rooms = edRooms();
+  if (!ED.links) ED.links = Object.fromEntries(rooms.map(g => [g.key, { link:g.link || "", owner:g.owner || "", orig:(g.link || "") + "|" + (g.owner || "") }]));
+  const changed = rooms.filter(g => { const x = ED.links[g.key]; return x && (x.link.trim() + "|" + x.owner.trim()) !== x.orig; }).length;
+  box.innerHTML = edTabs() + `
+    <p class="ed-hint">${esc(t("lkHint"))}</p>
+    ${ED.err ? `<p class="login-err">${esc(ED.err)}</p>` : ""}
+    <div class="ed-filter"><label>${esc(t("lkFilter"))}<select id="lkFilter"><option value="">${esc(t("lkAll",{n:rooms.length}))}</option>${rooms.map(g => `<option value="${esc(g.key)}"${ED.filter === g.key ? " selected" : ""}>${esc(roomName(g))}</option>`).join("")}</select></label></div>
+    <div class="ed-rows">${rooms.filter(g => !ED.filter || g.key === ED.filter).map(g => { const x = ED.links[g.key]; const dirty = (x.link.trim() + "|" + x.owner.trim()) !== x.orig; return `
+      <div class="ed-row lk-row${dirty ? " dirty" : ""}" data-room="${esc(g.key)}">
+        <div class="ed-row-h"><b class="lk-name">${esc(roomName(g))}</b>${dirty ? `<span class="lk-badge">${esc(t("lkChanged"))}</span>` : ""}
+          ${g.link ? `<a class="row-link" href="${esc(g.link)}" target="_blank" rel="noopener">${svg("video")}${esc(t("lkTest"))}</a>` : ""}</div>
+        <label class="lk-link">${esc(t("lkLink"))}<input type="url" dir="ltr" data-f="link" value="${esc(x.link)}" placeholder="https://meet.google.com/..."></label>
+        <label class="lk-owner">${esc(t("lkOwner"))}<input type="text" data-f="owner" value="${esc(x.owner)}" placeholder="${esc(t("lkOwnerPh"))}"></label>
+      </div>`; }).join("")}</div>
+    ${ED.msg ? `<p class="ed-ok">${esc(ED.msg)}</p>` : ""}`;
+  bindTabs(box);
+  box.querySelector("#lkFilter").addEventListener("change", e => { ED.filter = e.target.value; renderEditor(); });
+  box.querySelectorAll(".lk-row").forEach(row => row.querySelectorAll("[data-f]").forEach(inp => inp.addEventListener("input", ()=>{
+    const x = ED.links[row.dataset.room]; x[inp.dataset.f] = inp.value; ED.msg = "";
+    const dirty = (x.link.trim() + "|" + x.owner.trim()) !== x.orig; row.classList.toggle("dirty", dirty); setSaveLabel();
+  })));
+  setSaveLabel(changed);
+}
+function setSaveLabel(){
+  const sv = document.getElementById("edSave");
+  if (ED.tab !== "links") return;
+  const n = edRooms().filter(g => { const x = ED.links?.[g.key]; return x && (x.link.trim() + "|" + x.owner.trim()) !== x.orig; }).length;
+  sv.disabled = ED.busy || !n;
+  sv.querySelector("span").textContent = ED.busy ? t("checking") : (n ? t("lkSaveN",{n}) : t("lkSave"));
+}
+async function saveLinks(){
+  const rooms = edRooms();
+  const list = rooms.map(g => ({ g, x:ED.links[g.key] })).filter(({x}) => x && (x.link.trim() + "|" + x.owner.trim()) !== x.orig);
+  if (!list.length) return;
+  for (const {g, x} of list){
+    const u = fixUrl(x.link);
+    if (!u || !/^https:\/\/[\w.-]+\.[a-z]{2,}(\/|$)/i.test(u)){ ED.err = t("lkBad",{r:roomName(g)}); renderEditor(); return; }
+    x.link = u;
+  }
+  ED.busy = true; ED.err = ""; ED.msg = ""; setSaveLabel();
+  try{
+    const r = await postServer({ action:"saveLinks", code:CODE, links: list.map(({g, x}) => ({ room:g.key, link:x.link.trim(), owner:x.owner.trim() })) });
+    if (!r.ok) throw Object.assign(new Error(r.error), { res:r });
+    ED.msg = t("lkSaved",{n:r.saved}); ED.links = null;
+    await refresh();
+  }catch(e){
+    const r = e.res || {};
+    ED.err = r.error === "link" ? t("lkBad",{r:r.room || ""}) : r.error === "invalid" ? t("errExpired") : r.error === "busy" ? t("edBusy") : t("edSaveErr");
+  }
+  ED.busy = false; renderEditor();
+}
+
+function renderEditor(){
+  const box = document.getElementById("edBody"); if (!box) return;
+  if (ED.tab === "links"){ document.getElementById("edWho").textContent = WHO || ""; renderLinks(box); return; }
+  const rooms = edRooms();
+  const opts = sel => rooms.map(g => `<option value="${esc(g.key)}"${g.key === sel ? " selected" : ""}>${esc(roomName(g))}</option>`).join("");
+  const nextDays = schoolDays(11, ED.date).filter(d => d !== ED.date).slice(0, 10);
+  document.getElementById("edWho").textContent = WHO || "";
+  box.innerHTML = edTabs() + `
+    <div class="ed-date">
+      <label>${esc(t("edDate"))}<input type="date" id="edDate" value="${esc(ED.date)}"></label>
+      <div class="ed-quick">${schoolDays(3).map(d => `<button type="button" class="chip${d === ED.date ? " on" : ""}" data-d="${d}">${esc(dayLabel(d))}</button>`).join("")}</div>
+    </div>
+    <p class="ed-hint">${esc(t("edHint"))}</p>
+    ${ED.err ? `<p class="login-err">${esc(ED.err)}</p>` : ""}
+    ${ED.busy ? `<p class="ed-loading">${esc(t("loading"))}</p>` : `
+    ${ED.rows.length ? `<div class="ed-filter"><label>${svg("user")}${esc(t("edFilter"))}
+      <select id="edFilter"><option value="">${esc(t("edFilterAll",{n:ED.rows.length}))}</option>${rooms.map(g => { const n = ED.rows.filter(r => r.room === g.key).length; return `<option value="${esc(g.key)}"${ED.filter === g.key ? " selected" : ""}>${esc(roomName(g))} (${n})</option>`; }).join("")}</select></label>
+      ${ED.filter ? `<button type="button" class="ed-btn ghost sm" id="edFilterClear">${esc(t("edFilterClear"))}</button>` : ""}</div>` : ""}
+    <datalist id="edSubjects">${SUBJECTS.map(x => `<option value="${esc(x.name)}"></option>`).join("")}</datalist>
+    <div class="ed-rows">${ED.rows.length ? ED.rows.map((r,i)=> ED.filter && r.room !== ED.filter ? "" : `
+      <div class="ed-row" data-i="${i}">
+        <div class="ed-row-h"><b>${i+1}</b>
+          <button type="button" class="ed-ic" data-act="dup" title="${esc(t("edDup"))}">${svg("copy2")}</button>
+          <button type="button" class="ed-ic danger" data-act="del" title="${esc(t("edDel"))}">${svg("trash")}</button></div>
+        <label class="w3">${esc(t("edRoom"))}<select data-f="room">${opts(r.room)}</select></label>
+        <label class="w1 wp">${esc(t("edPeriod"))}<select data-f="p">${range(1,12).map(n=>`<option${+r.p === n ? " selected" : ""}>${n}</option>`).join("")}</select></label>
+        <label class="w1">${esc(t("edFrom"))}<input type="time" data-f="start" value="${esc(r.start || "")}"></label>
+        <label class="w1">${esc(t("edTo"))}<input type="time" data-f="end" value="${esc(r.end || "")}"></label>
+        <label>${esc(t("edSubject"))}<input type="text" data-f="subject" list="edSubjects" autocomplete="off" value="${esc(r.subject || "")}" placeholder="${esc(t("edSubjectPh"))}">${subjHint(r.subject)}</label>
+        <label>${esc(t("edTeacher"))}<input type="text" data-f="teacher" value="${esc(r.teacher || "")}" placeholder="${esc(t("edTeacherPh"))}"></label>
+        <label>${esc(t("edLink"))}<input type="url" dir="ltr" data-f="link" value="${esc(r.link || "")}" placeholder="https://meet.google.com/..."></label>
+      </div>`).join("") + (ED.filter && !ED.rows.some(r => r.room === ED.filter) ? `<div class="empty-state">${svg("cal")}<b>${esc(t("edFilterNone"))}</b></div>` : "") : `<div class="empty-state">${svg("cal")}<b>${esc(t("edEmpty"))}</b></div>`}
+    </div>
+    <div class="ed-add">
+      <button type="button" class="ed-btn" id="edAdd">${svg("plus")}${esc(t("edAdd"))}</button>
+      <span class="ed-or">${esc(t("edOr"))}</span>
+      <select id="edFullRoom"><option value="">${esc(t("edFullPick"))}</option>${opts("")}</select>
+    </div>
+    <details class="ed-copy"${ED.copy.size ? " open" : ""}><summary>${esc(t("edCopy"))}${ED.copy.size ? ` (${ED.copy.size})` : ""}</summary>
+      <div class="ed-days">${nextDays.map(d => `<label class="ed-day"><input type="checkbox" data-copy="${d}"${ED.copy.has(d) ? " checked" : ""}>${esc(dayLabel(d))}</label>`).join("")}</div>
+    </details>`}
+    ${ED.msg ? `<p class="ed-ok">${esc(ED.msg)}</p>` : ""}`;
+
+  // الأحداث
+  bindTabs(box);
+  box.querySelector("#edDate")?.addEventListener("change", e => { const v = normDate(e.target.value); if (v) { ED.copy.clear(); ED.msg = ""; loadDay(v); } });
+  box.querySelectorAll("[data-d]").forEach(b => b.addEventListener("click", ()=>{ ED.copy.clear(); ED.msg = ""; loadDay(b.dataset.d); }));
+  box.querySelectorAll(".ed-row").forEach(row=>{
+    const i = +row.dataset.i;
+    const subj = row.querySelector("[data-f=subject]");
+    // عند مغادرة الخانة: أي اسم بديل يُستبدل بالاسم الرسمي من قائمة المواد
+    subj.addEventListener("change", ()=>{ const m = findSubject(subj.value); if (m && m.name !== subj.value.trim()){ subj.value = m.name; ED.rows[i].subject = m.name; } subj.parentNode.querySelector(".subj-hint").outerHTML = subjHint(subj.value); });
+    row.querySelectorAll("[data-f]").forEach(inp => inp.addEventListener("input", ()=>{
+      const f = inp.dataset.f; ED.rows[i][f] = inp.value; ED.msg = "";
+      if (f === "subject"){ const h = inp.parentNode.querySelector(".subj-hint"); if (h) h.outerHTML = subjHint(inp.value); }
+      if (f === "room" || f === "p"){ const d = defaultTimes(ED.rows[i].room, ED.rows[i].p); if (d.start){ ED.rows[i].start = d.start; ED.rows[i].end = d.end; renderEditor(); } }
+    }));
+    row.querySelector("[data-act=del]").addEventListener("click", ()=>{ ED.rows.splice(i,1); ED.msg = ""; renderEditor(); });
+    row.querySelector("[data-act=dup]").addEventListener("click", ()=>{ const c = { ...ED.rows[i], p:String(+ED.rows[i].p + 1) }; Object.assign(c, defaultTimes(c.room, c.p)); ED.rows.splice(i+1, 0, c); renderEditor(); });
+  });
+  box.querySelector("#edAdd")?.addEventListener("click", ()=> addRow(ED.filter || undefined));
+  box.querySelector("#edFilter")?.addEventListener("change", e => { ED.filter = e.target.value; renderEditor(); });
+  box.querySelector("#edFilterClear")?.addEventListener("click", ()=>{ ED.filter = ""; renderEditor(); });
+  box.querySelector("#edFullRoom")?.addEventListener("change", e => { if (e.target.value) addFullDay(e.target.value); });
+  const sv = document.getElementById("edSave");
+  const label = () => { sv.disabled = ED.busy; sv.querySelector("span").textContent = ED.busy ? t("checking") : (ED.copy.size ? t("edSaveN",{n:ED.copy.size+1}) : t("edSave")); };
+  box.querySelectorAll("[data-copy]").forEach(c => c.addEventListener("change", ()=>{ c.checked ? ED.copy.add(c.dataset.copy) : ED.copy.delete(c.dataset.copy); label(); }));
+  label();
+}
+
+/* تلميح تحت خانة المادة: لمن تتبع؟ */
+function subjHint(v){
+  v = String(v || "").trim();
+  if (!v || !SUBJECTS.length) return `<span class="subj-hint"></span>`;
+  const m = findSubject(v);
+  if (!m) return `<span class="subj-hint warn">${esc(t("subjUnknown"))}</span>`;
+  const alias = m.name !== v ? ` — ${esc(t("subjSaveAs",{n:m.name}))}` : "";
+  return m.sup ? `<span class="subj-hint ok">${esc(t("subjOwner",{s:m.sup}))}${alias}</span>`
+               : `<span class="subj-hint none">${esc(t("subjNoSup"))}${alias}</span>`;
+}
+
+async function saveEditor(){
+  // تحقق سريع قبل الإرسال
+  for (let i = 0; i < ED.rows.length; i++){
+    const r = ED.rows[i];
+    if (!r.room || !r.p || !String(r.subject || "").trim()){ ED.err = t("edNeed",{n:i+1}); renderEditor(); return; }
+    if (r.link && !/^https:\/\/[\w.-]+\.[a-z]{2,}(\/|$)/i.test(r.link.trim())){ ED.err = t("edBadLink",{n:i+1}); renderEditor(); return; }
+  }
+  // توحيد أسماء المواد قبل الحفظ، والتنبيه على المواد غير الموجودة في القائمة
+  ED.rows.forEach(r => { const m = findSubject(r.subject); if (m) r.subject = m.name; });
+  const unknown = SUBJECTS.length ? [...new Set(ED.rows.filter(r => !findSubject(r.subject)).map(r => r.subject.trim()))] : [];
+  if (unknown.length && !confirm(t("subjConfirm",{l:unknown.join("، ")}))) { renderEditor(); return; }
+  const dates = [ED.date, ...[...ED.copy].sort()];
+  const rooms = [...new Set([...ED.loaded, ...ED.rows.map(r => r.room)])];
+  ED.busy = true; ED.err = ""; ED.msg = ""; renderEditor();
+  try{
+    const r = await postServer({ action:"saveDays", code:CODE, dates, rooms, entries: ED.rows.map(x => ({ room:x.room, p:x.p, start:x.start, end:x.end, subject:x.subject, teacher:x.teacher, link:(x.link||"").trim() })) });
+    if (!r.ok) throw Object.assign(new Error(r.error), { res:r });
+    ED.msg = t("edSaved",{n:ED.rows.length, d:r.dates}); ED.copy.clear(); ED.loaded = new Set(ED.rows.map(x => x.room));
+    refresh();
+  }catch(e){
+    const r = e.res || {};
+    ED.err = ({ link:t("edBadLink",{n:r.row}), subject:t("edNeed",{n:r.row}), period:t("edNeed",{n:r.row}), room:t("edRoomErr",{n:r.row}),
+                invalid:t("errExpired"), busy:t("edBusy") })[r.error] || t("edSaveErr");
+  }
+  ED.busy = false; renderEditor();
+}
+
+/* ==================================================================
+   تسجيل الدخول إلى الحصة (للتقرير اليومي) — من رمز فصل فقط
+   كل جهاز له معرّف عشوائي لا يحمل أي بيانات شخصية؛ يُرسل مرة كل 10 دقائق لكل فصل على الأكثر
+   ================================================================== */
+function deviceId(){
+  let d = LS.get("ol-dev");
+  if (!/^[a-z0-9]{6,32}$/i.test(d || "")){ d = Array.from(crypto.getRandomValues(new Uint8Array(10)), b => (b % 36).toString(36)).join(""); LS.set("ol-dev", d); }
+  return d;
+}
+document.addEventListener("click", e => {
+  const a = e.target.closest("a[data-room]");
+  if (!a || MODE !== "class" || !CODE || !SCRIPT_URL || isDemo()) return;
+  // التقرير يحسب كل جهاز مرة واحدة لكل فصل في اليوم: نرسل الدخول مرة واحدة فقط يوميًا لكل فصل
+  const k = "ol-j-" + a.dataset.room, day = todayDs();
+  if (LS.get(k) === day) return;
+  LS.set(k, day);
+  const q = joinQueue(); q.push({ code:CODE, room:a.dataset.room, day, at:Date.now() }); LS.set("ol-jq", JSON.stringify(q));
+  // يُرسل بعد لحظات، أو فورًا عند انتقال الطالب إلى Meet (اختفاء الصفحة) — ويبقى محفوظًا إن انقطع الاتصال
+  setTimeout(flushJoins, 1500 + Math.random() * 3000);
+});
+document.addEventListener("visibilitychange", ()=>{ if (document.hidden) flushJoins(true); });
+window.addEventListener("pagehide", ()=> flushJoins(true));
+function joinQueue(){ try{ const q = JSON.parse(LS.get("ol-jq") || "[]"); return Array.isArray(q) ? q : []; }catch(e){ return []; } }
+function flushJoins(now){
+  if (!SCRIPT_URL || isDemo()) return;
+  const td = todayDs(), all = joinQueue().filter(x => x.day === td);   // ضغطات أيام سابقة لا تُحسب
+  const q = all.filter(x => now || Date.now() - x.at > 1000), keep = all.filter(x => !q.includes(x));
+  q.forEach(x => {
+    const body = JSON.stringify({ action:"join", code:x.code, room:x.room, dev:deviceId() });
+    try{
+      if (!(navigator.sendBeacon && navigator.sendBeacon(SCRIPT_URL, new Blob([body], { type:"text/plain;charset=utf-8" }))))
+        fetch(SCRIPT_URL, { method:"POST", mode:"no-cors", keepalive:true, headers:{ "Content-Type":"text/plain;charset=utf-8" }, body });
+    }catch(err){}
+  });
+  LS.set("ol-jq", JSON.stringify(keep));
+  if (keep.length) setTimeout(flushJoins, 6000);
+}
+
+/* ==================================================================
+   التقرير اليومي (مديرو المراحل ومدير التعليم)
+   ================================================================== */
+const RP = { date:"", data:null, stage:"", open:"", busy:false, err:"" };
+function openReport(){
+  RP.date = RP.date || todayDs(); RP.err = "";
+  document.getElementById("report").hidden = false; document.body.classList.add("ed-lock");
+  loadReport(RP.date);
+}
+function closeReport(){
+  const e = document.getElementById("report"); if (!e) return;
+  e.hidden = true; document.body.classList.remove("ed-lock");
+}
+async function loadReport(ds, force){
+  RP.date = ds; RP.busy = true; RP.err = ""; renderReport();
+  try{
+    const r = await postServer({ action:"report", code:CODE, date:ds, force:!!force });
+    if (!r.ok) throw Object.assign(new Error(r.error), { res:r });
+    RP.data = r;
+    if (!r.stages.some(s => s.key === RP.stage)) RP.stage = r.stages[0]?.key || "";
+  }catch(e){ RP.data = null; RP.err = e.res?.error === "invalid" ? t("errExpired") : t("rpErr"); }
+  RP.busy = false; renderReport();
+}
+/* الأيام الدراسية الماضية (الأحد–الخميس) حتى اليوم */
+function pastSchoolDays(n){
+  const out = []; const d = new Date(); d.setHours(12,0,0,0);
+  while (out.length < n){ if (d.getDay() <= 4) out.push(dsOf(d)); d.setDate(d.getDate()-1); }
+  return out.reverse();
+}
+const arCount = (n, one, two, few, many) => LANG !== "ar" ? "" : (n === 1 ? one : n === 2 ? two : (n % 100 >= 3 && n % 100 <= 10) ? `${n} ${few}` : `${n} ${many}`);
+function renderReport(){
+  const box = document.getElementById("rpBody"); if (!box) return;
+  document.getElementById("rpWho").textContent = WHO || "";
+  const D = RP.data;
+  const days = [...new Set([...pastSchoolDays(5), RP.date])].sort();
+  const head = `
+    <div class="ed-date">
+      <label>${esc(t("edDate"))}<input type="date" id="rpDate" value="${esc(RP.date)}" max="${esc(todayDs())}"></label>
+      <div class="ed-quick">${days.map(d => `<button type="button" class="chip${d === RP.date ? " on" : ""}" data-d="${d}">${esc(dayLabel(d))}</button>`).join("")}</div>
+    </div>`;
+  if (RP.busy){ box.innerHTML = head + `<p class="ed-loading">${esc(t("rpLoading"))}</p>`; bindReport(box); return; }
+  if (!D){ box.innerHTML = head + (RP.err ? `<p class="login-err">${esc(RP.err)}</p>` : ""); bindReport(box); return; }
+  const S = D.stages.find(s => s.key === RP.stage) || D.stages[0];
+  const pct = (a,b) => b ? Math.round(a*100/b) : 0;
+  const row = (name, a, b, extra) => `<div class="rp-row${a ? "" : " zero"}"><span><bdi>${esc(name)}</bdi></span><b>${a}${b != null ? ` <em>/ ${b}</em>` : ""}</b>${b != null ? `<div class="rp-bar"><i style="width:${pct(a,b)}%"></i></div>` : ""}${extra || ""}</div>`;
+  const card = (id, color, icon, title, num, of, sub, list) => `
+    <div class="rp-card${RP.open === id ? " open" : ""}" style="--c:${color}">
+      <button type="button" data-open="${id}" aria-expanded="${RP.open === id}">
+        <span class="rp-ic">${svg(icon)}</span>
+        <span class="rp-t"><span>${esc(title)}</span>${sub ? `<small>${esc(sub)}</small>` : ""}</span>
+        <span class="rp-num">${num}${of != null ? `<em> / ${of}</em>` : ""}</span>
+        <svg class="rp-chev" viewBox="0 0 24 24" aria-hidden="true">${ICONS.chev}</svg>
+      </button>
+      <div class="rp-list">${list || `<p class="rp-empty">${esc(t("rpNone"))}</p>`}</div>
+    </div>`;
+  const grades = S ? S.byGrade.map(G => row(GRADES[G.g] ? gradeFull(GRADES[G.g]) : G.g, G.n, null,
+      G.classes.length > 1 || (G.classes[0] && G.classes[0].l) ? `<div class="rp-sub">${G.classes.map(c => `<span>${esc(c.l ? `${t("classes")} ${c.l}` : t("allClasses"))}: <b>${c.n}</b></span>`).join("")}</div>` : "")).join("") : "";
+  const srcLine = D.source === "meet" ? t("rpSrcMeet") : t("rpSrcClicks");
+  box.innerHTML = head + `
+    ${D.stages.length > 1 ? `<div class="rp-tabs" role="tablist">${D.stages.map(s => `<button type="button" class="rp-tab${s.key === S.key ? " on" : ""}" data-st="${esc(s.key)}">${esc(s.key === "all" ? t("rpAll") : s.label)}</button>`).join("")}</div>` : ""}
+    <p class="rp-meta">${D.partial ? `<b>${esc(t("rpPartial"))}</b> · ` : ""}${esc(t("rpSrc"))} <b>${esc(srcLine)}</b>${D.at ? ` · ${esc(t("rpAt"))} <bdi>${esc(D.at.slice(11))}</bdi>` : ""}
+      ${D.source !== "meet" ? `<br><span>${esc(t("rpClicksNote"))}</span>` : ""}</p>
+    ${!S || !S.planned && !S.students ? `<div class="empty-state">${svg("cal")}<b>${esc(t("rpEmpty"))}</b></div>` : `<div class="rp-cards">
+      ${card("p", "#6D4BFF", "cal", t("rpPeriods"), S.done, S.planned, t("rpPeriodsSub",{p:pct(S.done,S.planned)}), S.bySubject.map(x => row(x.name, x.done, x.planned)).join(""))}
+      ${card("t", "#E8790A", "users", t("rpTeachers"), S.teachers, S.teachersPlanned, t("rpTeachersSub"), S.byTeacher.map(x => row(x.name, x.done, x.planned)).join(""))}
+      ${card("s", "#0B9A6D", "user", t("rpStudents"), S.students, null, t("rpStudentsSub"), grades)}
+    </div>`}
+    <div class="rp-foot">${S && (S.planned || S.students) ? `<button type="button" class="ed-btn" id="rpPdf">${svg("download")}${esc(t("rpPdf"))}</button>` : ""}<button type="button" class="ed-btn" id="rpRe">${svg("chart")}${esc(t("rpRecalc"))}</button></div>`;
+  bindReport(box);
+}
+function bindReport(box){
+  box.querySelector("#rpDate")?.addEventListener("change", e => { const v = normDate(e.target.value); if (v && v <= todayDs()) loadReport(v); });
+  box.querySelectorAll("[data-d]").forEach(b => b.addEventListener("click", ()=> loadReport(b.dataset.d)));
+  box.querySelectorAll("[data-st]").forEach(b => b.addEventListener("click", ()=>{ RP.stage = b.dataset.st; renderReport(); }));
+  box.querySelectorAll("[data-open]").forEach(b => b.addEventListener("click", ()=>{ RP.open = RP.open === b.dataset.open ? "" : b.dataset.open; renderReport(); }));
+  box.querySelector("#rpRe")?.addEventListener("click", ()=> loadReport(RP.date, true));
+  box.querySelector("#rpPdf")?.addEventListener("click", exportReportPdf);
+}
+
+/* ---- تصدير تقرير المرحلة المعروضة إلى PDF (ضمن صلاحيات الحساب: البيانات القادمة من الخادم مقصورة على نطاقه) ---- */
+/* الشعار كصورة مضمّنة (لا يعتمد على تحميله في نافذة الطباعة) */
+function logoData(){
+  try{
+    const im = document.querySelector('.logo-dt img');
+    if (im && im.complete && im.naturalWidth){ const c = document.createElement("canvas"); c.width = im.naturalWidth; c.height = im.naturalHeight; c.getContext("2d").drawImage(im, 0, 0); return c.toDataURL("image/png"); }
+  }catch(e){}
+  return new URL("../assets/img/logo.png", location.href).href;
+}
+function reportDocHtml(D, S){
+  const pct = (a,b) => b ? Math.round(a*100/b) : 0;
+  const d = dateOf(D.date);
+  const dateTxt = d.toLocaleDateString(LANG === "ar" ? "ar-SA-u-ca-gregory-nu-latn" : "en-GB", { weekday:"long", day:"numeric", month:"long", year:"numeric" });
+  const stageName = S.key === "all" ? t("rpAll") : S.label;
+  const src = D.source === "meet" ? t("rpSrcMeet") : t("rpSrcClicks");
+  const tile = (c, label, num, of, sub) => `<div class="x-tile" style="--c:${c}"><span>${esc(label)}</span><b>${num}${of != null ? `<em> / ${of}</em>` : ""}</b>${sub ? `<small>${esc(sub)}</small>` : ""}</div>`;
+  const bar = (a,b) => `<div class="x-bar"><i style="width:${pct(a,b)}%"></i></div>`;
+  const tbl = (title, c, head, rows) => rows.length ? `<h3 style="--c:${c}">${esc(title)}</h3><table><thead><tr>${head.map(h => `<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>${rows.join("")}</tbody></table>` : "";
+  const subj = S.bySubject.map(x => `<tr class="${x.done ? "" : "z"}"><td><bdi>${esc(x.name)}</bdi></td><td>${x.done}</td><td>${x.planned}</td><td>${pct(x.done,x.planned)}%${bar(x.done,x.planned)}</td></tr>`);
+  const tch = S.byTeacher.map(x => `<tr class="${x.done ? "" : "z"}"><td><bdi>${esc(x.name)}</bdi></td><td>${x.done}</td><td>${x.planned}</td><td>${pct(x.done,x.planned)}%${bar(x.done,x.planned)}</td></tr>`);
+  const grd = S.byGrade.map(G => `<tr class="${G.n ? "" : "z"}"><td>${esc(GRADES[G.g] ? gradeFull(GRADES[G.g]) : G.g)}</td><td>${G.n}</td><td class="x-cls">${G.classes.length > 1 || (G.classes[0] && G.classes[0].l) ? G.classes.map(c => `<span>${esc(c.l ? `${t("classes")} ${c.l}` : t("allClasses"))}: <b>${c.n}</b></span>`).join("") : "—"}</td></tr>`);
+  const now = new Date();
+  return `<div class="x-doc" dir="${LANG === "ar" ? "rtl" : "ltr"}" lang="${LANG}">
+    <style>
+      .x-doc{width:794px;padding:34px 40px 28px;background:#fff;color:#14173A;font-family:'IBM Plex Sans Arabic','Sora',Tahoma,sans-serif;font-size:13px;line-height:1.7;box-sizing:border-box}
+      .x-doc *{box-sizing:border-box}
+      .x-top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-bottom:14px;border-bottom:3px solid transparent;border-image:linear-gradient(90deg,#6D4BFF,#0EA5D6,#0E9F76,#E8790A,#E63E7C) 1}
+      .x-top img{height:58px}
+      .x-top h1{margin:0;font-family:'Noto Kufi Arabic','Sora',sans-serif;font-weight:900;font-size:22px;line-height:1.5;color:#3C2BB0}
+      .x-top p{margin:0;color:#565D8C;font-size:12.5px}
+      .x-info{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:16px 0}
+      .x-info div{background:#F5F6FC;border-radius:12px;padding:8px 12px}
+      .x-info span{display:block;font-size:11px;color:#565D8C}
+      .x-info b{font-size:13.5px}
+      .x-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:8px}
+      .x-tile{border:1px solid rgba(60,70,160,.16);border-top:4px solid var(--c);border-radius:14px;padding:10px 14px}
+      .x-tile span{display:block;font-size:12px;color:#565D8C;font-weight:600}
+      .x-tile b{display:block;font-family:'Sora','Noto Kufi Arabic',sans-serif;font-size:28px;line-height:1.3;color:var(--c)}
+      .x-tile b em{font-style:normal;font-size:15px;color:#565D8C}
+      .x-tile small{font-size:11px;color:#565D8C}
+      .x-doc h3{margin:18px 0 6px;font-family:'Noto Kufi Arabic',sans-serif;font-size:15px;display:flex;align-items:center;gap:8px}
+      .x-doc h3::before{content:"";width:5px;height:16px;border-radius:3px;background:var(--c)}
+      .x-doc table{width:100%;border-collapse:collapse;font-size:12.5px}
+      .x-doc th{background:#F0F1FA;color:#565D8C;font-weight:600;text-align:start;padding:6px 10px}
+      .x-doc td{padding:5px 10px;border-bottom:1px solid #ECEEF7;vertical-align:middle}
+      .x-doc tr{page-break-inside:avoid;break-inside:avoid}
+      .x-doc tr.z td{color:#9AA0C3}
+      .x-doc td:nth-child(n+2):not(.x-cls){width:90px;font-family:'Sora',sans-serif}
+      .x-bar{height:4px;border-radius:3px;background:#ECEEF7;margin-top:3px;overflow:hidden}.x-bar i{display:block;height:100%;background:#0E9F76}
+      .x-cls span{display:inline-block;margin-inline-end:10px;white-space:nowrap}
+      .x-note{margin-top:14px;font-size:11px;color:#565D8C;background:#F5F6FC;border-radius:10px;padding:8px 12px}
+      .x-foot{margin-top:14px;padding-top:8px;border-top:1px solid #ECEEF7;display:flex;justify-content:space-between;font-size:10.5px;color:#565D8C}
+    </style>
+    <div class="x-top"><div><h1>${esc(t("rpTitle"))}</h1><p>${esc(stageName)}</p></div><img src="${logoData()}" alt=""></div>
+    <div class="x-info">
+      <div><span>${esc(t("rpDay"))}</span><b>${esc(dateTxt)}</b></div>
+      <div><span>${esc(t("rpSrc").replace(/[:：]\s*$/,""))}</span><b>${esc(src)}</b></div>
+      <div><span>${esc(t("rpAt"))}</span><b><bdi>${esc(D.at || "")}</bdi></b></div>
+      <div><span>&nbsp;</span><b style="color:${D.partial ? "#E8790A" : "#0E9F76"}">${esc(D.partial ? t("rpPartial") : t("rpFinal"))}</b></div>
+    </div>
+    <div class="x-tiles">
+      ${tile("#6D4BFF", t("rpPeriods"), S.done, S.planned, t("rpPeriodsSub",{p:pct(S.done,S.planned)}).split("·")[0].trim())}
+      ${tile("#E8790A", t("rpTeachers"), S.teachers, S.teachersPlanned, t("rpTeachersSub"))}
+      ${tile("#0B9A6D", t("rpStudents"), S.students, null, t("rpStudentsSub"))}
+    </div>
+    ${tbl(t("rpByGrade"), "#0B9A6D", [t("rpColGrade"), t("rpColStudents"), t("rpColClasses")], grd)}
+    ${tbl(t("rpBySubject"), "#6D4BFF", [t("rpColSubject"), t("rpColDone"), t("rpColPlanned"), t("rpColPct")], subj)}
+    ${tbl(t("rpByTeacher"), "#E8790A", [t("rpColTeacher"), t("rpColDone"), t("rpColPlanned"), t("rpColPct")], tch)}
+    ${D.source !== "meet" ? `<p class="x-note">${esc(t("rpClicksNote"))}</p>` : ""}
+    <div class="x-foot"><span>${esc(t("rpBy"))}: ${esc(WHO || "")}</span><span>${esc(t("rpPrinted"))} <bdi>${esc(dsOf(now))} ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}</bdi></span></div>
+  </div>`;
+}
+function exportReportPdf(){
+  const D = RP.data; if (!D) return;
+  const S = D.stages.find(s => s.key === RP.stage) || D.stages[0]; if (!S) return;
+  const name = `${t("rpTitle")} - ${S.key === "all" ? t("rpAll") : S.label} - ${D.date}`.replace(/[\\/:*?"<>|—]+/g, "-").replace(/\s+/g, " ");
+  const base = location.href.replace(/[#?].*$/, "").replace(/[^/]*$/, "");
+  const page = `<!doctype html><html lang="${LANG}" dir="${LANG === "ar" ? "rtl" : "ltr"}"><head><meta charset="utf-8"><base href="${base}"><title>${esc(name)}</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;600&family=Noto+Kufi+Arabic:wght@600;900&family=Sora:wght@400;600&display=swap" rel="stylesheet">
+<style>@page{size:A4;margin:10mm 0}html,body{margin:0;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.x-doc{margin:0 auto}@media screen{body{background:#EEF0F8;padding:16px 0}.x-doc{box-shadow:0 10px 30px -18px rgba(40,50,140,.5);border-radius:12px}.x-hint{max-width:794px;margin:0 auto 12px;font:14px 'IBM Plex Sans Arabic',sans-serif;color:#565D8C;text-align:center}}@media print{.x-hint{display:none}}</style>
+</head><body><p class="x-hint">${esc(t("rpPdfHint"))}</p>${reportDocHtml(D, S)}
+<script>(document.fonts ? document.fonts.ready : Promise.resolve()).then(function(){ var im=document.images[0]; var go=function(){ setTimeout(function(){ window.focus(); window.print(); }, 250); }; if (im && !im.complete){ im.onload = im.onerror = go; } else go(); });<\/script></body></html>`;
+  const w = window.open("", "_blank");
+  if (w){ w.document.open(); w.document.write(page); w.document.close(); return; }
+  // النوافذ المنبثقة محجوبة: نطبع من إطار مخفي
+  const fr = document.createElement("iframe"); fr.style.cssText = "position:fixed;width:0;height:0;border:0;right:0;bottom:0";
+  document.body.appendChild(fr); fr.contentDocument.open(); fr.contentDocument.write(page); fr.contentDocument.close();
+  setTimeout(() => fr.remove(), 60000);
+}
+
+function applyLang(lang){
+  LANG = lang;
+  const de = document.documentElement;
+  de.lang = lang; de.dir = lang === "ar" ? "rtl" : "ltr";
+  document.querySelectorAll("[data-t]").forEach(el => { el.textContent = t(el.dataset.t); });
+  document.title = t("meta");
+  LS.set("lang", lang);
+  renderAll();
+  if (!document.getElementById("report").hidden) renderReport();
+}
+
+
+/* ==================================================================
+   5) التشغيل
+   ================================================================== */
+document.getElementById("langBtn").addEventListener("click", ()=> applyLang(LANG === "ar" ? "en" : "ar"));
+document.getElementById("refreshBtn").addEventListener("click", refresh);
+document.getElementById("logoutBtn").addEventListener("click", ()=> logout(""));
+document.getElementById("edClose").addEventListener("click", closeEditor);
+document.getElementById("edCancel").addEventListener("click", closeEditor);
+document.getElementById("edSave").addEventListener("click", ()=> ED.tab === "links" ? saveLinks() : saveEditor());
+document.getElementById("rpClose").addEventListener("click", closeReport);
+document.addEventListener("keydown", e => { if (e.key !== "Escape") return; if (!document.getElementById("editor").hidden) closeEditor(); if (!document.getElementById("report").hidden) closeReport(); });
+
+function takeHashCode(){
+  return "";
+  const m = location.hash.match(/(?:^#|&)c=([^&]+)/);
+  if (!m) return "";
+  try{ history.replaceState(null, "", location.pathname + location.search); }catch(e){}
+  return decodeURIComponent(m[1]).trim();
+}
+window.addEventListener("hashchange", ()=>{ const hc = takeHashCode(); if (hc) login(hc); });
+
+(async function init(){
+  const q = new URLSearchParams(location.search).get("lang");
+  // الدخول بحساب المنصة: إن وُجدت جلسة فالرمز «SSO»، وإلا تظهر شاشة الدخول
+  const tok = await lmsToken();
+  if (LS.get("ol-user") !== SSO_EMAIL){ LS.set("ol-cache", ""); LS.set("ol-pend", ""); LS.set("ol-pend-n", ""); LS.set("ol-user", SSO_EMAIL); }
+  CODE = tok ? "SSO" : ""; LS.set("ol-code", CODE);
+  if (!tok){ PEND = ""; PEND_NAME = ""; }
+  LANG = [q, LS.get("lang")].find(v => v === "ar" || v === "en") || "ar";
+  // رابط الدخول المباشر من رسالة واتساب: ...online-learning.html#c=1234
+  // يُحفظ الرمز ثم يُحذف من شريط العنوان فورًا حتى لا يبقى ظاهرًا أو يُنسخ مع الرابط
+  const hc = takeHashCode();
+  if (hc && hc !== CODE){ CODE = hc; LS.set("ol-code", CODE); LS.set("ol-cache", ""); }
+  LOAD_STATE = (CODE && SCRIPT_URL) ? "loading" : "login";
+  // عرض آخر بيانات محفوظة على الجهاز فورًا، ثم تحديثها من الخادم
+  try{
+    const c = JSON.parse(LS.get("ol-cache") || "null");
+    if (CODE && c && c.code === CODE && c.res && c.res.ok){ applyResponse(c.res); LOAD_STATE = "ok"; LAST_LOAD = new Date(c.at); }
+  }catch(e){}
+  applyLang(LANG);
+  refresh();
+  const every = (AUTO_REFRESH_MIN + Math.random() * 2) * 60000;
+  setInterval(()=>{ if ((CODE || isDemo()) && !document.hidden) refresh(); }, every);
+  document.addEventListener("visibilitychange", ()=>{
+    if (!document.hidden && (CODE || isDemo()) && (!LAST_LOAD || Date.now() - LAST_LOAD.getTime() > every)) refresh();
+  });
+  flushJoins();
+  setInterval(()=>{ renderGroups(); if (ALLOWED.length > 1 && (LOAD_STATE === "ok" || LOAD_STATE === "demo")) renderGate(); }, 30000);   // تحديث «مباشر الآن» والحصة الحالية
+})();
+</script>
+</body>
+</html>

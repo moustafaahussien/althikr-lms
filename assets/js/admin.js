@@ -66,7 +66,6 @@
      =================================================================== */
   async function overview(pane) {
     const st = await run(sb.rpc('school_stats'));
-    const noEmailStaff = R.staff.filter((s) => !s.email).length;
     const steps = [
       ['1', 'استيراد الموظفين', 'المعلمون والمشرفون ومديرو المراحل والإدارة، مع نطاق كل مشرف ومدير.', st.staff > 1],
       ['2', 'استيراد الطلاب', 'كل طالب برقمه وبريده وفصله. الفصول الناقصة تُنشأ تلقائيًا.', st.students > 0],
@@ -79,9 +78,12 @@
            ['المواد', st.subjects], ['الإسنادات', st.assignments]]
           .map(([l, n]) => `<div class="stat glass"><div class="n">${n}</div><div class="l">${l}</div></div>`).join('')}
       </div>
-      ${(st.no_class || st.no_email) ? `<div class="notice warn" style="margin-top:14px">
-        ${st.no_class ? `• ${st.no_class} طالب بدون فصل.<br>` : ''}
-        ${st.no_email ? `• ${st.no_email} حساب نشط بدون بريد إلكتروني — لن يستطيع الدخول.${noEmailStaff ? ` (منهم ${noEmailStaff} موظف)` : ''}` : ''}</div>` : ''}
+      ${(st.by_stage || []).length ? `<div class="grid stats" style="margin-top:14px">${st.by_stage.map((x) =>
+        `<div class="stat glass"><div class="n">${x.students}</div><div class="l">${esc(x.stage)}</div></div>`).join('')}</div>` : ''}
+      ${(st.no_class || st.no_email || st.students_no_email) ? `<div class="notice warn" style="margin-top:14px">
+        ${st.no_class ? `• ${st.no_class} طالب لم يُوزَّعوا على فصول بعد — وزّعهم من تبويب «الطلاب» (حدد ← «توزيع المحددين على فصل»).<br>` : ''}
+        ${st.students_no_email ? `• ${st.students_no_email} طالب بدون بريد مدرسي — لن يستطيعوا الدخول للمنصة حتى يُضاف بريدهم (البيانات محفوظة).<br>` : ''}
+        ${st.no_email ? `• ${st.no_email} موظف بدون بريد — لن يستطيع الدخول.` : ''}</div>` : ''}
       <div class="section-title"><h2>خطوات تجهيز المنصة</h2></div>
       <div class="grid modules">${steps.map(([n, t, d, done]) => `
         <div class="module glass"><span class="badge" style="${done ? 'background:linear-gradient(135deg,#10b981,#0891b2)' : ''}">${done ? 'تم ✓' : 'الخطوة ' + n}</span>
@@ -113,7 +115,7 @@
                ['أ. مشرف العلوم', 'sci@althikr.edu.sa', 'مشرف', 'مشرف العلوم', '', 'العلوم', '', '']]
     },
     students: {
-      title: 'الطلاب', rpc: 'import_students', order: 2,
+      title: 'الطلاب (قالب المنصة مع الفصول)', rpc: 'import_students', order: 3,
       desc: 'رقم الطالب هو المفتاح: إذا كان موجودًا تُحدَّث بياناته وفصله (مفيد للترفيع السنوي). الفصل غير الموجود يُنشأ تلقائيًا داخل الصف.',
       fields: [
         ['student_number', 'رقم الطالب', true, ['رقم الطالب', 'الرقم', 'رقم', 'student number', 'student_number', 'id']],
@@ -129,8 +131,27 @@
                ['20456', 'سارة خالد', '20456@althikr.edu.sa', 'ابتدائي بنات', '5', '2', 'خالد محمد', '0550000000'],
                ['30111', 'Omar Hassan', '30111@althikr.edu.sa', 'الدبلوم الأمريكي', '7', 'A', '', '']]
     },
+    sis: {
+      title: 'الطلاب من نظام التسجيل (ShereEDU)', rpc: 'import_students_sis', order: 2, raw: true,
+      desc: 'ارفع ملف «Active Agreements» كما هو من نظام التسجيل. المفتاح هو رقم الهوية/الإقامة: الطالب الموجود تُحدَّث بياناته، والجديد يُضاف. يُحفظ كل عمود في الملف. رقم الهوية وتاريخ الميلاد وبريد ولي الأمر لا يراها إلا مدير النظام والإدارة العليا. الطالب يُسجَّل في صفه، ثم يُوزَّع على الفصول من تبويب «الطلاب».',
+      fields: [
+        ['national_id', 'رقم الهوية / الإقامة', true, ['saudi id number / iqama (student) (students)', 'رقم الهويه', 'الهويه', 'national_id']],
+        ['full_name', 'الاسم الكامل', true, ['full name (student) (students)', 'الاسم الكامل', 'full_name']],
+        ['grade', 'الصف (كما في نظام التسجيل)', true, ['grade', 'الصف']],
+        ['agreement_id', 'رقم الاتفاقية', false, ['(do not modify) agreement']],
+        ['first_name', 'الاسم الأول', false, ['student name (student) (students)']],
+        ['father_name', 'اسم الأب', false, ['father’s name (student) (students)', "father's name (student) (students)"]],
+        ['grandfather_name', 'اسم الجد', false, ['grandfather’s name (student) (students)', "grandfather's name (student) (students)"]],
+        ['family_name', 'اسم العائلة', false, ['family name  (student) (students)', 'family name (student) (students)']],
+        ['parent_email', 'بريد ولي الأمر', false, ['email (parent/guardian) (contact)']],
+        ['nationality', 'الجنسية', false, ['nationality new (student) (students)', 'nationality']],
+        ['date_of_birth', 'تاريخ الميلاد', false, ['date of birth (student) (students)', 'تاريخ الميلاد']],
+        ['modified_on', 'آخر تعديل في نظام التسجيل', false, ['(do not modify) modified on']]
+      ],
+      sample: [['1000000000', 'محمد أحمد علي الغامدي', 'Dar Grade 4 - Ethraa Plus', '', 'محمد', 'أحمد', 'علي', 'الغامدي', 'parent@example.com', 'Saudi', '2015-03-01', '']]
+    },
     assignments: {
-      title: 'الإسناد (معلم × فصل × مادة)', rpc: 'import_assignments', order: 3,
+      title: 'الإسناد (معلم × فصل × مادة)', rpc: 'import_assignments', order: 4,
       desc: 'يُستورد بعد الموظفين. كل صف = معلم يدرّس مادة لفصل. المادة غير الموجودة تُضاف تلقائيًا (راجع قائمة المواد الجديدة في التقرير لاكتشاف الأخطاء الإملائية).',
       fields: [
         ['teacher_email', 'بريد المعلم', true, ['بريد المعلم', 'البريد', 'البريد الإلكتروني', 'email', 'teacher_email']],
@@ -194,7 +215,7 @@
       if (typeof XLSX === 'undefined') { toast('تعذر تحميل مكتبة قراءة Excel، تحقق من الإنترنت وأعد تحميل الصفحة.', 'err'); return; }
       try {
         const buf = await file.arrayBuffer();
-        wb = XLSX.read(buf, { type: 'array', codepage: 65001, cellDates: false });
+        wb = XLSX.read(buf, { type: 'array', codepage: 65001, cellDates: false, cellNF: true });
         $('#fileName', pane).textContent = `${file.name} — ${wb.SheetNames.length} ورقة`;
         loadSheet(wb.SheetNames[0]);
       } catch (e) { toast('تعذرت قراءة الملف: ' + errMsg(e), 'err'); }
@@ -202,6 +223,19 @@
 
     function loadSheet(name) {
       const ws = wb.Sheets[name];
+      // التواريخ تُحوَّل إلى صيغة ثابتة (yyyy-mm-dd) بدل تنسيق Excel المحلي مثل 4/15/09
+      const p2 = (n) => String(n).padStart(2, '0');
+      const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+      for (let R = range.s.r; R <= range.e.r; R++) for (let C = range.s.c; C <= range.e.c; C++) {
+        const cell = ws[XLSX.utils.encode_cell({ r: R, c: C })];
+        if (cell && cell.t === 'n' && cell.z && XLSX.SSF.is_date(cell.z)) {
+          const d = XLSX.SSF.parse_date_code(cell.v);
+          if (d) {
+            const day = `${d.y}-${p2(d.m)}-${p2(d.d)}`;
+            cell.w = (d.H || d.M) ? `${day}T${p2(d.H)}:${p2(d.M)}:${p2(Math.floor(d.S))}` : day;
+          }
+        }
+      }
       const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: '', blankrows: false });
       // أول صف يحتوي على عمودين فأكثر غير فارغين = صف العناوين
       let h = aoa.findIndex((r) => r.filter((c) => String(c).trim() !== '').length >= 2);
@@ -242,6 +276,9 @@
         }).join('')}</div>
         ${typeSel.value === 'assignments' ? `<label style="display:flex;gap:8px;align-items:center;margin-top:12px;font-weight:700">
           <input type="checkbox" id="replaceAll"> حذف كل الإسنادات الحالية قبل الاستيراد (لبداية فصل/عام جديد)</label>` : ''}
+        ${typeSel.value === 'sis' ? `<label style="display:flex;gap:8px;align-items:center;margin-top:12px;font-weight:700">
+          <input type="checkbox" id="deactMissing"> إيقاف حسابات الطلاب غير الموجودين في هذا الملف (المنسحبين)</label>
+          <p class="hint">فعّل هذا الخيار فقط إذا كان الملف يضم <b>كل</b> طلاب المدرسة. «تحقق بدون حفظ» يعرض لك عدد من سيتم إيقافهم قبل الحفظ.</p>` : ''}
         <h3 style="margin-top:16px">معاينة أول 8 صفوف</h3>
         <div class="table-wrap" id="preview"></div>
         <div class="toolbar" style="margin-top:14px">
@@ -274,6 +311,11 @@
           const x = m[f[0]];
           o[f[0]] = x == null ? '' : ('c' in x ? x.c : String(r[x.i] ?? '').trim());
         });
+        if (T.raw) {
+          // كل أعمدة الملف كما هي (عدا رمز التحقق الداخلي لنظام التسجيل)
+          o.raw = {};
+          sheet.headers.forEach((h, i) => { if (!/checksum/i.test(h) && String(r[i] ?? '').trim() !== '') o.raw[h] = String(r[i]).trim(); });
+        }
         return o;
       });
     }
@@ -293,12 +335,13 @@
       });
       if (missing.length) { toast('اربط الحقول المطلوبة: ' + missing.map((f) => f[1]).join('، '), 'warn'); return; }
       const replaceAll = !!$('#replaceAll', pane)?.checked;
+      const deactMissing = !!$('#deactMissing', pane)?.checked;
       if (!dry) {
         const ok = await confirmBox(`سيتم حفظ ${sheet.rows.length} صف في «${T.title}»${replaceAll ? ' بعد حذف كل الإسنادات الحالية' : ''}. هل تريد المتابعة؟`, 'نعم، احفظ', replaceAll);
         if (!ok) return;
       }
       const rows = mapped();
-      const total = { total: 0, inserted: 0, updated: 0, saved: 0, scopes: 0, classes_created: 0, subjects_created: [], errors: [] };
+      const total = { total: 0, inserted: 0, updated: 0, saved: 0, scopes: 0, classes_created: 0, grade_changed: 0, deactivated: 0, subjects_created: [], errors: [] };
       const btns = [$('#dryBtn', pane), $('#saveBtn', pane)]; btns.forEach((b) => b.disabled = true);
       const prog = $('#progress', pane);
       try {
@@ -307,9 +350,17 @@
           const args = { rows: rows.slice(i, i + CHUNK), dry_run: dry };
           if (typeSel.value === 'assignments') args.replace_all = replaceAll && i === 0 && !dry;
           const res = await run(sb.rpc(T.rpc, args));
-          ['total', 'inserted', 'updated', 'saved', 'scopes', 'classes_created'].forEach((k) => { total[k] += res[k] || 0; });
+          ['total', 'inserted', 'updated', 'saved', 'scopes', 'classes_created', 'grade_changed'].forEach((k) => { total[k] += res[k] || 0; });
           (res.subjects_created || []).forEach((s) => { if (!total.subjects_created.includes(s)) total.subjects_created.push(s); });
           (res.errors || []).forEach((e) => total.errors.push({ row: e.row + i + sheet.headerRow, msg: e.msg }));
+        }
+        if (typeSel.value === 'sis' && deactMissing) {
+          const ids = rows.map((r) => String(r.national_id || '').replace(/\s/g, '')).filter(Boolean);
+          if (ids.length) {
+            prog.textContent = 'جارٍ مطابقة المنسحبين…';
+            const res = await run(sb.rpc('import_students_sis', { rows: [], dry_run: dry, deactivate_missing: true, keep_ids: ids }));
+            total.deactivated = res.deactivated || 0;
+          }
         }
         prog.textContent = '';
         renderReport(total, dry, T);
@@ -329,6 +380,8 @@
       if (t.updated) parts.push(`<span class="chip gray">تحديث: ${t.updated}</span>`);
       if (t.saved) parts.push(`<span class="chip gray">إسنادات: ${t.saved}</span>`);
       if (t.scopes) parts.push(`<span class="chip gray">نطاقات: ${t.scopes}</span>`);
+      if (t.grade_changed) parts.push(`<span class="chip gray">تغيّر صفهم: ${t.grade_changed}</span>`);
+      if (t.deactivated) parts.push(`<span class="chip pink">${dry ? 'سيتم إيقاف' : 'أُوقف'}: ${t.deactivated} طالب غير موجود في الملف</span>`);
       if (t.classes_created) parts.push(`<span class="chip gray">فصول ${dry ? 'ستُنشأ' : 'أُنشئت'}: ${t.classes_created}</span>`);
       $('#report', pane).innerHTML = `<div class="report">
         <div class="row">${parts.join('')}</div>
@@ -464,95 +517,140 @@
      الطلاب
      =================================================================== */
   async function studentsTab(pane) {
-    const all = await fetchAll(() => sb.from('students')
-      .select('profile_id, student_number, class_id, guardian_name, guardian_phone, notes, profile:profiles(full_name, email, active)')
-      .order('student_number'));
-    const clsById = Object.fromEntries(R.classes.map((c) => [c.id, c]));
+    const all = await fetchAll(() => sb.from('v_students').select('*').order('stage_sort').order('grade_number').order('full_name'));
     pane.innerHTML = `
       <div class="toolbar">
         <input class="grow" id="q" placeholder="بحث بالاسم أو الرقم أو البريد…">
-        <select id="stF"><option value="">كل المراحل</option>${opts(R.stages, (s) => s.id, (s) => s.name_ar)}<option value="none">بدون فصل</option></select>
-        <select id="clF"><option value="">كل الفصول</option></select>
-        <button class="btn primary" id="add">+ إضافة طالب</button>
-        <button class="btn" id="move">نقل المحددين</button>
-        <button class="btn" id="csv">⬇ تنزيل</button>
+        <select id="stF"><option value="">كل المراحل</option>${opts(R.stages, (s) => s.id, (s) => s.name_ar)}</select>
+        <select id="grF"><option value="">كل الصفوف</option></select>
+        <select id="clF"><option value="">كل الفصول</option><option value="none">بدون فصل</option></select>
+        <select id="acF"><option value="1">النشطون</option><option value="0">الموقوفون</option><option value="">الكل</option></select>
       </div>
-      <p class="hint" id="cnt"></p>
+      <div class="toolbar">
+        <button class="btn primary" id="add">+ إضافة طالب</button>
+        <button class="btn" id="move">📦 توزيع المحددين على فصل</button>
+        <button class="btn" id="csv">⬇ تنزيل</button>
+        <span class="hint grow" id="cnt"></span>
+      </div>
       <div class="table-wrap glass" id="tbl"></div>`;
-    const stF = $('#stF', pane), clF = $('#clF', pane);
+    const stF = $('#stF', pane), grF = $('#grF', pane), clF = $('#clF', pane);
+    let current = [];
     stF.onchange = () => {
-      const cs = R.classes.filter((c) => !stF.value || stF.value === 'none' || String(c.stage_id) === stF.value);
-      clF.innerHTML = `<option value="">كل الفصول</option>${opts(cs, (c) => c.id, (c) => c.label)}`;
+      const gs = R.grades.filter((g) => !stF.value || String(g.stage_id) === stF.value);
+      grF.innerHTML = `<option value="">كل الصفوف</option>${opts(gs, (g) => g.id, gradeLabel)}`;
+      grF.onchange();
+    };
+    grF.onchange = () => {
+      const cs = R.classes.filter((c) => (!stF.value || String(c.stage_id) === stF.value) && (!grF.value || String(c.grade_id) === grF.value));
+      clF.innerHTML = `<option value="">كل الفصول</option><option value="none">بدون فصل</option>${opts(cs, (c) => c.id, (c) => c.label)}`;
       draw();
     };
-    let current = [];
-    stF.onchange();
     function draw() {
-      const q = norm(val(pane, '#q'));
+      const q = norm(val(pane, '#q')), ac = val(pane, '#acF');
       current = all.filter((s) => {
-        const c = clsById[s.class_id];
-        if (stF.value === 'none') { if (s.class_id) return false; }
-        else if (stF.value && (!c || String(c.stage_id) !== stF.value)) return false;
-        if (clF.value && String(s.class_id) !== clF.value) return false;
-        return !q || norm(`${s.profile?.full_name} ${s.student_number} ${s.profile?.email || ''}`).includes(q);
+        if (stF.value && String(s.stage_id) !== stF.value) return false;
+        if (grF.value && String(s.grade_id) !== grF.value) return false;
+        if (clF.value === 'none') { if (s.class_id) return false; }
+        else if (clF.value && String(s.class_id) !== clF.value) return false;
+        if (ac !== '' && String(s.active ? 1 : 0) !== ac) return false;
+        return !q || norm(`${s.full_name} ${s.student_number || ''} ${s.email || ''}`).includes(q);
       });
-      current.sort((a, b) => (clsById[a.class_id]?.label || '').localeCompare(clsById[b.class_id]?.label || '', 'ar')
-        || (a.profile?.full_name || '').localeCompare(b.profile?.full_name || '', 'ar'));
-      $('#cnt', pane).textContent = `${current.length} طالب`;
+      $('#cnt', pane).textContent = `${current.length} طالب${current.length > 600 ? ' — يُعرض أول 600، استخدم التصفية' : ''}`;
       const shown = current.slice(0, 600);
-      $('#tbl', pane).innerHTML = `<table><thead><tr><th><input type="checkbox" id="all"></th><th>الاسم</th><th>رقم الطالب</th><th>البريد</th><th>الفصل</th><th>ولي الأمر</th><th>الحالة</th><th></th></tr></thead>
+      $('#tbl', pane).innerHTML = `<table><thead><tr><th><input type="checkbox" id="all" title="تحديد الكل"></th><th>الاسم</th><th>الصف</th><th>الفصل</th><th>رقم الطالب</th><th>البريد</th><th>ولي الأمر</th><th>الحالة</th><th></th></tr></thead>
         <tbody>${shown.length ? shown.map((s) => `<tr>
           <td><input type="checkbox" data-pick="${s.profile_id}"></td>
-          <td><b>${esc(s.profile?.full_name)}</b></td><td>${esc(s.student_number)}</td><td dir="ltr">${esc(s.profile?.email || '—')}</td>
-          <td>${esc(clsById[s.class_id]?.label || '— بدون فصل —')}</td><td>${esc(s.guardian_name || '')} <span dir="ltr">${esc(s.guardian_phone || '')}</span></td>
-          <td>${pill(s.profile?.active)}</td>
+          <td><b>${esc(s.full_name)}</b></td>
+          <td>${esc(s.grade_name ? s.grade_name + ' ' + s.stage_name : '—')}</td>
+          <td>${s.class_name ? esc(s.class_name) : '<span class="hint">—</span>'}</td>
+          <td>${esc(s.student_number || '—')}</td><td dir="ltr">${esc(s.email || '—')}</td>
+          <td>${esc(s.guardian_name || '')} <span dir="ltr">${esc(s.guardian_phone || '')}</span></td>
+          <td>${pill(s.active)}</td>
           <td class="actions"><button class="btn sm" data-edit="${s.profile_id}">تعديل</button><button class="btn sm danger" data-del="${s.profile_id}">حذف</button></td></tr>`).join('')
-          : '<tr><td colspan="8" class="empty">لا نتائج</td></tr>'}</tbody></table>
-        ${current.length > 600 ? '<p class="hint" style="padding:8px 12px">يُعرض أول 600 — استخدم البحث أو التصفية.</p>' : ''}`;
+          : '<tr><td colspan="9" class="empty">لا نتائج</td></tr>'}</tbody></table>`;
       const allBox = $('#all', pane); if (allBox) allBox.onchange = () => $$('[data-pick]', pane).forEach((b) => b.checked = allBox.checked);
     }
-    $('#q', pane).oninput = draw; clF.onchange = draw;
-    $('#csv', pane).onclick = () => downloadCSV('الطلاب.csv', [['رقم الطالب', 'الاسم', 'البريد', 'المرحلة', 'الصف', 'الفصل', 'ولي الأمر', 'الجوال']]
-      .concat(current.map((s) => { const c = clsById[s.class_id] || {}; return [s.student_number, s.profile?.full_name, s.profile?.email, c.stage_name, c.grade_number, c.name, s.guardian_name, s.guardian_phone]; })));
+    stF.onchange();
+    $('#q', pane).oninput = draw; clF.onchange = draw; $('#acF', pane).onchange = draw;
+    $('#csv', pane).onclick = () => downloadCSV('الطلاب.csv', [['الاسم', 'المرحلة', 'الصف', 'الفصل', 'رقم الطالب', 'البريد', 'ولي الأمر', 'الجوال', 'الحالة']]
+      .concat(current.map((s) => [s.full_name, s.stage_name, s.grade_number, s.class_name, s.student_number, s.email, s.guardian_name, s.guardian_phone, s.active ? 'نشط' : 'موقوف'])));
     $('#add', pane).onclick = () => editStudent(null);
+
     $('#move', pane).onclick = async () => {
       const ids = $$('[data-pick]:checked', pane).map((b) => b.dataset.pick);
-      if (!ids.length) { toast('حدد طلابًا أولًا', 'warn'); return; }
-      await modal({ title: `نقل ${ids.length} طالب`, body: `<label class="f">إلى الفصل<select id="to">${opts(R.classes, (c) => c.id, (c) => c.label, '', '— بدون فصل —')}</select></label>`,
-        actions: [{ label: 'نقل', cls: 'primary', onClick: async (w) => {
-          const to = val(w, '#to') ? +val(w, '#to') : null;
-          for (let i = 0; i < ids.length; i += 200) await run(sb.from('students').update({ class_id: to }).in('profile_id', ids.slice(i, i + 200)));
-          toast('تم النقل'); await changed('students'); openTab('students', true); return true;
+      if (!ids.length) { toast('حدد طلابًا أولًا (من مربعات الاختيار في الجدول)', 'warn'); return; }
+      const picked = all.filter((s) => ids.includes(s.profile_id));
+      const grades = [...new Set(picked.map((s) => s.grade_id))];
+      if (grades.length > 1) { toast('الطلاب المحددون من أكثر من صف — اختر طلاب صف واحد (استخدم تصفية الصف).', 'warn'); return; }
+      const gid = grades[0];
+      const cs = R.classes.filter((c) => !gid || c.grade_id === gid);
+      const g = R.grades.find((x) => x.id === gid);
+      await modal({ title: `توزيع ${ids.length} طالب على فصل`, body: `
+          <p class="hint">${g ? 'الصف: ' + esc(gradeLabel(g)) : ''}</p>
+          <label class="f">فصل موجود<select id="to"><option value="">— اختر —</option>${opts(cs, (c) => c.id, (c) => c.label)}<option value="none">إزالة من الفصل</option></select></label>
+          ${gid ? `<label class="f" style="margin-top:10px">أو أنشئ فصلًا جديدًا في هذا الصف (اكتب اسمه، مثل 1 أو أ)<input id="newCls"></label>` : ''}`,
+        actions: [{ label: 'تنفيذ', cls: 'primary', onClick: async (w) => {
+          let to = val(w, '#to'); const nc = val(w, '#newCls');
+          if (!to && !nc) { toast('اختر فصلًا أو اكتب اسم فصل جديد', 'warn'); return false; }
+          if (nc) {
+            const exist = R.classes.find((c) => c.grade_id === gid && norm(c.name) === norm(nc));
+            to = exist ? exist.id : (await run(sb.from('classes').insert({ grade_id: gid, name: nc }).select('id')))[0].id;
+          }
+          const cid = to === 'none' ? null : +to;
+          for (let i = 0; i < ids.length; i += 200) await run(sb.from('students').update({ class_id: cid }).in('profile_id', ids.slice(i, i + 200)));
+          toast('تم التوزيع'); await changed('students'); openTab('students', true); return true;
         } }, { label: 'إلغاء', cls: 'ghost' }] });
     };
+
     $('#tbl', pane).onclick = async (e) => {
       const ed = e.target.closest('[data-edit]'), dl = e.target.closest('[data-del]');
       if (ed) editStudent(all.find((s) => s.profile_id === ed.dataset.edit));
       if (dl) {
         const s = all.find((x) => x.profile_id === dl.dataset.del);
-        if (!await confirmBox(`حذف الطالب «${s.profile?.full_name}» نهائيًا؟ (للإيقاف استخدم «تعديل» ← موقوف)`, 'حذف نهائي')) return;
+        if (!await confirmBox(`حذف الطالب «${s.full_name}» نهائيًا مع كل بياناته؟ (للإيقاف المؤقت استخدم «تعديل» ← موقوف)`, 'حذف نهائي')) return;
         try { await run(sb.from('profiles').delete().eq('id', s.profile_id)); toast('تم الحذف'); await changed('students'); openTab('students', true); }
         catch (er) { toast(errMsg(er), 'err'); }
       }
     };
 
     async function editStudent(s) {
-      const isNew = !s; s = s || { profile: { active: true } };
+      const isNew = !s; s = s || { active: true };
+      let pv = null;
+      if (!isNew) { try { pv = (await run(sb.from('student_private').select('*').eq('profile_id', s.profile_id)))[0] || null; } catch (_) {} }
+      const cs = R.classes.filter((c) => !s.grade_id || c.grade_id === s.grade_id);
+      const rawRows = pv && pv.raw ? Object.entries(pv.raw) : [];
       const body = `<div class="form-grid">
-        <label class="f">الاسم الكامل<input id="fn" value="${esc(s.profile?.full_name || '')}"></label>
-        <label class="f">رقم الطالب<input id="num" value="${esc(s.student_number || '')}"></label>
-        <label class="f">البريد المدرسي<input id="em" dir="ltr" value="${esc(s.profile?.email || '')}"></label>
-        <label class="f">الفصل<select id="cl">${opts(R.classes, (c) => c.id, (c) => c.label, s.class_id, '— بدون فصل —')}</select></label>
+        <label class="f">الاسم الكامل<input id="fn" value="${esc(s.full_name || '')}"></label>
+        <label class="f">رقم الطالب (اختياري)<input id="num" value="${esc(s.student_number || '')}"></label>
+        <label class="f">البريد المدرسي<input id="em" dir="ltr" value="${esc(s.email || '')}" placeholder="للدخول إلى المنصة"></label>
+        <label class="f">الصف<select id="gr">${opts(R.grades, (g) => g.id, gradeLabel, s.grade_id, '— اختر —')}</select></label>
+        <label class="f">الفصل<select id="cl">${opts(cs, (c) => c.id, (c) => c.label, s.class_id, '— بدون فصل —')}</select></label>
         <label class="f">اسم ولي الأمر<input id="gn" value="${esc(s.guardian_name || '')}"></label>
         <label class="f">جوال ولي الأمر<input id="gp" dir="ltr" value="${esc(s.guardian_phone || '')}"></label>
-        <label class="f">الحالة<select id="ac"><option value="1" ${s.profile?.active ? 'selected' : ''}>نشط</option><option value="0" ${!s.profile?.active ? 'selected' : ''}>موقوف</option></select></label>
-      </div>`;
-      const ok = await modal({ title: isNew ? 'إضافة طالب' : 'تعديل: ' + s.profile.full_name, body, wide: true, actions: [
+        <label class="f">الحالة<select id="ac"><option value="1" ${s.active ? 'selected' : ''}>نشط</option><option value="0" ${!s.active ? 'selected' : ''}>موقوف</option></select></label>
+      </div>
+      ${pv ? `<h4 style="margin:16px 0 6px">🔒 بيانات نظام التسجيل <span class="hint">(تظهر لمدير النظام والإدارة العليا فقط)</span></h4>
+        <div class="form-grid">
+          <label class="f">رقم الهوية / الإقامة<input id="nid" dir="ltr" value="${esc(pv.national_id || '')}"></label>
+          <label class="f">تاريخ الميلاد<input id="dob" type="date" value="${esc(pv.date_of_birth || '')}"></label>
+          <label class="f">الجنسية<input id="nat" value="${esc(pv.nationality || '')}"></label>
+          <label class="f">بريد ولي الأمر<input id="pem" dir="ltr" value="${esc(pv.parent_email || '')}"></label>
+        </div>
+        ${rawRows.length ? `<details style="margin-top:10px"><summary class="hint">كل أعمدة الملف الأصلي (${rawRows.length})</summary>
+          <div class="table-wrap" style="margin-top:6px"><table><tbody>${rawRows.map(([k, v]) => `<tr><th>${esc(k)}</th><td>${esc(v)}</td></tr>`).join('')}</tbody></table></div></details>` : ''}
+        <p class="hint">آخر تحديث من نظام التسجيل: ${pv.source_modified_at ? fmtDate(pv.source_modified_at) : '—'} — إعادة استيراد الملف ستستبدل هذه القيم.</p>` : ''}`;
+      const ok = await modal({ title: isNew ? 'إضافة طالب' : 'تعديل: ' + s.full_name, body, wide: true, actions: [
         { label: 'حفظ', cls: 'primary', onClick: async (w) => {
           const prof = { full_name: val(w, '#fn'), email: val(w, '#em').toLowerCase() || null, active: val(w, '#ac') === '1' };
-          const st = { student_number: val(w, '#num'), class_id: val(w, '#cl') ? +val(w, '#cl') : null,
+          const st = { student_number: val(w, '#num') || null, grade_id: val(w, '#gr') ? +val(w, '#gr') : null,
+                       class_id: val(w, '#cl') ? +val(w, '#cl') : null,
                        guardian_name: val(w, '#gn') || null, guardian_phone: val(w, '#gp') || null };
-          if (!prof.full_name || !st.student_number) { toast('الاسم ورقم الطالب مطلوبان', 'warn'); return false; }
+          if (!prof.full_name) { toast('الاسم مطلوب', 'warn'); return false; }
+          if (!st.grade_id && !st.class_id) { toast('اختر الصف', 'warn'); return false; }
+          if (st.class_id) {
+            const c = R.classes.find((x) => x.id === st.class_id);
+            if (c && st.grade_id && c.grade_id !== st.grade_id) { toast('الفصل المختار ليس من نفس الصف', 'warn'); return false; }
+          }
           if (prof.email && !prof.email.endsWith('@' + LMS.C.SCHOOL_DOMAIN)) { toast('البريد يجب أن يكون على نطاق المدرسة', 'warn'); return false; }
           if (isNew) {
             const [np] = await run(sb.from('profiles').insert({ ...prof, role: 'student' }).select('id'));
@@ -561,10 +659,27 @@
           } else {
             await run(sb.from('profiles').update(prof).eq('id', s.profile_id));
             await run(sb.from('students').update(st).eq('profile_id', s.profile_id));
+            if (pv) {
+              const nid = val(w, '#nid').replace(/\s/g, '');
+              if (!nid) { toast('رقم الهوية لا يمكن أن يكون فارغًا', 'warn'); return false; }
+              await run(sb.from('student_private').update({ national_id: nid, date_of_birth: val(w, '#dob') || null,
+                nationality: val(w, '#nat') || null, parent_email: val(w, '#pem').toLowerCase() || null, updated_at: new Date().toISOString() })
+                .eq('profile_id', s.profile_id));
+            }
           }
           toast('تم الحفظ'); return true;
         } }, { label: 'إلغاء', cls: 'ghost' }] });
       if (ok === true) { await changed('students'); openTab('students', true); }
+    }
+    // عند تغيير الصف في نافذة التعديل تُحدَّث قائمة الفصول
+    if (!window.__grListener) {
+      window.__grListener = true;
+      document.addEventListener('change', (e) => {
+        if (e.target.id !== 'gr') return;
+        const w = e.target.closest('.modal'); if (!w) return;
+        const clSel = $('#cl', w); const gid = +e.target.value;
+        clSel.innerHTML = opts(R.classes.filter((c) => c.grade_id === gid), (c) => c.id, (c) => c.label, '', '— بدون فصل —');
+      });
     }
   }
 

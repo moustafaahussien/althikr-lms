@@ -57,12 +57,15 @@
     let html = `<div class="section-title"><h2>نظرة عامة على المدرسة</h2>
       ${role === 'admin' ? '<a class="btn primary sm" href="admin.html">لوحة الإدارة</a>' : ''}</div>
       <div class="grid stats">${items.map(([l, n]) => `<div class="stat glass"><div class="n">${n}</div><div class="l">${l}</div></div>`).join('')}</div>`;
-    if (st.by_section && st.by_section.length) {
+    if (st.by_stage && st.by_stage.length) {
+      html += `<div class="grid stats" style="margin-top:14px">${st.by_stage.map((s) =>
+        `<div class="stat glass"><div class="n">${s.students}</div><div class="l">${esc(s.stage)}</div></div>`).join('')}</div>`;
+    } else if (st.by_section && st.by_section.length) {
       html += `<div class="grid stats" style="margin-top:14px">${st.by_section.map((s) =>
         `<div class="stat glass"><div class="n">${s.students}</div><div class="l">طلاب ${esc(s.section)} — ${s.classes} فصل</div></div>`).join('')}</div>`;
     }
-    if (role === 'admin' && (st.no_class || st.no_email)) {
-      html += `<div class="notice warn" style="margin-top:14px">تنبيه: ${st.no_class ? `${st.no_class} طالب بدون فصل. ` : ''}${st.no_email ? `${st.no_email} حساب بدون بريد (لن يتمكن من الدخول).` : ''}</div>`;
+    if (role === 'admin' && (st.no_class || st.no_email || st.students_no_email)) {
+      html += `<div class="notice warn" style="margin-top:14px">تنبيه: ${st.no_class ? `${st.no_class} طالب لم يُوزَّعوا على فصول بعد. ` : ''}${st.students_no_email ? `${st.students_no_email} طالب بدون بريد مدرسي. ` : ''}${st.no_email ? `${st.no_email} موظف بدون بريد.` : ''}</div>`;
     }
     panel.insertAdjacentHTML('beforeend', html);
   }

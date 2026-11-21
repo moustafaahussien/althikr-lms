@@ -38,7 +38,7 @@ window.LMS_CONFIG = {
     { key: 'directory',   title: 'دليل الموظفين',        icon: '📇', url: 'staff-directory.html', roles: ['admin','leadership','principal','supervisor','teacher','staff'], desc: 'أسماء المنسوبين ومسمياتهم وطرق التواصل' },
     { key: 'supervision', title: 'مكتب الإشراف التربوي', icon: '🧭', url: 'supervision/', roles: ['admin','leadership','principal','supervisor'], desc: 'جداول الحصص والزيارات وتقييم المعلمين' },
     { key: '21csu',       title: 'مهارات القرن 21',      icon: '🚀', url: 'https://moustafaahussien.github.io/21csu/', roles: [], desc: 'البرامج الستة للوحدة' },
-    { key: 'ai',          title: 'المعلم الذكي',         icon: '🤖', url: 'https://moustafaahussien.github.io/21csu/ai/', roles: ['admin','leadership','principal','supervisor','teacher','staff'], desc: 'أدوات الذكاء الاصطناعي للمعلمين' },
+    { key: 'ai',          title: 'المعلم الذكي',         icon: '🤖', url: 'ai/', roles: ['admin','leadership','principal','supervisor','teacher','staff'], desc: 'أدوات الذكاء الاصطناعي للمعلمين' },
     { key: 'talent',      title: 'منصة الموهبة',         icon: '🌟', url: 'https://moustafaahussien.github.io/Mawhiba/', roles: [], desc: 'برامج موهبة والمسابقات' },
     { key: 'gifted',      title: 'الكشف عن الموهوبين',   icon: '🧩', url: 'https://moustafaahussien.github.io/matrices-test/', roles: ['admin','leadership','principal','supervisor','teacher'], desc: 'اختبارات رافن وتورانس' }
   ]

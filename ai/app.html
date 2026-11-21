@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>تطبيق — المعلم الذكي</title>
+<link rel="icon" type="image/png" href="../favicon.png">
+<style>
+  html,body{margin:0;height:100%;background:#F5F6FC;font-family:Tahoma,sans-serif}
+  iframe{border:0;width:100%;height:100%;display:block;background:#fff}
+  .msg{display:grid;place-items:center;height:100%;color:#565D8C;text-align:center;padding:24px}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../assets/js/config.js?v=202611220130"></script>
+<script src="ai-lms.js?v=9"></script>
+</head>
+<body>
+<div class="msg" id="m">⏳ جارٍ تحميل التطبيق…</div>
+<script>
+/* تطبيق المعلم يعمل داخل إطار معزول (sandbox) حتى لا يصل لحسابك في المنصة */
+(async function () {
+  const id = new URLSearchParams(location.search).get('id') || '';
+  const m = document.getElementById('m');
+  const SHIM = '<script>(function(){function M(){var d={};return{getItem:function(k){return Object.prototype.hasOwnProperty.call(d,k)?d[k]:null},setItem:function(k,v){d[k]=String(v)},removeItem:function(k){delete d[k]},clear:function(){d={}},key:function(i){return Object.keys(d)[i]||null},get length(){return Object.keys(d).length}}}["localStorage","sessionStorage"].forEach(function(n){try{window[n].getItem("x")}catch(e){try{Object.defineProperty(window,n,{value:M(),configurable:true})}catch(e2){}}});})();<\/script>';
+  const doc = h => /<head[^>]*>/i.test(h) ? h.replace(/<head[^>]*>/i, x => x + SHIM) : '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' + SHIM + '</head><body>' + h + '</body></html>';
+  try {
+    const r = await AI_LMS.call('app', { id });
+    if (!r || !r.ok) throw new Error((r && r.error) || 'تعذّر فتح التطبيق');
+    const g = await AI_LMS.call('get', { id }).catch(() => null);
+    if (g && g.item && g.item.title) document.title = g.item.title + ' — المعلم الذكي';
+    const f = document.createElement('iframe');
+    f.setAttribute('sandbox', 'allow-scripts allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-downloads');
+    f.setAttribute('allow', 'fullscreen; autoplay; clipboard-write; microphone; camera');
+    f.srcdoc = doc(r.html || '');
+    m.replaceWith(f);
+  } catch (e) { m.textContent = e.message; }
+})();
+</script>
+</body>
+</html>

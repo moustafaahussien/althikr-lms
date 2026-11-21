@@ -198,3 +198,4 @@ footer.credit { text-align: center; color: var(--muted); font-size: .82rem; padd
 .tbl-tools { display: flex; gap: 6px; justify-content: flex-end; margin: 4px 0 6px; }
 .tbl-tools .btn { padding: 3px 10px; font-size: .8rem; }
 @media print { #topbar, .tbl-tools, .no-print, .credit { display: none !important; } }
+.nbadge { background: #e4a842; color: #3d2600; border-radius: 99px; padding: 0 7px; font-size: .75rem; font-weight: 700; margin-inline-start: 4px; }

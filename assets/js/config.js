@@ -28,6 +28,7 @@ window.LMS_CONFIG = {
 
     // —— منصاتك الحالية (تُدمج تدريجيًا) ——
     { key: 'online',      title: 'التعليم عن بعد',       icon: '🎥', url: 'online/', roles: [], desc: 'روابط الحصص والجداول والتقرير اليومي' },
+    { key: 'messages',    title: 'الرسائل والتعاميم',   icon: '✉️', url: 'messages.html', roles: [], desc: 'البريد الداخلي والتعاميم ومراسلة أولياء الأمور' },
     { key: 'attendance',  title: 'الحضور والغياب',      icon: '🗓️', url: 'attendance.html', roles: ['admin','leadership','principal','supervisor','teacher','staff'], desc: 'تسجيل الحضور اليومي وتقارير الغياب والتأخر' },
     { key: 'load',        title: 'نصاب الحصص',          icon: '📊', url: 'teaching-load.html', roles: ['admin','leadership','principal','supervisor'], desc: 'الحصص الأسبوعية لكل معلم وجدوله' },
     { key: 'directory',   title: 'دليل الموظفين',        icon: '📇', url: 'staff-directory.html', roles: ['admin','leadership','principal','supervisor','teacher','staff'], desc: 'أسماء المنسوبين ومسمياتهم وطرق التواصل' },

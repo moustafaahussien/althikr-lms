@@ -170,6 +170,7 @@
       ['admin.html', 'لوحة الإدارة', p.role === 'admin'],
       ['settings.html', 'إعدادات المدرسة', ['admin', 'leadership', 'principal'].includes(p.role)],
       ['supervision/', '🧭 مكتب الإشراف التربوي', ['admin', 'leadership', 'principal', 'supervisor'].includes(p.role)],
+      ['messages.html', '✉️ الرسائل <span class="nbadge" id="navMsg" hidden></span>', true],
       ['attendance.html', '🗓️ الحضور والغياب', !['student', 'parent'].includes(p.role)],
       ['teaching-load.html', '📊 نصاب الحصص', ['admin', 'leadership', 'principal', 'supervisor'].includes(p.role)],
       ['staff-directory.html', '📇 دليل الموظفين', !['student', 'parent'].includes(p.role)]];
@@ -187,6 +188,10 @@
         <div id="calBar" class="calbar" role="button" tabindex="0" title="التقويم الدراسي"></div>
       </nav>`;
     $('#logoutBtn').onclick = signOut;
+    // عدّاد الرسائل غير المقروءة والتعاميم التي تنتظر «تم الاطلاع»
+    const msgBadge = async () => { try { const { data } = await sb.rpc('msg_counts'); const b = $('#navMsg'); if (!b || !data) return;
+      const n = (data.unread || 0); b.hidden = !n; b.textContent = n; window.LMS_MSG = data; document.dispatchEvent(new CustomEvent('lms:msg', { detail: data })); } catch (_) {} };
+    msgBadge(); clearInterval(window.__msgT); window.__msgT = setInterval(msgBadge, 90000);
     const cal = $('#calBar');
     cal.onclick = openCalendar;
     cal.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openCalendar(); } };

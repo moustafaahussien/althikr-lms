@@ -170,6 +170,7 @@
       ['admin.html', 'لوحة الإدارة', p.role === 'admin'],
       ['settings.html', 'إعدادات المدرسة', ['admin', 'leadership', 'principal'].includes(p.role)],
       ['supervision/', '🧭 مكتب الإشراف التربوي', ['admin', 'leadership', 'principal', 'supervisor'].includes(p.role)],
+      ['attendance.html', '🗓️ الحضور والغياب', !['student', 'parent'].includes(p.role)],
       ['teaching-load.html', '📊 نصاب الحصص', ['admin', 'leadership', 'principal', 'supervisor'].includes(p.role)],
       ['staff-directory.html', '📇 دليل الموظفين', !['student', 'parent'].includes(p.role)]];
     bar.innerHTML = `

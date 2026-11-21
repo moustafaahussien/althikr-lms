@@ -169,7 +169,8 @@
     const links = [['home.html', 'الرئيسية', true],
       ['admin.html', 'لوحة الإدارة', p.role === 'admin'],
       ['settings.html', 'إعدادات المدرسة', ['admin', 'leadership', 'principal'].includes(p.role)],
-      ['supervision/', '🧭 مكتب الإشراف التربوي', ['admin', 'leadership', 'principal', 'supervisor'].includes(p.role)]];
+      ['supervision/', '🧭 مكتب الإشراف التربوي', ['admin', 'leadership', 'principal', 'supervisor'].includes(p.role)],
+      ['staff-directory.html', '📇 دليل الموظفين', !['student', 'parent'].includes(p.role)]];
     bar.innerHTML = `
       <div class="hrow">
         <a class="brand" href="home.html"><span class="logo-tile"><img src="assets/img/logo-mark.png" alt="مدارس دار الذكر"></span><span>${esc(C.PLATFORM_NAME)}<small>${esc(C.SCHOOL_NAME)}</small></span></a>

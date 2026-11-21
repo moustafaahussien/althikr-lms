@@ -66,7 +66,7 @@
     if (role === 'admin' || role === 'leadership') await leaderPanel();
     if (STAFF) await staffPanel();
     if (role === 'student') await studentPanel();
-    if (role === 'parent') await parentPanel();
+    if (role === 'parent' || (ctx.children || []).length) await parentPanel();
   } catch (e) { toast(errMsg(e), 'err'); }
 
   function scopeText(s) {
@@ -169,32 +169,42 @@
   }
 
   // ---------- الطالب ----------
+  // ---------- بطاقة طالب (للطالب نفسه ولولي أمره) ----------
+  const STL = { absent: 'غائب', late: 'متأخر', excused: 'غائب بعذر' };
+  async function childCard(id, mine) {
+    const { data: c, error } = await sb.rpc('portal_child', { p_student: id });
+    if (error) return `<div class="notice err">${esc(errMsg(error))}</div>`;
+    const a = c.attendance || {};
+    const pct = a.days_taken ? Math.round((1 - (a.absent + a.excused) / a.days_taken) * 100) : null;
+    return `<div class="card glass" style="margin-bottom:14px">
+      <div class="section-title" style="margin-top:0"><h2>🎓 ${esc(c.name)}</h2><span class="hint">${esc(c.grade || '')}${c.class ? ' / فصل ' + esc(c.class) : ''}${c.number ? ' · رقم ' + esc(c.number) : ''}</span></div>
+      <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px">
+        <div class="card-box" style="padding:10px"><b style="font-size:1.4rem;color:var(--accent)">${pct == null ? '—' : pct + '%'}</b><div class="hint">نسبة الحضور (60 يومًا)</div></div>
+        <div class="card-box" style="padding:10px"><b style="font-size:1.4rem;color:#c0392b">${a.absent || 0}</b><div class="hint">غياب</div></div>
+        <div class="card-box" style="padding:10px"><b style="font-size:1.4rem;color:#b9691b">${a.late || 0}</b><div class="hint">تأخر</div></div>
+        <div class="card-box" style="padding:10px"><b style="font-size:1.4rem;color:#2c7be5">${a.excused || 0}</b><div class="hint">غياب بعذر</div></div></div>
+      ${(a.recent || []).length ? `<details style="margin-top:10px"><summary class="hint" style="cursor:pointer">سجل الغياب والتأخر</summary><div class="table-wrap" data-title="سجل حضور ${esc(c.name)}" style="margin-top:6px"><table>
+        <thead><tr><th>التاريخ</th><th>هجري</th><th>الحصة</th><th>الحالة</th><th>ملاحظة</th></tr></thead><tbody>${a.recent.map((r) => `<tr><td>${esc(r.d)}</td><td>${esc(LMS.hijri(r.d))}</td>
+        <td>${r.p ? r.p : 'يومي'}</td><td>${STL[r.s] || r.s}</td><td>${esc(r.n || '')}</td></tr>`).join('')}</tbody></table></div></details>` : ''}
+      <h3 style="margin:14px 0 8px;font-size:1rem">المعلمون</h3>
+      ${(c.teachers || []).length ? `<div class="grid modules">${c.teachers.sort((x, y) => (x.subject || '').localeCompare(y.subject || '', 'ar')).map((t) => `
+        <div class="module glass"><span class="ic">📚</span><b>${esc(t.subject)}</b><small>${esc(t.name)}</small>
+          <a class="btn sm" style="margin-top:6px" href="messages.html?to=${esc(t.id)}">✉️ مراسلة</a></div>`).join('')}</div>`
+        : '<div class="hint">لم تُسند مواد لهذا الصف بعد.</div>'}
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><a class="btn" href="messages.html">✉️ الرسائل</a><a class="btn" href="services.html#cmp">📣 تقديم شكوى</a></div>
+    </div>`;
+  }
   async function studentPanel() {
     const s = ctx.student;
-    if (!s || !s.class_id) {
-      panel.innerHTML = `<div class="notice warn">لم يتم ربطك بفصل بعد. تواصل مع إدارة المنصة.</div>`;
-      return;
-    }
-    const ta = await fetchAll(() => sb.from('teaching_assignments')
-      .select('subject:subjects(name_ar), teacher:profiles(full_name, job_title)').eq('class_id', s.class_id));
-    ta.sort((a, b) => (a.subject?.name_ar || '').localeCompare(b.subject?.name_ar || '', 'ar'));
-    panel.innerHTML = `
-      <div class="section-title"><h2>موادي ومعلميّ — ${esc(s.class_label)}</h2></div>
-      ${ta.length ? `<div class="grid modules">${ta.map((a) => `
-        <div class="module glass"><span class="ic">📚</span><b>${esc(a.subject?.name_ar)}</b>
-          <small>${esc(a.teacher?.full_name || '')}</small></div>`).join('')}</div>`
-        : '<div class="card glass empty">لم تُسند مواد لفصلك بعد.</div>'}`;
+    if (!s) { panel.innerHTML = `<div class="notice warn">لم يُستكمل ملفك الدراسي بعد. تواصل مع إدارة المدرسة.</div>`; return; }
+    panel.innerHTML = await childCard(s.id, true);
   }
 
-  // ---------- ولي الأمر ----------
+  // ---------- ولي الأمر (وأي موظف له أبناء في المدرسة) ----------
   async function parentPanel() {
-    const links = await fetchAll(() => sb.from('parent_links')
-      .select('relation, student:students(student_number, class_id, profile:profiles(full_name))').eq('parent_id', p.id));
-    if (!links.length) { panel.innerHTML = `<div class="notice info">لم يتم ربط أبنائك بحسابك بعد.</div>`; return; }
-    const cls = await fetchAll(() => sb.from('v_classes').select('id,label'));
-    const lab = Object.fromEntries(cls.map((c) => [c.id, c.label]));
-    panel.innerHTML = `<div class="section-title"><h2>أبنائي</h2></div>
-      <div class="grid modules">${links.map((l) => `<div class="module glass"><span class="ic">🎓</span>
-        <b>${esc(l.student?.profile?.full_name)}</b><small>${esc(lab[l.student?.class_id] || '')}</small></div>`).join('')}</div>`;
+    const kids = ctx.children || [];
+    if (!kids.length) { panel.innerHTML = role === 'parent' ? `<div class="notice info">لم يتم ربط أبنائك بحسابك بعد. تواصل مع إدارة المدرسة.</div>` : ''; return; }
+    const cards = await Promise.all(kids.map((k) => childCard(k)));
+    panel.insertAdjacentHTML(role === 'parent' ? 'afterbegin' : 'beforeend', `<div class="section-title"><h2>👪 أبنائي</h2></div>${cards.join('')}`);
   }
 })();

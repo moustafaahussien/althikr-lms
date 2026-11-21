@@ -99,10 +99,11 @@
   }
 
   // ---------- إنشاء رسالة / تعميم ----------
-  function compose({ kind, reply }) {
+  function compose({ kind, reply, to }) {
     const circ = kind === 'circular';
     const TO = new Map(); const files = [];
     if (reply && reply.from_id) TO.set(reply.from_id, reply.from);
+    if (to) TO.set(to.id, to.name);
     const G = GROUPS;
     const groupsHtml = (G.can_broadcast ? `
       <div class="grp-box"><label><input type="checkbox" data-all> كل الموظفين</label>
@@ -171,5 +172,9 @@
   // فتح رسالة من رابط (?m=رقم)
   const qid = Number(new URLSearchParams(location.search).get('m'));
   counts(); await loadList(); if (qid) open(qid);
+  // مراسلة شخص محدد من رابط (?to=رقم الحساب) — مثل «مراسلة المعلم» في بوابة ولي الأمر
+  const qto = new URLSearchParams(location.search).get('to');
+  if (qto) { const { data } = await sb.rpc('msg_contacts', { p_q: '' }); const p = (data || []).find((x) => x.id === qto);
+    if (p) compose({ kind: 'mail', to: { id: p.id, name: p.name } }); else toast('لا يمكنك مراسلة هذا الشخص', 'warn'); }
   setInterval(counts, 60000);
 })();

@@ -8,7 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="icon" type="image/png" href="favicon.png">
   <meta name="theme-color" content="#0f6e6a">
-  <link rel="stylesheet" href="assets/css/app.css?v=202611220330">
+  <link rel="stylesheet" href="assets/css/app.css?v=202611220400">
 </head>
 <body>
   <div class="login-wrap">
@@ -22,8 +22,8 @@
   <footer class="credit" style="position:fixed;bottom:0;inset-inline:0">إعداد وتصميم: مصطفى حسين · <a href="privacy.html">سياسة الخصوصية</a></footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="assets/js/config.js?v=202611220330"></script>
-  <script src="assets/js/core.js?v=202611220330"></script>
+  <script src="assets/js/config.js?v=202611220400"></script>
+  <script src="assets/js/core.js?v=202611220400"></script>
   <script>
   (async function () {
     const { sb, C, configured, esc, $, signInWithGoogle, signOut, getContext, errMsg, rememberNext, takeNext } = LMS;
@@ -38,8 +38,11 @@
       area.innerHTML = `
         <p>سجّل الدخول بحسابك المدرسي <b dir="ltr">@${esc(C.SCHOOL_DOMAIN)}</b></p>
         <button class="btn primary gbtn" id="gbtn">${gIcon}<span>الدخول بحساب Google المدرسي</span></button>
+        <div class="hint" style="margin:14px 0 6px">أولياء الأمور:</div>
+        <button class="btn gbtn" id="pbtn">${gIcon}<span>دخول ولي الأمر (بريده المسجّل في المدرسة)</span></button>
         ${notice}`;
-      $('#gbtn').onclick = signInWithGoogle;
+      $('#gbtn').onclick = () => signInWithGoogle();
+      $('#pbtn').onclick = () => signInWithGoogle(true);
     };
 
     if (!configured) {
@@ -67,9 +70,11 @@
       const email = (ctx && ctx.email) || session.user.email || '';
       const msg = ctx && ctx.students_closed
         ? `دخول الطلاب إلى المنصة غير متاح حاليًا، وسيُعلَن عند فتحه.`
+        : ctx && ctx.parents_closed
+        ? `بوابة أولياء الأمور غير متاحة حاليًا، وستُعلن المدرسة عند فتحها.`
         : ctx && ctx.domain_ok === false
         ? `الحساب <b dir="ltr">${esc(email)}</b> ليس حسابًا مدرسيًا. استخدم بريدك على <b dir="ltr">@${esc(C.SCHOOL_DOMAIN)}</b>.`
-        : `الحساب <b dir="ltr">${esc(email)}</b> غير مسجّل في المنصة أو موقوف. تواصل مع إدارة المنصة لإضافتك.`;
+        : `الحساب <b dir="ltr">${esc(email)}</b> غير مسجّل في المنصة أو موقوف. ولي الأمر: ادخل بنفس البريد المسجّل لدى المدرسة لابنك. وإلا تواصل مع إدارة المدرسة.`;
       area.innerHTML = `<div class="notice err">${msg}</div>
         <button class="btn gbtn" id="other">الدخول بحساب آخر</button>`;
       $('#other').onclick = async () => { await sb.auth.signOut(); showLogin(); };

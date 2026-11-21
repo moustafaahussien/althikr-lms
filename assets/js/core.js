@@ -110,12 +110,11 @@
     return n;
   }
 
-  async function signInWithGoogle() {
+  // parent = true: حساب Google الشخصي لولي الأمر (بدون تقييد نطاق المدرسة)
+  async function signInWithGoogle(parent) {
     const redirectTo = new URL('index.html', location.href.replace(/[^/]*([?#].*)?$/, '')).href;
-    const { error } = await sb.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo, queryParams: { hd: C.SCHOOL_DOMAIN, prompt: 'select_account' } }
-    });
+    const queryParams = parent === true ? { prompt: 'select_account' } : { hd: C.SCHOOL_DOMAIN, prompt: 'select_account' };
+    const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo, queryParams } });
     if (error) toast(errMsg(error), 'err');
   }
 

@@ -971,8 +971,23 @@
           <input type="checkbox" id="stLogin" ${get('student_login_enabled') === true ? 'checked' : ''}> السماح للطلاب بالدخول إلى المنصة</label>
         <p class="hint" style="margin:6px 0 0">بريد كل طالب = رقم هويته@${esc(LMS.C.SCHOOL_DOMAIN)} ويُضبط تلقائيًا من نظام التسجيل. عند الإيقاف تبقى بيانات الطلاب محفوظة، لكن أي طالب يحاول الدخول يرى رسالة «دخول الطلاب غير متاح حاليًا». المعلمون والإدارة غير متأثرين.</p>
       </div>
+      <div class="card glass" style="margin:16px 0;padding:14px">
+        <label style="display:flex;gap:10px;align-items:center;font-weight:800;font-size:1.02rem">
+          <input type="checkbox" id="paLogin" ${get('parent_login_enabled') === true ? 'checked' : ''}> فتح بوابة أولياء الأمور</label>
+        <p class="hint" style="margin:6px 0 8px">ولي الأمر يدخل بحساب Google على نفس البريد المسجّل لابنه في نظام التسجيل (أي نطاق). يرى أبناءه وحضورهم ومعلميهم، ويراسل المعلمين والإدارة، ويقدّم الشكاوى.</p>
+        <button class="btn sm" id="paSync">👪 إنشاء حسابات أولياء الأمور وربطهم بأبنائهم</button> <span class="hint" id="paInfo"></span>
+      </div>
       <p class="hint">⚠️ أي حساب خارج هذه النطاقات لن يرى أي بيانات حتى لو كان مسجّلًا. لا تحذف نطاق المدرسة وإلا ستفقد الدخول أنت أيضًا.</p>
       <button class="btn primary" id="sv">حفظ الإعدادات</button></div>`;
+    $('#paSync', pane).onclick = async () => {
+      try {
+        const pre = await run(sb.rpc('parents_sync', { p_apply: false }));
+        if (!await confirmBox(`سيتم: ${pre.new_accounts} حساب ولي أمر جديد من ${pre.emails} بريد، وربط ${pre.students} طالب بأولياء أمورهم${pre.existing_staff ? ` (منهم ${pre.existing_staff} موظف ولي أمر يُربط بحسابه الحالي)` : ''}. الحسابات لا تعمل إلا بعد فتح البوابة.`, 'نعم، أنشئ واربط', false)) return;
+        const r = await run(sb.rpc('parents_sync', { p_apply: true }));
+        $('#paInfo', pane).textContent = `✓ ${r.created} حساب جديد — ${r.parents} ولي أمر مربوط بـ ${r.links} طالب`;
+        toast('تم إنشاء الحسابات والربط ✓');
+      } catch (er) { toast(errMsg(er), 'err'); }
+    };
     $('#sv', pane).onclick = async () => {
       const domains = val(pane, '#dm').split(/[,،\s]+/).map((d) => d.trim().toLowerCase().replace(/^@/, '')).filter(Boolean);
       const myDomain = (ME.email || '').split('@')[1];
@@ -982,8 +997,12 @@
         if (stOn !== (get('student_login_enabled') === true)) {
           if (!await confirmBox(stOn ? 'فتح دخول الطلاب؟ سيتمكن كل طالب نشط من الدخول ببريده المدرسي فورًا.' : 'إيقاف دخول الطلاب؟ سيُمنع كل الطلاب من الدخول فورًا.', stOn ? 'نعم، افتح الدخول' : 'نعم، أوقف', !stOn)) return;
         }
+        const paOn = $('#paLogin', pane).checked;
+        if (paOn !== (get('parent_login_enabled') === true)) {
+          if (!await confirmBox(paOn ? 'فتح بوابة أولياء الأمور؟ سيتمكن كل ولي أمر مربوط بابنه من الدخول فورًا.' : 'إغلاق بوابة أولياء الأمور؟', paOn ? 'نعم، افتح' : 'نعم، أغلق', !paOn)) return;
+        }
         await run(sb.from('app_settings').upsert([{ key: 'school_name', value: val(pane, '#sn') }, { key: 'allowed_domains', value: domains },
-                                                  { key: 'student_login_enabled', value: stOn }]));
+                                                  { key: 'student_login_enabled', value: stOn }, { key: 'parent_login_enabled', value: paOn }]));
         rows.splice(0, rows.length, ...(await run(sb.from('app_settings').select('*'))));
         toast('تم حفظ الإعدادات');
       } catch (er) { toast(errMsg(er), 'err'); }

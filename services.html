@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>الخدمات الإدارية — منصة دار الذكر التعليمية</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <meta name="theme-color" content="#0f6e6a">
+    <link rel="stylesheet" href="assets/css/app.css?v=202611220330">
+  <style>
+    .duty-grid { display: grid; grid-template-columns: repeat(5, minmax(170px, 1fr)); gap: 10px; overflow-x: auto; }
+    .duty-day { padding: 10px; } .duty-day h3 { margin: 0 0 8px; font-size: 1rem; color: var(--brand); }
+    .duty-item { border: 1px solid var(--line); border-radius: 10px; padding: 7px 9px; margin-bottom: 6px; font-size: .88rem; background: #fff; }
+    .duty-item b { display: block; } .duty-item.me { border-color: var(--brand); background: var(--brand2); }
+    .types { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; }
+    .types button { font-family: inherit; padding: 14px; border: 1px solid var(--line); border-radius: 14px; background: #fff; cursor: pointer; font-size: .95rem; font-weight: 600; text-align: center; }
+    .types button:hover { border-color: var(--brand); background: var(--brand2); } .types button span { font-size: 1.6rem; display: block; }
+    .st { padding: 1px 9px; border-radius: 99px; font-size: .78rem; font-weight: 700; white-space: nowrap; }
+    .st.pending, .st.new { background: #fff3e0; color: #b9691b; } .st.approved, .st.resolved { background: #e6f6ee; color: var(--accent); }
+    .st.rejected { background: #fdecea; color: #c0392b; } .st.returned, .st.in_progress { background: #e8f0fd; color: #2c7be5; } .st.cancelled, .st.closed { background: #f1f3f5; color: var(--muted); }
+    .timeline { border-inline-start: 2px solid var(--line); margin: 10px 4px; padding-inline-start: 14px; }
+    .timeline div { margin-bottom: 10px; position: relative; } .timeline div::before { content: ''; position: absolute; inset-inline-start: -20px; top: 6px; width: 10px; height: 10px; border-radius: 50%; background: var(--line); }
+    .timeline div.ok::before { background: var(--accent); } .timeline div.no::before { background: #c0392b; } .timeline div.wait::before { background: #e4a842; }
+    .kv { display: grid; grid-template-columns: 140px 1fr; gap: 6px 12px; } .kv b { color: var(--muted); font-weight: 600; }
+    .subtabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+    .subtabs button { font-family: inherit; border: 1px solid var(--line); background: #fff; border-radius: 99px; padding: 5px 14px; cursor: pointer; }
+    .subtabs button.on { background: var(--brand); color: #fff; border-color: var(--brand); }
+    .stars { color: #e4a842; letter-spacing: 1px; }
+    @media (max-width: 800px) { .duty-grid { grid-template-columns: 1fr; } .kv { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header id="topbar"></header>
+  <main class="page">
+    <section class="hero glass">
+      <h1>🗂️ الخدمات الإدارية</h1>
+      <p>جدول المناوبة، والمعاملات الإلكترونية بسير اعتماد، والشكاوى الأكاديمية، وسجل تدريب المعلمين — في مكان واحد.</p>
+    </section>
+    <nav class="tabs glass" id="tabs">
+      <button data-tab="duty" class="staff-only">🛡️ المناوبة</button>
+      <button data-tab="req" class="staff-only">📨 المعاملات <span class="nbadge" id="reqBadge" hidden></span></button>
+      <button data-tab="cmp">📣 الشكاوى</button>
+      <button data-tab="trn" class="staff-only">🎓 التدريب</button>
+    </nav>
+    <section class="tab-pane" id="tab-duty"></section>
+    <section class="tab-pane" id="tab-req"></section>
+    <section class="tab-pane" id="tab-cmp"></section>
+    <section class="tab-pane" id="tab-trn"></section>
+  </main>
+  <footer class="credit">إعداد وتصميم: مصطفى حسين</footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/js/config.js?v=202611220330"></script>
+  <script src="assets/js/academic-calendar.js?v=202611220330"></script>
+  <script src="assets/js/core.js?v=202611220330"></script>
+  <script src="assets/js/services.js?v=202611220330"></script>
+</body>
+</html>
+

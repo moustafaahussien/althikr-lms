@@ -30,6 +30,7 @@
       <div class="chips">${chips.join('')}</div>
     </section>
     ${ctx.viewAs ? `<div class="notice" style="margin-bottom:14px">أنت الآن في <b>واجهة المشرف</b> — اضغط «${esc(ROLE_LABELS[ctx.realRole])}» تحت اسمك للرجوع للوضع الكامل.</div>` : ''}
+    <div id="dutyToday"></div>
     <div id="acks"></div>
     <div id="panel"></div>
     <div class="section-title"><h2>الوحدات</h2></div>
@@ -47,6 +48,9 @@
     box.innerHTML = L.length ? `<div class="notice warn" style="margin-bottom:14px"><b>📢 تعاميم بانتظار اطلاعك (${L.length}):</b>
       <ul style="margin:6px 0 0;padding-inline-start:18px">${L.slice(0, 5).map((c) => `<li><a href="messages.html?m=${c.id}">${esc(c.subject)}</a>${c.ref ? ` <span class="hint">رقم ${esc(c.ref)}</span>` : ''} — <span class="hint">${esc(c.from || '')}</span></li>`).join('')}</ul></div>` : ''; };
   if (window.LMS_MSG) showAcks(window.LMS_MSG);
+  // مناوبتي اليوم
+  if (STAFF) sb.rpc('duty_today').then(({ data }) => { if (!data || !data.length) return;
+    $('#dutyToday').innerHTML = (`<div class="notice" style="margin-bottom:14px">🛡️ <b>مناوبتك اليوم:</b> ${data.map((d) => `${esc(d.slot)} — ${esc(d.place)}${d.note ? ' (' + esc(d.note) + ')' : ''}`).join(' · ')} <a href="services.html#duty">الجدول</a></div>`); });
   document.addEventListener('lms:msg', (e) => showAcks(e.detail));
 
   // ---------- الوحدات ----------

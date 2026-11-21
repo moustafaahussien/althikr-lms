@@ -171,6 +171,7 @@
       ['settings.html', 'إعدادات المدرسة', ['admin', 'leadership', 'principal'].includes(p.role)],
       ['supervision/', '🧭 مكتب الإشراف التربوي', ['admin', 'leadership', 'principal', 'supervisor'].includes(p.role)],
       ['messages.html', '✉️ الرسائل <span class="nbadge" id="navMsg" hidden></span>', true],
+      ['services.html', '🗂️ الخدمات', true],
       ['attendance.html', '🗓️ الحضور والغياب', !['student', 'parent'].includes(p.role)],
       ['teaching-load.html', '📊 نصاب الحصص', ['admin', 'leadership', 'principal', 'supervisor'].includes(p.role)],
       ['staff-directory.html', '📇 دليل الموظفين', !['student', 'parent'].includes(p.role)]];

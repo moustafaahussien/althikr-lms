@@ -83,7 +83,7 @@ begin
         n_new := n_new + 1;
       end if;
     end loop;
-    delete from staff_directory;
+    delete from staff_directory where true;   -- (Supabase يمنع DELETE بلا WHERE)
     insert into staff_directory(zid, emp_no, name_ar, name_en, title_hr, email, mobile, work_phone, grp, manager, profile_id)
     select zid, emp_no, name_ar, name_en, title_hr, email, mobile, work_phone, grp, manager, pid from _d;
   end if;

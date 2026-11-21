@@ -151,7 +151,7 @@
     const isAdmin = p.role === 'admin';
     const here = location.pathname.split('/').pop() || 'index.html';
     bar.innerHTML = `
-      <a class="brand" href="home.html"><span class="logo-dot">د</span><span>${esc(C.PLATFORM_NAME)}</span></a>
+      <a class="brand" href="home.html"><span class="logo-tile"><img src="assets/img/logo-mark.png" alt="مدارس دار الذكر"></span><span>${esc(C.PLATFORM_NAME)}<small>${esc(C.SCHOOL_NAME)}</small></span></a>
       <nav class="nav">
         <a href="home.html" class="${here === 'home.html' ? 'on' : ''}">الرئيسية</a>
         ${isAdmin ? `<a href="admin.html" class="${here === 'admin.html' ? 'on' : ''}">لوحة الإدارة</a>` : ''}

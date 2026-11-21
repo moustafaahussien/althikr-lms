@@ -5,13 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>تسجيل الدخول — منصة دار الذكر التعليمية</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/app.css?v=202611211932">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <meta name="theme-color" content="#0f6e6a">
+  <link rel="stylesheet" href="assets/css/app.css?v=202611211938">
 </head>
 <body>
   <div class="login-wrap">
     <div class="login glass">
-      <div class="logo-dot">د</div>
+      <img class="logo-full" src="assets/img/logo.png" alt="مدارس دار الذكر">
       <h1 id="pname">منصة دار الذكر التعليمية</h1>
       <p id="sname">مدارس دار الذكر</p>
       <div id="area"><div class="loader"><div class="spin"></div>جارٍ التحقق…</div></div>
@@ -20,8 +22,8 @@
   <footer class="credit" style="position:fixed;bottom:0;inset-inline:0">إعداد وتصميم: مصطفى حسين · <a href="privacy.html">سياسة الخصوصية</a></footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="assets/js/config.js?v=202611211932"></script>
-  <script src="assets/js/core.js?v=202611211932"></script>
+  <script src="assets/js/config.js?v=202611211938"></script>
+  <script src="assets/js/core.js?v=202611211938"></script>
   <script>
   (async function () {
     const { sb, C, configured, esc, $, signInWithGoogle, signOut, getContext, errMsg, rememberNext, takeNext } = LMS;

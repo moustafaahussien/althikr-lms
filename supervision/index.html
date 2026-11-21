@@ -10,7 +10,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <meta name="theme-color" content="#0f6e6a">
-<title>منصة الإشراف التربوي – مدارس دار الذكر</title>
+<title>قسم الإشراف التربوي – منصة دار الذكر التعليمية</title>
 <script src="i18n.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../assets/js/config.js"></script>
@@ -28,6 +28,10 @@ button,input,select{font:inherit}
 header{background:var(--brand);color:#fff;padding:14px 18px 0}
 .hrow{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 h1{font-size:19px;margin:0;font-weight:700}
+.brandlink{display:flex;align-items:center;gap:10px;color:#fff;text-decoration:none}
+.logo-tile{width:42px;height:42px;border-radius:12px;background:#fff;display:grid;place-items:center;flex:0 0 auto;padding:4px}
+.logo-tile img{width:100%;height:100%;object-fit:contain}
+.brandlink small.plat{display:block;font-size:12px;color:#d6ecea;font-weight:500;line-height:1.2}
 .clock{font-size:15px;opacity:.95;display:flex;gap:10px;align-items:center}
 @media (max-width:600px){
   header{padding:10px 10px 0}
@@ -207,7 +211,7 @@ dialog::backdrop{background:#0006}
 <body>
 <header>
   <div class="hrow">
-    <h1 id="appTitle">منصة الإشراف التربوي</h1>
+    <a class="brandlink" href="../home.html" title="منصة دار الذكر التعليمية"><span class="logo-tile"><img src="../assets/img/logo-mark.png" alt="مدارس دار الذكر"></span><span><h1 id="appTitle">قسم الإشراف التربوي</h1><small class="plat">منصة دار الذكر التعليمية</small></span></a>
     <div class="clock"><button class="btn sm" id="inboxBtn" style="background:transparent;color:#fff;border-color:#ffffff66;position:relative">📩 الرسائل<span id="inboxBadge" style="display:none;position:absolute;top:-6px;left:-6px;background:#e4a842;color:#3d2600;border-radius:999px;font-size:11px;padding:0 6px;font-weight:700"></span></button><span id="whoLbl" class="sync"></span><button class="btn sm langbtn" id="langBtn" data-raw title="English / Arabic">EN</button><button class="btn sm" id="codeBtn" style="display:none" title="تغيير كود الدخول">🔑 الكود</button><a class="btn sm" id="lmsHome" href="../home.html" style="background:transparent;color:#fff;border-color:#ffffff66;text-decoration:none" title="العودة إلى منصة المدرسة">🏠 منصة المدرسة</a><button class="btn sm" id="logoutBtn" style="background:transparent;color:#fff;border-color:#ffffff66">خروج</button><span id="todayLbl"></span><b id="clk">--:--</b></div>
   </div>
   <nav id="tabs">
@@ -435,8 +439,8 @@ dialog::backdrop{background:#0006}
 </div></div>
 <div id="toast"></div>
 <div id="login"><form class="box" id="loginForm">
-  <div style="font-size:40px">🗓️</div>
-  <h2 style="margin:6px 0 2px">منصة الإشراف التربوي</h2>
+  <img src="../assets/img/logo.png" alt="مدارس دار الذكر" style="width:150px;max-width:60%;display:block;margin:0 auto 6px">
+  <h2 style="margin:6px 0 2px">قسم الإشراف التربوي</h2>
   <div style="color:var(--muted)">مدارس دار الذكر</div>
   <div id="ssoState" style="margin:16px 0 6px;font-weight:600">جارٍ الدخول بحساب المدرسة…</div>
   <div id="linkBox" style="display:none"></div>
@@ -1007,7 +1011,7 @@ function showAlarm(due){
   const orig=document.getElementById("appTitle").textContent; let on=false; clearInterval(titleFlash);
   titleFlash=setInterval(()=>{ document.title=(on=!on)?"🔔 حصة تبدأ قريبًا!":orig; },900);
 }
-document.getElementById("alarmOk").onclick=()=>{ document.getElementById("alarm").classList.remove("on"); clearInterval(titleFlash); document.title="منصة الإشراف التربوي – مدارس دار الذكر"; };
+document.getElementById("alarmOk").onclick=()=>{ document.getElementById("alarm").classList.remove("on"); clearInterval(titleFlash); document.title="قسم الإشراف التربوي – منصة دار الذكر التعليمية"; };
 
 /* ================= جدول معلم ================= */
 function renderWeek(){
@@ -1180,7 +1184,7 @@ function applyData(d){
 }
 function applyTitle(){
   const t = cfg.title || (WHO&&WHO.dept) || "";
-  document.getElementById("appTitle").innerHTML = "منصة الإشراف التربوي"+(t?" – <bdi>"+esc(t)+"</bdi>":"");
+  document.getElementById("appTitle").innerHTML = "قسم الإشراف التربوي"+(t?" – <bdi>"+esc(t)+"</bdi>":"");
   document.getElementById("whoLbl").textContent = WHO&&WHO.name ? WHO.name : "";
 }
 // دمج نسخة الجهاز (بها تعديلات لم تُرفع) مع نسخة أحدث على الخادم من جهاز آخر: لا يضيع تقييم ولا تذكير من أي منهما
@@ -1232,7 +1236,7 @@ document.addEventListener("click",ev=>{ const b=ev.target.closest(".peye"); if(!
 function forceLogout(msg){ remSynced=false; CODE=""; LS.set("tt_code",""); initCloud(); }
 document.getElementById("loginForm").addEventListener("submit",ev=>ev.preventDefault());
 document.getElementById("logoutBtn").onclick=()=>{
-  const b=document.getElementById("dlgBody"); b.innerHTML=`<h3>تسجيل الخروج من منصة المدرسة؟</h3><p>سيتم الخروج من منصة المدرسة ومنصة الإشراف معًا على هذا الجهاز. بياناتك محفوظة على الخادم.</p><div class="acts"><button class="btn" id="x1">إلغاء</button><button class="btn pri" id="x2">خروج</button></div>`;
+  const b=document.getElementById("dlgBody"); b.innerHTML=`<h3>تسجيل الخروج من منصة المدرسة؟</h3><p>سيتم الخروج من منصة المدرسة وقسم الإشراف التربوي معًا على هذا الجهاز. بياناتك محفوظة على الخادم.</p><div class="acts"><button class="btn" id="x1">إلغاء</button><button class="btn pri" id="x2">خروج</button></div>`;
   const d=document.getElementById("dlg"); d.showModal(); b.querySelector("#x1").onclick=()=>d.close();
   b.querySelector("#x2").onclick=async()=>{ d.close();
     if(dirty || LS.get(pendKey())){ clearTimeout(saveTimer); toast("جارٍ رفع تعديلاتك قبل الخروج…"); await flushSave(); }
@@ -1263,7 +1267,7 @@ async function initCloud(){
     ssoState("تعذّر الاتصال بالخادم. تأكد من الإنترنت وأعد تحميل الصفحة."); return;
   }
   if(r && r.ok) return startWithCode(r.id);
-  if(r && r.error==="not_member"){ CODE=""; LS.set("tt_code",""); ssoState("ليست لديك صلاحية على منصة الإشراف التربوي. إذا كنت مشرفًا تواصل مع مشرف مهارات القرن 21 لإضافتك."); return; }
+  if(r && r.error==="not_member"){ CODE=""; LS.set("tt_code",""); ssoState("ليست لديك صلاحية على قسم الإشراف التربوي. إذا كنت مشرفًا تواصل مع مشرف مهارات القرن 21 لإضافتك."); return; }
   if(r && r.error==="no_session"){ location.href=LMS_LOGIN; return; }
   ssoState("تعذّر الدخول ("+((r&&r.error)||"")+")، أعد تحميل الصفحة.");
 }
@@ -1281,7 +1285,7 @@ function applyAdmin(){ document.getElementById("admTab").style.display = (WHO &&
   if((!(WHO&&WHO.admin) && curTab==="adm") || (!IS_SYS() && curTab==="sch")) document.querySelector('#tabs [data-t="day"]').click(); }
 function inviteText(u,code){ if(LANG!=="en") return inviteTextAr(u,code); return `Hello ${u.name},
 
-The «Educational Supervision Platform» is now part of the school platform:
+The «Educational Supervision Department» is now part of the school platform:
 ${PAGE_URL}
 
 🔐 Sign in with your school Google account (@althikr.edu.sa) — no code needed.
@@ -1309,7 +1313,7 @@ ${PAGE_URL}
 `+inviteTextAr(u,code); }
 function inviteTextAr(u,code){ return `السلام عليكم ${u.name}،
 
-«منصة الإشراف التربوي» أصبحت جزءًا من منصة المدرسة:
+«قسم الإشراف التربوي» أصبح جزءًا من منصة المدرسة:
 ${PAGE_URL}
 
 🔐 الدخول بحساب Google المدرسي (@althikr.edu.sa) — بدون كود.
@@ -1335,7 +1339,7 @@ async function adminCall(params){
   const m=document.getElementById("admMsg"); m.textContent="جارٍ التنفيذ…";
   try{
     const r=await jsonp(Object.assign({code:CODE},params),25000);
-    if(!r.ok){ m.textContent = r.error==="not_admin"?"هذه الصلاحية للمدير فقط": r.error==="not_sys"?"هذه الصلاحية لمسؤول النظام فقط": r.error==="owner"?"حساب صاحب النظام لا يمكن تعديله من هنا": r.error==="self"?"لا يمكن تنفيذ هذا على حسابك أنت": r.error==="bad_email"?"البريد يجب أن يكون على نطاق المدرسة @althikr.edu.sa": r.error==="email_taken"?"هذا البريد مستخدم لحساب آخر": r.error==="exists"?"هذا الشخص عضو في منصة الإشراف بالفعل": r.error==="no_name"?"اكتب اسم المشرف (حسابه غير موجود في منصة المدرسة بعد)": "تعذّر التنفيذ ("+(r.error||"")+")"; return r; }
+    if(!r.ok){ m.textContent = r.error==="not_admin"?"هذه الصلاحية للمدير فقط": r.error==="not_sys"?"هذه الصلاحية لمسؤول النظام فقط": r.error==="owner"?"حساب صاحب النظام لا يمكن تعديله من هنا": r.error==="self"?"لا يمكن تنفيذ هذا على حسابك أنت": r.error==="bad_email"?"البريد يجب أن يكون على نطاق المدرسة @althikr.edu.sa": r.error==="email_taken"?"هذا البريد مستخدم لحساب آخر": r.error==="exists"?"هذا الشخص عضو في قسم الإشراف التربوي بالفعل": r.error==="no_name"?"اكتب اسم المشرف (حسابه غير موجود في منصة المدرسة بعد)": "تعذّر التنفيذ ("+(r.error||"")+")"; return r; }
     if(r.users){ ADM_USERS=r.users; renderAdmin(); }
     m.textContent="تم ✓"; setTimeout(()=>{ if(m.textContent==="تم ✓") m.textContent=""; },2500);
     return r;

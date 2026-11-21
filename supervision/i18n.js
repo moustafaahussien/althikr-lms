@@ -1,4 +1,4 @@
-/* منصة الإشراف التربوي — الترجمة (عربي / English)
+/* قسم الإشراف التربوي — الترجمة (عربي / English)
  * تُترجم الواجهة فقط عند اختيار الإنجليزية، ولا تمسّ البيانات المخزنة.
  * لإضافة/تعديل ترجمة: أضف السطر في X (نص كامل) أو في R (نمط فيه أرقام/أسماء).
  */
@@ -18,8 +18,9 @@
   var X = {
     // العنوان والتبويبات
     "الإشراف التربوي": "Supervision",
-    "منصة الإشراف التربوي": "Educational Supervision Platform",
-    "منصة الإشراف التربوي – مدارس دار الذكر": "Educational Supervision Platform – Dar Al-Thikr Schools",
+    "قسم الإشراف التربوي": "Educational Supervision Department",
+    "منصة دار الذكر التعليمية": "Dar Al-Thikr Learning Platform",
+    "قسم الإشراف التربوي – منصة دار الذكر التعليمية": "Educational Supervision Department – Dar Al-Thikr Learning Platform",
     "📩 الرسائل": "📩 Messages", "تغيير كود الدخول": "Change login code", "🔑 الكود": "🔑 Code", "خروج": "Log out",
     "حصص اليوم": "Today's Classes", "تذكيراتي": "My Reminders", "التقييمات": "Evaluations", "جدول معلم": "Teacher Timetable",
     "الإعدادات": "Settings", "المشرفون": "Supervisors",
@@ -284,7 +285,7 @@
     "سأعمل على تطبيق التوصية الخاصة بـ [...] خلال الأسبوعين القادمين.": "I'll apply the recommendation on [...] over the next two weeks.",
     "أتفق مع الملاحظات، وسأطلب حضور حصة نموذجية في [...].": "I agree with the notes and will ask to attend a model lesson on [...]."
   });
-  X["الصف"] = "Class"; X["منصة الإشراف التربوي –"] = "Educational Supervision Platform –"; X["وحدة مهارات القرن 21"] = "21st Century Skills Unit";
+  X["الصف"] = "Class"; X["قسم الإشراف التربوي –"] = "Educational Supervision Department –"; X["وحدة مهارات القرن 21"] = "21st Century Skills Unit";
   /* ---------- أسماء المواد (للعرض فقط) ---------- */
   var SUBJ_EXTRA = { "بدنية R": "PE", "بدنية": "PE" };
   var SUBJ = {
@@ -311,7 +312,7 @@
   /* ---------- أنماط (نص فيه أرقام/أسماء) ---------- */
   var R = [
     [/^(.+?)((?: [\d\u2066\u2069-]+)*)$/, function (m, sj, rest) { var r = SUBJ[sj.trim()] || SUBJ_EXTRA[sj.trim()]; return r ? r + rest : null; }],
-    [/^منصة الإشراف التربوي – (.+)$/, function (m, a) { return "Educational Supervision Platform – " + a; }],
+    [/^قسم الإشراف التربوي – (.+)$/, function (m, a) { return "Educational Supervision Department – " + a; }],
     [/^الصف (الحادي عشر|الثاني عشر|الأول|الثاني|الثالث|الرابع|الخامس|السادس|السابع|الثامن|التاسع|العاشر)(?: (المتوسط|الثانوي))?(?: \/ ([^ (]+))?(?: \(قاعة (.+)\))?$/,
       function (m, o, st, s, room) { var g = ORD[o] + (st === "المتوسط" ? 6 : st === "الثانوي" ? 9 : 0); return "Grade " + g + (s ? " / " + sec(s) : "") + (room ? " (Room " + room + ")" : ""); }],
     [/^\(قاعة (.+)\)$/, "(Room $1)"], [/^قاعة (.+)$/, "Room $1"],

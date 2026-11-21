@@ -279,6 +279,7 @@ begin
         if v_email = my_email and v_role <> 'admin' then
           raise exception 'لا يمكن تغيير دورك أنت (مدير النظام) من الاستيراد'; end if;
 
+        perform public._claim_timetable_profile(v_email, v_name);
         select id into pid from profiles where email = v_email;
         if pid is not null and exists (select 1 from students where profile_id = pid) then
           raise exception 'البريد "%" مسجّل لطالب', v_email; end if;

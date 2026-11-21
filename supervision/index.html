@@ -333,6 +333,12 @@ dialog::backdrop{background:#0006}
         <div class="bar" style="margin:0"><input id="pushKeyIn" type="password" dir="ltr" autocomplete="off" placeholder="os_v2_app_..." style="flex:1 1 260px;padding:8px 10px;border:1px solid var(--line);border-radius:10px"><button class="btn pri" id="pushKeySave" type="button">حفظ المفتاح</button></div>
       </div>
       <div style="margin:6px 0 14px">
+        <b>👩‍🏫 مزامنة المعلمين مع منصة المدرسة</b> <span class="sync" id="tsyncMsg"></span>
+        <p class="h" style="margin:4px 0">ينقل كل المعلمين من جداول المشرفين إلى منصة المدرسة (حساب «معلم» لكل واحد + فصوله ومواده وعدد حصصه + مشرفه). تتم تلقائيًا كلما فتحت هذه الصفحة وتغيّرت الجداول، ويمكنك تشغيلها يدويًا هنا. المعلمون بلا بريد حاليًا (لن يستطيعوا الدخول) وعند استيراد إيميلاتهم لاحقًا تُربط بنفس الحسابات.</p>
+        <div class="bar" style="margin:0"><button class="btn" id="tsyncPrev" type="button">معاينة</button><button class="btn pri" id="tsyncRun" type="button">مزامنة الآن</button></div>
+        <div id="tsyncBox" class="h" style="margin-top:8px"></div>
+      </div>
+      <div style="margin:6px 0 14px">
         <b>📤 تصدير البيانات إلى Excel</b>
         <div class="bar" style="margin:6px 0 0"><button class="btn sm" type="button" data-exp="evals">تقييمات المعلمين</button><button class="btn sm" type="button" data-exp="sessions">الجلسات الفردية</button><button class="btn sm" type="button" data-exp="plans">خطط التطوير</button><span class="sync" id="expMsg"></span></div>
       </div>
@@ -1181,7 +1187,7 @@ async function startWithCode(code){
   document.getElementById("login").classList.add("off");
   const local=LS.get(localKey()); if(local){ lastStamp=Number(local.stamp)||0; applyData(local); }
   applyTitle(); applyAdmin(); restoreTab(); setSync("جارٍ المزامنة…");
-  try{ const r=await loadRemote(); if(!r.ok){ if(r.error==="not_member"||r.error==="no_session") forceLogout(""); else setSync("تعذّرت المزامنة — يعمل من نسخة هذا الجهاز"); } else if(WHO&&WHO.name) toast("أهلًا "+WHO.name); }
+  try{ const r=await loadRemote(); if(!r.ok){ if(r.error==="not_member"||r.error==="no_session") forceLogout(""); else setSync("تعذّرت المزامنة — يعمل من نسخة هذا الجهاز"); } else { if(WHO&&WHO.name) toast("أهلًا "+WHO.name); setTimeout(autoSyncTeachers,4000); } }
   catch(e){ setSync(local?"بدون اتصال — يعمل من نسخة هذا الجهاز":"تعذّر الاتصال بالخادم"); }
 }
 async function initCloud(){
@@ -1504,6 +1510,59 @@ document.getElementById("svSysCard").addEventListener("click",async ev=>{
     csvDownload({evals:"تقييمات-المعلمين",sessions:"الجلسات-الفردية",plans:"خطط-التطوير"}[b.dataset.exp]+".csv", data.rows); m.textContent="✓ "+data.rows.length+" صف"; }
   catch(e){ m.textContent="تعذّر التصدير"; }
 });
+
+/* ================= مزامنة المعلمين مع منصة المدرسة (LMS) ================= */
+function tsStage(e,c,shName){
+  if(e.kind!=="class"||!e.gradeNum) return null;
+  const g=+e.gradeNum, st=schStage(e,c), girls=/بنات/.test(shName||"");
+  const cls=String(e.section||"").replace(/^-+/,"").trim(); if(!cls) return null;
+  if(e.track==="american"||st==="المسار الأمريكي") return g>=4&&g<=12?{stage:"american",grade:g,cls}:null;
+  const prim=girls?"girls-primary":"boys-primary";
+  if(st==="الصفوف الأولية"||st==="ابتدائي (4–6)"||st==="ابتدائي") return g>=1&&g<=6?{stage:prim,grade:g,cls}:null;
+  if(st==="متوسط"){ const n=g>=7?g-6:g; return n>=1&&n<=3?{stage:"boys-intermediate",grade:n,cls}:null; }
+  if(st==="ثانوي"){ const n=g>=10?g-9:g; return n>=1&&n<=3?{stage:"boys-secondary",grade:n,cls}:null; }
+  if(g>=7&&g<=9) return {stage:"boys-intermediate",grade:g-6,cls};
+  if(g>=10&&g<=12) return {stage:"boys-secondary",grade:g-9,cls};
+  return null; // صف 1–6 بلا مرحلة محددة: غير واضح
+}
+async function tsBuild(){
+  const r=await jsonp({code:CODE,action:"admin_school"},40000);
+  if(!r||!r.ok) throw new Error((r&&r.error)||"admin_school");
+  const T={}, A={}; let unmapped=0, noSubj=0; const unmappedEx=new Set();
+  r.school.forEach(sp=>{ const c=sp.cfg||{}; const raw=c.raw||[]; const pr=parseSheets(raw);
+    pr.entries.forEach(e=>{ if(e.kind!=="class"||!e.teacher) return;
+      const subj=(e.subj||(c.subjects||{})[e.sheet+"|"+e.teacher]||"").trim();
+      const t=T[e.teacher]||(T[e.teacher]={name:e.teacher,subj:{},sups:new Set()}); t.sups.add(sp.code); if(subj) t.subj[subj]=(t.subj[subj]||0)+1;
+      const shName=(c.sheetNames||{})[e.sheet]||(raw[e.sheet]||{}).name||"";
+      const m=tsStage(e,c,shName); if(!m){ unmapped++; unmappedEx.add(e.cls+" ("+shName+")"); return; }
+      if(!subj){ noSubj++; return; }
+      const k=[e.teacher,m.stage,m.grade,m.cls,subj].join("|"); (A[k]=A[k]||{teacher:e.teacher,stage:m.stage,grade:String(m.grade),cls:m.cls,subject:subj,periods:0}).periods++;
+    }); });
+  const teachers=Object.values(T).map(t=>({name:t.name,subject:(Object.entries(t.subj).sort((a,b)=>b[1]-a[1])[0]||[""])[0],sups:[...t.sups]})).sort((a,b)=>a.name.localeCompare(b.name,"ar"));
+  const assign=Object.values(A).sort((a,b)=>(a.teacher+a.stage+a.grade+a.cls).localeCompare(b.teacher+b.stage+b.grade+b.cls,"ar"));
+  return {teachers,assign,unmapped,noSubj,unmappedEx:[...unmappedEx].slice(0,12)};
+}
+function tsHash(x){ const s=JSON.stringify(x); let h=0; for(let i=0;i<s.length;i++){ h=(h*31+s.charCodeAt(i))|0; } return String(h)+":"+s.length; }
+async function tsRun(dry,silent){
+  const msg=document.getElementById("tsyncMsg"), box=document.getElementById("tsyncBox");
+  if(!silent){ msg.textContent="جارٍ قراءة جداول المشرفين…"; box.innerHTML=""; }
+  const b=await tsBuild(); const payload={teachers:b.teachers,assign:b.assign}; const h=tsHash(payload);
+  if(silent && LS.get("tt_tsync")===h) return;
+  if(!silent) msg.textContent=dry?"جارٍ المعاينة…":"جارٍ المزامنة…";
+  const { data, error } = await SB.rpc("sv_sync_teachers",{p:payload, dry_run:!!dry});
+  if(error||!data||!data.ok) throw new Error((error&&error.message)||"sync");
+  if(!dry) LS.set("tt_tsync",h);
+  if(silent){ if(data.teachers_new||data.teachers_deactivated) toast(`تمت مزامنة المعلمين مع منصة المدرسة ✓ (${b.teachers.length} معلم)`); return; }
+  msg.textContent=dry?"معاينة (لم يُحفظ شيء)":"✓ تمت المزامنة";
+  box.innerHTML=`<b>${b.teachers.length}</b> معلم في الجداول — جديد: <b>${data.teachers_new}</b>، موجود: <b>${data.teachers_existing}</b>، أُوقف (لم يعد في الجداول): <b>${data.teachers_deactivated}</b><br>
+    إسناد (معلم × فصل × مادة): <b>${data.assignments}</b> — فصول جديدة: <b>${data.classes_new}</b>، مواد جديدة: <b>${data.subjects_new}</b>`
+    +(b.noSubj?`<br>⚠️ ${b.noSubj} حصة بدون مادة محددة (حدّد مادة المعلم من جدول المشرف) — المعلم يُضاف لكن بدون إسناد لهذه الحصص.`:"")
+    +(b.unmapped?`<br>⚠️ ${b.unmapped} حصة لم يُعرف صفها/مرحلتها، مثل: ${b.unmappedEx.map(esc).join("، ")}`:"")
+    +(data.errors&&data.errors.length?`<br>⚠️ أخطاء: `+data.errors.slice(0,8).map(x=>esc(x.teacher+": "+x.msg)).join(" · "):"");
+}
+document.getElementById("tsyncPrev").onclick=()=>tsRun(true,false).catch(e=>{ document.getElementById("tsyncMsg").textContent="تعذّرت المعاينة ("+String(e.message||e).slice(0,80)+")"; });
+document.getElementById("tsyncRun").onclick=()=>tsRun(false,false).catch(e=>{ document.getElementById("tsyncMsg").textContent="تعذّرت المزامنة ("+String(e.message||e).slice(0,80)+")"; });
+function autoSyncTeachers(){ if(IS_SYS()) tsRun(false,true).catch(()=>{}); }
 // —— النقل من المنصة القديمة ——
 const OLD_API="https://script.google.com/macros/s/AKfycbyQHMzK0MW2w8FaZZzZ-ZcnisYGu9IXSMMtse1GcmPvz8QvVN_bj5lCQF221F6J5y35kQ/exec";
 function oldJsonp(params, timeout=40000){

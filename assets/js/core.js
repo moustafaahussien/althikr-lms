@@ -148,20 +148,78 @@
     const bar = $('#topbar');
     if (!bar) return;
     const p = ctx.profile;
-    const isAdmin = p.role === 'admin';
     const here = location.pathname.split('/').pop() || 'index.html';
+    const links = [['home.html', 'الرئيسية', true],
+      ['admin.html', 'لوحة الإدارة', p.role === 'admin'],
+      ['settings.html', 'إعدادات المدرسة', ['admin', 'leadership', 'principal'].includes(p.role)],
+      ['supervision/', '🧭 مكتب الإشراف التربوي', ['admin', 'leadership', 'principal', 'supervisor'].includes(p.role)]];
     bar.innerHTML = `
-      <a class="brand" href="home.html"><span class="logo-tile"><img src="assets/img/logo-mark.png" alt="مدارس دار الذكر"></span><span>${esc(C.PLATFORM_NAME)}<small>${esc(C.SCHOOL_NAME)}</small></span></a>
+      <div class="hrow">
+        <a class="brand" href="home.html"><span class="logo-tile"><img src="assets/img/logo-mark.png" alt="مدارس دار الذكر"></span><span>${esc(C.PLATFORM_NAME)}<small>${esc(C.SCHOOL_NAME)}</small></span></a>
+        <div class="clock">
+          <span class="who"><b>${esc(p.full_name)}</b><small>${esc(p.job_title || ROLE_LABELS[p.role])}</small></span>
+          <button class="btn sm hbtn" id="logoutBtn">خروج</button>
+          <span id="todayLbl"></span><b id="clk">--:--</b>
+        </div>
+      </div>
       <nav class="nav">
-        <a href="home.html" class="${here === 'home.html' ? 'on' : ''}">الرئيسية</a>
-        ${isAdmin ? `<a href="admin.html" class="${here === 'admin.html' ? 'on' : ''}">لوحة الإدارة</a>` : ''}
-        ${['admin','leadership','principal'].includes(p.role) ? `<a href="settings.html" class="${here === 'settings.html' ? 'on' : ''}">إعدادات المدرسة</a>` : ''}
-      </nav>
-      <div class="me">
-        <div class="me-text"><b>${esc(p.full_name)}</b><small>${esc(p.job_title || ROLE_LABELS[p.role])}</small></div>
-        <button class="btn ghost sm" id="logoutBtn">خروج</button>
-      </div>`;
+        ${links.filter((l) => l[2]).map(([href, label]) => `<a href="${href}" class="${here === href ? 'on' : ''}">${label}</a>`).join('')}
+        <div id="calBar" class="calbar" role="button" tabindex="0" title="التقويم الدراسي"></div>
+      </nav>`;
     $('#logoutBtn').onclick = signOut;
+    const cal = $('#calBar');
+    cal.onclick = openCalendar;
+    cal.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openCalendar(); } };
+    startClock();
+  }
+
+  /* ---------- الساعة والتاريخ والتقويم الدراسي (نفس شريط مكتب الإشراف التربوي) ---------- */
+  const ymd = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  const parseYmd = (s) => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+  const LOC = 'ar-SA-u-ca-gregory-nu-latn';
+  const calDay = (s) => { try { return parseYmd(s).toLocaleDateString(LOC, { weekday: 'long', day: 'numeric', month: 'long' }).replace('،', ''); } catch (e) { return s; } };
+  const daysWord = (n) => n === 1 ? 'يوم' : n === 2 ? 'يومين' : n <= 10 ? n + ' أيام' : n + ' يومًا';
+  const calRange = (f, t) => { const a = parseYmd(f), b = parseYmd(t), mo = (d) => d.toLocaleDateString(LOC, { month: 'long' });
+    return a.getMonth() === b.getMonth() ? `${a.getDate()}–${b.getDate()} ${mo(b)}` : `${a.getDate()} ${mo(a)} – ${b.getDate()} ${mo(b)}`; };
+  function renderCal() {
+    const bar = $('#calBar'), A = window.ACAD; if (!bar || !A) return;
+    const now = new Date(), today = ymd(now), dow = now.getDay();
+    const weekOf = (ds) => A.weeks.find((w) => ds >= w.s && ds <= ymd(new Date(parseYmd(w.s).getTime() + 6 * 864e5)));
+    const weekTxt = (w) => `الأسبوع ${w.n} · الفصل ${w.t === 1 ? 'الأول' : 'الثاني'}${w.ex ? ' (اختبارات)' : ''}`;
+    const cur = A.hol.find((h) => today >= h.f && today <= h.to), w = weekOf(today);
+    let wk = '', hl = '';
+    if (cur) wk = `🏖️ <b>${esc(cur.ar)}</b> · العودة ${esc(calDay(cur.back))}`;
+    else if (w) {
+      if (dow >= 5) { const nw = weekOf(ymd(new Date(now.getTime() + (7 - dow) * 864e5))); wk = nw ? `📅 القادم: <b>${esc(weekTxt(nw))}</b>` : `📅 <b>${esc(weekTxt(w))}</b>`; }
+      else wk = `📅 <b>${esc(weekTxt(w))}</b>`;
+    } else if (today < A.weeks[0].s) wk = `📅 بداية الدراسة ${esc(calDay(A.weeks[0].s))}`;
+    else wk = '📅 انتهى التقويم الدراسي — يلزم تحديثه';
+    const nx = A.hol.find((h) => h.f > today);
+    if (nx) { const d = Math.round((parseYmd(nx.f) - parseYmd(today)) / 864e5);
+      hl = `🏖️ أقرب إجازة: <b>${esc(nx.ar)}</b> (${esc(calRange(nx.f, nx.to))}) · ${d === 1 ? 'تبدأ غدًا' : 'بعد ' + daysWord(d)}`; }
+    bar.innerHTML = `<span class="cc">${wk}</span>${hl ? `<span class="cc hol">${hl}</span>` : ''}`;
+  }
+  function openCalendar() {
+    const A = window.ACAD; if (!A) return;
+    const today = ymd(new Date());
+    const rows = [...A.hol.map((h) => ({ d: h.f, e: h.to, name: h.ar, h: h.h, hol: true, back: h.back })), ...A.other.map((o) => ({ d: o.d, name: o.ar, h: o.h }))]
+      .sort((a, b) => a.d.localeCompare(b.d));
+    modal({ title: '📅 التقويم الدراسي ' + A.year, wide: true, body: `<p class="hint" style="margin:0 0 8px">مكة · المدينة · جدة · الطائف</p>
+      <div class="table-wrap"><table class="caltbl"><thead><tr><th>البيان</th><th>التاريخ</th><th>هجري</th></tr></thead><tbody>
+      ${rows.map((r) => { const past = (r.e || r.d) < today, now = r.hol && today >= r.d && today <= r.e;
+        return `<tr class="${now ? 'now' : past ? 'past' : ''}"><td>${r.hol ? '🏖️ ' : ''}${esc(r.name)}${r.hol ? `<div class="hint" style="margin:0">العودة ${esc(calDay(r.back))}</div>` : ''}</td>
+          <td>${esc(calDay(r.d))}${r.e ? '<br>– ' + esc(calDay(r.e)) : ''}</td><td>${esc(r.h || '')}</td></tr>`; }).join('')}
+      </tbody></table></div>`, actions: [{ label: 'إغلاق', cls: 'primary', value: true }] });
+  }
+  let clockTimer = null, calKey = '';
+  function startClock() {
+    const tick = () => {
+      const n = new Date(), c = $('#clk'), t = $('#todayLbl'); if (!c) return;
+      if (ymd(n) !== calKey) { calKey = ymd(n); renderCal(); }
+      c.textContent = String(n.getHours()).padStart(2, '0') + ':' + String(n.getMinutes()).padStart(2, '0');
+      try { t.textContent = n.toLocaleDateString(LOC, { weekday: 'long', day: 'numeric', month: 'long' }); } catch (e) { t.textContent = ymd(n); }
+    };
+    tick(); clearInterval(clockTimer); clockTimer = setInterval(tick, 10000);
   }
 
   // تنزيل ملف CSV بترميز يقرؤه Excel بالعربية

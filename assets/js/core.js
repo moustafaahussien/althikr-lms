@@ -132,6 +132,22 @@
 
   /* حماية الصفحة: تُعيد سياق المستخدم أو تُحوّله لصفحة الدخول
      roles: الأدوار المسموح لها بهذه الصفحة (فارغ = أي مسجّل) */
+  /* ---------- تبديل الواجهة: صاحب الصفتين (مدير النظام + مشرف) ----------
+     «مشرف» = يرى المنصة ومكتب الإشراف كما يراها المشرف تمامًا، و«مدير النظام» يرجع للوضع الكامل */
+  const VIEW_KEY = 'lms_view';
+  function getView() { try { return localStorage.getItem(VIEW_KEY) || ''; } catch (_) { return ''; } }
+  function setView(v) { try { v ? localStorage.setItem(VIEW_KEY, v) : localStorage.removeItem(VIEW_KEY); } catch (_) {} }
+  function canSwitch(p) { return !!p && ['admin', 'leadership', 'principal'].includes(p.role) && /مشرف/.test(p.job_title || ''); }
+  function applyView(ctx) {
+    if (!ctx || !ctx.profile) return ctx;
+    ctx.realRole = ctx.profile.role;
+    ctx.canSwitch = canSwitch(ctx.profile);
+    ctx.viewAs = ctx.canSwitch && getView() === 'supervisor' ? 'supervisor' : '';
+    if (ctx.viewAs) ctx.profile = Object.assign({}, ctx.profile, { role: 'supervisor' });
+    else if (!ctx.canSwitch) setView('');
+    return ctx;
+  }
+
   async function requireAuth(roles = []) {
     if (!sb) { location.href = 'index.html'; return new Promise(() => {}); }
     const { data: { session } } = await sb.auth.getSession();
@@ -139,6 +155,7 @@
     let ctx;
     try { ctx = await getContext(); } catch (e) { toast(errMsg(e), 'err'); throw e; }
     if (!ctx || !ctx.registered) { location.href = 'index.html'; return new Promise(() => {}); }
+    applyView(ctx);
     if (roles.length && !roles.includes(ctx.profile.role)) { location.href = 'home.html'; return new Promise(() => {}); }
     renderTopbar(ctx);
     return ctx;
@@ -157,7 +174,7 @@
       <div class="hrow">
         <a class="brand" href="home.html"><span class="logo-tile"><img src="assets/img/logo-mark.png" alt="مدارس دار الذكر"></span><span>${esc(C.PLATFORM_NAME)}<small>${esc(C.SCHOOL_NAME)}</small></span></a>
         <div class="clock">
-          <span class="who"><b>${esc(p.full_name)}</b><small>${esc(p.job_title || ROLE_LABELS[p.role])}</small></span>
+          <span class="who"><b>${esc(p.full_name)}</b><small>${esc(ctx.viewAs ? (p.job_title || ROLE_LABELS.supervisor) : ctx.canSwitch ? ROLE_LABELS[p.role] : (p.job_title || ROLE_LABELS[p.role]))}</small></span>
           <button class="btn sm hbtn" id="logoutBtn">خروج</button>
           <span id="todayLbl"></span><b id="clk">--:--</b>
         </div>
@@ -235,5 +252,6 @@
   }
 
   window.LMS = { sb, C, configured, ROLE_LABELS, esc, $, $$, toast, modal, confirmBox, errMsg,
-                 fetchAll, signInWithGoogle, signOut, getContext, requireAuth, downloadCSV, rememberNext, takeNext };
+                 fetchAll, signInWithGoogle, signOut, getContext, requireAuth, downloadCSV, rememberNext, takeNext,
+                 getView, setView, canSwitch, applyView };
 })();

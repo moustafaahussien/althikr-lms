@@ -60,6 +60,9 @@ button, input, select, textarea { font: inherit; }
 .chip.teal { background: #e6f6ee; color: var(--accent); border-color: #b7e4cb; }
 .chip.pink { background: #fff4e0; color: var(--warn); border-color: #f3d39a; }
 .chip.gray { background: #f1f3f5; color: var(--muted); border-color: var(--line); }
+.chip.view-sw { cursor: pointer; font-family: inherit; opacity: .55; transition: .15s; }
+.chip.view-sw:hover { opacity: .85; }
+.chip.view-sw.on { opacity: 1; box-shadow: 0 0 0 2px currentColor inset; }
 
 .section-title { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 24px 0 12px; }
 .section-title h2 { font-size: 1.15rem; margin: 0; }

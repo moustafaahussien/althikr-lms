@@ -212,7 +212,7 @@ dialog::backdrop{background:#0006}
 <header>
   <div class="hrow">
     <a class="brandlink" href="../home.html" title="منصة دار الذكر التعليمية"><span class="logo-tile"><img src="../assets/img/logo-mark.png" alt="مدارس دار الذكر"></span><span><h1 id="appTitle">مكتب الإشراف التربوي</h1><small class="plat">منصة دار الذكر التعليمية</small></span></a>
-    <div class="clock"><button class="btn sm" id="inboxBtn" style="background:transparent;color:#fff;border-color:#ffffff66;position:relative">📩 الرسائل<span id="inboxBadge" style="display:none;position:absolute;top:-6px;left:-6px;background:#e4a842;color:#3d2600;border-radius:999px;font-size:11px;padding:0 6px;font-weight:700"></span></button><span id="whoLbl" class="sync"></span><button class="btn sm langbtn" id="langBtn" data-raw title="English / Arabic">EN</button><button class="btn sm" id="codeBtn" style="display:none" title="تغيير كود الدخول">🔑 الكود</button><a class="btn sm" id="lmsHome" href="../home.html" style="background:transparent;color:#fff;border-color:#ffffff66;text-decoration:none" title="العودة إلى منصة المدرسة">🏠 منصة المدرسة</a><button class="btn sm" id="logoutBtn" style="background:transparent;color:#fff;border-color:#ffffff66">خروج</button><span id="todayLbl"></span><b id="clk">--:--</b></div>
+    <div class="clock"><button class="btn sm" id="inboxBtn" style="background:transparent;color:#fff;border-color:#ffffff66;position:relative">📩 الرسائل<span id="inboxBadge" style="display:none;position:absolute;top:-6px;left:-6px;background:#e4a842;color:#3d2600;border-radius:999px;font-size:11px;padding:0 6px;font-weight:700"></span></button><span id="whoLbl" class="sync"></span><button class="btn sm langbtn" id="langBtn" data-raw title="English / Arabic">EN</button><button class="btn sm" id="codeBtn" style="display:none" title="تغيير كود الدخول">🔑 الكود</button><button class="btn sm" id="viewSw" style="display:none;background:#fff;color:#0f6e6a;border-color:#fff;font-weight:700" title="الرجوع إلى الواجهة الكاملة">⇄ مدير النظام</button><a class="btn sm" id="lmsHome" href="../home.html" style="background:transparent;color:#fff;border-color:#ffffff66;text-decoration:none" title="العودة إلى منصة المدرسة">🏠 منصة المدرسة</a><button class="btn sm" id="logoutBtn" style="background:transparent;color:#fff;border-color:#ffffff66">خروج</button><span id="todayLbl"></span><b id="clk">--:--</b></div>
   </div>
   <nav id="tabs">
     <button data-t="day" class="on">حصص اليوم</button>
@@ -1013,7 +1013,10 @@ function loadXLSX(){ return new Promise((res,rej)=>{ if(window.XLSX) return res(
 
 /* ================= الحفظ والمزامنة (Google Sheet عبر Apps Script) ================= */
 const API = (window.TT_API||"").trim();
+/* واجهة المشرف (من «مشرف …» تحت الاسم في المنصة): تُخفي أدوات المدير ومسؤول النظام */
+function SV_VIEW(){ try{ return localStorage.getItem("lms_view")==="supervisor"; }catch(e){ return false; } }
 let CODE = LS.get("tt_code")||"", WHO = LS.get("tt_who")||null;
+if(WHO && SV_VIEW()){ WHO.admin=false; WHO.sys=false; }
 let dirty=false, saveTimer=null, saving=false, saveAgain=false, lastStamp=0;
 function setSync(t){ document.getElementById("syncLbl").textContent=t; }
 /* ===== الاتصال بخادم منصة المدرسة (Supabase) =====
@@ -1095,7 +1098,9 @@ async function loadRemote(silent){
   const r=await jsonpRetry({action:"login",code:CODE});
   if(!r || !r.ok) return r||{ok:false,error:"unknown"};
   if(r.id && r.id!==CODE) return {ok:false,error:"not_member"};
-  WHO={name:r.name||"",dept:r.dept||"",admin:!!r.admin,sys:!!r.sys,role:r.role||""}; LS.set("tt_who",WHO); applyAdmin(); restoreTab(); loadInbox(); movePushToCode();
+  WHO={name:r.name||"",dept:r.dept||"",admin:!!r.admin,sys:!!r.sys,role:r.role||""};
+  if(SV_VIEW()){ WHO.admin=false; WHO.sys=false; }   // واجهة المشرف: نفس ما يراه أي مشرف
+  LS.set("tt_who",WHO); applyAdmin(); restoreTab(); loadInbox(); movePushToCode();
   const local=LS.get(localKey());
   // لو عندنا تعديلات محلية لم تُرفع وأحدث من الخادم، نحتفظ بها ونرفعها
   if(local && dirty) { applyTitle(); return r; }
@@ -1172,7 +1177,7 @@ window.addEventListener("beforeunload",e=>{ if(dirty){ e.preventDefault(); e.ret
 /* ================= إدارة المشرفين (للمدير فقط) ================= */
 const PAGE_URL = location.origin + location.pathname.replace(/index\.html$/,"");
 let ADM_USERS = [];
-const IS_SYS=()=>!!(WHO&&WHO.sys);
+const IS_SYS=()=>!!(WHO&&WHO.sys) && !SV_VIEW();
 function applyAdmin(){ document.getElementById("admTab").style.display = (WHO && WHO.admin) ? "" : "none"; document.getElementById("schTab").style.display = IS_SYS() ? "" : "none";
   document.getElementById("schedCard").style.display = IS_SYS() ? "" : "none"; document.getElementById("svSysCard").style.display = IS_SYS() ? "" : "none"; document.getElementById("admRole").style.display = IS_SYS() ? "" : "none";
   if((!(WHO&&WHO.admin) && curTab==="adm") || (!IS_SYS() && curTab==="sch")) document.querySelector('#tabs [data-t="day"]').click(); }
@@ -2254,6 +2259,12 @@ rebuild(); renderAll(); tick();
 initPlans();
 restoreTab();
 initCloud();
+</script>
+<script>
+(function(){ const b=document.getElementById("viewSw"); if(!b) return;
+  if(SV_VIEW()) b.style.display="";
+  b.onclick=()=>{ try{ localStorage.removeItem("lms_view"); }catch(e){} location.href="../home.html"; };
+})();
 </script>
 </body>
 </html>

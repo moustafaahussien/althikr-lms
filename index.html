@@ -8,7 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="icon" type="image/png" href="favicon.png">
   <meta name="theme-color" content="#0f6e6a">
-  <link rel="stylesheet" href="assets/css/app.css?v=202611212130">
+  <link rel="stylesheet" href="assets/css/app.css?v=202611212200">
 </head>
 <body>
   <div class="login-wrap">
@@ -22,8 +22,8 @@
   <footer class="credit" style="position:fixed;bottom:0;inset-inline:0">إعداد وتصميم: مصطفى حسين · <a href="privacy.html">سياسة الخصوصية</a></footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="assets/js/config.js?v=202611212130"></script>
-  <script src="assets/js/core.js?v=202611212130"></script>
+  <script src="assets/js/config.js?v=202611212200"></script>
+  <script src="assets/js/core.js?v=202611212200"></script>
   <script>
   (async function () {
     const { sb, C, configured, esc, $, signInWithGoogle, signOut, getContext, errMsg, rememberNext, takeNext } = LMS;
@@ -60,7 +60,7 @@
       const ctx = await getContext();
       // المشرف يبدأ من مكتب الإشراف التربوي مباشرة (الرئيسية متاحة من الشريط العلوي)
       const nxt = takeNext();
-      if (ctx && ctx.registered) { location.replace(nxt || (ctx.profile && ctx.profile.role === 'supervisor' ? 'supervision/' : 'home.html')); return; }
+      if (ctx && ctx.registered) { LMS.applyView(ctx); location.replace(nxt || (ctx.profile && ctx.profile.role === 'supervisor' ? 'supervision/' : 'home.html')); return; }
       // صفحة «التعليم عن بعد» تقبل أي حساب مدرسي (الطلاب يدخلونها حتى لو كانت بقية المنصة مقفولة عليهم)
       if (ctx && ctx.domain_ok !== false && /^online\//.test(nxt)) { location.replace(nxt); return; }
 

@@ -8,8 +8,15 @@
   const main = $('#main');
 
   // ---------- البطاقة الترحيبية ----------
-  const chips = [`<span class="chip">${esc(ROLE_LABELS[role])}</span>`];
-  if (p.job_title) chips.push(`<span class="chip teal">${esc(p.job_title)}</span>`);
+  const chips = [];
+  if (ctx.canSwitch) {
+    // صاحب الصفتين: الضغط على «مدير النظام» يرجع للوضع الكامل، والضغط على «مشرف …» يفتح واجهة المشرف
+    chips.push(`<button type="button" class="chip view-sw ${ctx.viewAs ? '' : 'on'}" data-view="" title="الواجهة الكاملة">${esc(ROLE_LABELS[ctx.realRole])}</button>`);
+    chips.push(`<button type="button" class="chip teal view-sw ${ctx.viewAs ? 'on' : ''}" data-view="supervisor" title="واجهة المشرف">${esc(p.job_title)}</button>`);
+  } else {
+    chips.push(`<span class="chip">${esc(ROLE_LABELS[role])}</span>`);
+    if (p.job_title) chips.push(`<span class="chip teal">${esc(p.job_title)}</span>`);
+  }
   if (ctx.term) chips.push(`<span class="chip gray">${esc(ctx.term.year)} — ${esc(ctx.term.term)}</span>`);
   if (ctx.student && ctx.student.class_label) chips.push(`<span class="chip pink">${esc(ctx.student.class_label)}</span>`);
   (ctx.scopes || []).forEach((s) => chips.push(`<span class="chip pink">نطاق: ${esc(scopeText(s))}</span>`));
@@ -22,9 +29,17 @@
       <p>مرحبًا بك في ${esc(C.PLATFORM_NAME)}</p>
       <div class="chips">${chips.join('')}</div>
     </section>
+    ${ctx.viewAs ? `<div class="notice" style="margin-bottom:14px">أنت الآن في <b>واجهة المشرف</b> — اضغط «${esc(ROLE_LABELS[ctx.realRole])}» تحت اسمك للرجوع للوضع الكامل.</div>` : ''}
     <div id="panel"></div>
     <div class="section-title"><h2>الوحدات</h2></div>
     <div class="grid modules" id="modules"></div>`;
+
+  main.querySelectorAll('.view-sw').forEach((b) => b.onclick = () => {
+    const v = b.dataset.view;
+    if (v === (ctx.viewAs || '')) { if (v) location.href = 'supervision/'; return; }
+    LMS.setView(v);
+    location.href = v ? 'supervision/' : 'home.html';
+  });
 
   // ---------- الوحدات ----------
   // المشرف يرى الوحدات الجاهزة فقط (الوحدات «قريبًا» تظهر له تلقائيًا عند تفعيلها)

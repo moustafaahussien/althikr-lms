@@ -403,32 +403,46 @@
   async function staffTab(pane) {
     const all = await fetchAll(() => sb.from('profiles').select('*').neq('role', 'student').order('full_name'));
     const scopes = await fetchAll(() => sb.from('staff_scopes').select('*'));
+    const teach = await fetchAll(() => sb.from('v_staff_teaching').select('*'));
+    const T = Object.fromEntries(teach.map((t) => [t.teacher_id, t]));
     const scCount = {}; scopes.forEach((s) => { scCount[s.profile_id] = (scCount[s.profile_id] || 0) + 1; });
+    const uniq = (f) => [...new Set(teach.flatMap((t) => String(t[f] || '').split('، ').filter(Boolean)))].sort((a, b) => a.localeCompare(b, 'ar'));
     pane.innerHTML = `
       <div class="toolbar">
-        <input class="grow" id="q" placeholder="بحث بالاسم أو البريد…">
+        <input class="grow" id="q" placeholder="بحث بالاسم أو البريد أو الفصل…">
         <select id="roleF"><option value="">كل الأدوار</option>${Object.entries(ROLE_LABELS).filter(([k]) => k !== 'student')
           .map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select>
+        <select id="stgF"><option value="">كل المراحل</option>${uniq('stages').map((x) => `<option>${esc(x)}</option>`).join('')}</select>
+        <select id="subF"><option value="">كل المواد</option>${uniq('subjects').map((x) => `<option>${esc(x)}</option>`).join('')}</select>
+        <select id="supF"><option value="">كل المشرفين</option>${uniq('supervisors').map((x) => `<option>${esc(x)}</option>`).join('')}</select>
         <button class="btn primary" id="add">+ إضافة موظف</button>
         <button class="btn" id="csv">⬇ تنزيل</button>
       </div>
       <div class="table-wrap glass" id="tbl"></div>`;
     const draw = () => {
-      const q = norm(val(pane, '#q')), rf = val(pane, '#roleF');
-      const rows = all.filter((p) => (!rf || p.role === rf) && (!q || norm(p.full_name + ' ' + (p.email || '')).includes(q)));
-      $('#tbl', pane).innerHTML = `<table><thead><tr><th>الاسم</th><th>البريد</th><th>الدور</th><th>المسمى</th><th>النطاقات</th><th>الحالة</th><th></th></tr></thead>
-        <tbody>${rows.length ? rows.map((p) => `<tr>
-          <td><b>${esc(p.full_name)}</b></td><td dir="ltr">${esc(p.email || '—')}</td><td>${esc(ROLE_LABELS[p.role])}</td>
-          <td>${esc(p.job_title || '')}</td><td>${scCount[p.id] || '—'}</td><td>${pill(p.active)}</td>
+      const q = norm(val(pane, '#q')), rf = val(pane, '#roleF'), sf = val(pane, '#stgF'), bf = val(pane, '#subF'), pf = val(pane, '#supF');
+      const has = (t, f, v) => !v || (t && String(t[f] || '').split('، ').includes(v));
+      const rows = all.filter((p) => { const t = T[p.id];
+        return (!rf || p.role === rf) && has(t, 'stages', sf) && has(t, 'subjects', bf) && has(t, 'supervisors', pf)
+          && (!q || norm(p.full_name + ' ' + (p.email || '') + ' ' + (t ? t.classes.map((c) => c.label).join(' ') : '')).includes(q)); });
+      $('#tbl', pane).innerHTML = `<p class="hint" style="margin:0 0 8px">${rows.length} موظف — المادة والمرحلة والفصول والنصاب من جدول الحصص في منصة الإشراف.</p>
+        <table><thead><tr><th>الاسم</th><th>المادة</th><th>المرحلة</th><th>الفصول</th><th>الحصص/أسبوع</th><th>المشرف</th><th>البريد</th><th>الدور</th><th>الحالة</th><th></th></tr></thead>
+        <tbody>${rows.length ? rows.map((p) => { const t = T[p.id]; return `<tr>
+          <td><b>${esc(p.full_name)}</b>${p.job_title ? `<div class="hint" style="margin:0">${esc(p.job_title)}</div>` : ''}</td>
+          <td>${esc(t?.subjects || '—')}</td><td>${esc(t?.stages || '—')}</td>
+          <td title="${esc(t ? t.classes.map((c) => c.label + ' — ' + c.subject).join('\n') : '')}">${t ? t.class_count : '—'}</td>
+          <td>${t ? t.weekly_periods : '—'}</td><td>${esc(t?.supervisors || '—')}</td>
+          <td dir="ltr">${esc(p.email || '—')}</td><td>${esc(ROLE_LABELS[p.role])}${scCount[p.id] ? ` <span class="chip pink" title="نطاقات">${scCount[p.id]}</span>` : ''}</td><td>${pill(p.active)}</td>
           <td class="actions"><button class="btn sm" data-edit="${p.id}">تعديل</button>
-            ${p.id !== ME.id ? `<button class="btn sm danger" data-del="${p.id}">حذف</button>` : ''}</td></tr>`).join('')
-          : '<tr><td colspan="7" class="empty">لا نتائج</td></tr>'}</tbody></table>`;
+            ${p.id !== ME.id ? `<button class="btn sm danger" data-del="${p.id}">حذف</button>` : ''}</td></tr>`; }).join('')
+          : '<tr><td colspan="10" class="empty">لا نتائج</td></tr>'}</tbody></table>`;
     };
     draw();
-    $('#q', pane).oninput = draw; $('#roleF', pane).onchange = draw;
+    $('#q', pane).oninput = draw; ['#roleF', '#stgF', '#subF', '#supF'].forEach((x) => { $(x, pane).onchange = draw; });
     $('#add', pane).onclick = () => editStaff(null);
-    $('#csv', pane).onclick = () => downloadCSV('الموظفون.csv', [['الاسم', 'البريد', 'الدور', 'المسمى', 'الحالة']]
-      .concat(all.map((p) => [p.full_name, p.email, ROLE_LABELS[p.role], p.job_title, p.active ? 'نشط' : 'موقوف'])));
+    $('#csv', pane).onclick = () => downloadCSV('الموظفون.csv', [['الاسم', 'البريد', 'الدور', 'المسمى', 'المادة', 'المرحلة', 'عدد الفصول', 'الفصول', 'الحصص/أسبوع', 'المشرف', 'الحالة']]
+      .concat(all.map((p) => { const t = T[p.id] || {}; return [p.full_name, p.email, ROLE_LABELS[p.role], p.job_title, t.subjects || '', t.stages || '',
+        t.class_count || 0, (t.classes || []).map((c) => c.label + ' (' + c.subject + ')').join(' | '), t.weekly_periods || 0, t.supervisors || '', p.active ? 'نشط' : 'موقوف']; })));
     $('#tbl', pane).onclick = async (e) => {
       const ed = e.target.closest('[data-edit]'), dl = e.target.closest('[data-del]');
       if (ed) editStaff(all.find((p) => p.id === ed.dataset.edit));
@@ -453,6 +467,10 @@
           <label class="f">المسمى الوظيفي<input id="jt" value="${esc(p.job_title || '')}"></label>
           <label class="f">الحالة<select id="ac" ${p.id === ME.id ? 'disabled' : ''}><option value="1" ${p.active ? 'selected' : ''}>نشط</option><option value="0" ${!p.active ? 'selected' : ''}>موقوف</option></select></label>
         </div>
+        ${T[p.id] ? `<h4 style="margin:14px 0 6px">التدريس (من جدول الحصص) — ${T[p.id].class_count} فصل، ${T[p.id].weekly_periods} حصة أسبوعيًا${T[p.id].supervisors ? ' — المشرف: ' + esc(T[p.id].supervisors) : ''}</h4>
+          <div class="table-wrap" style="max-height:240px;overflow:auto"><table><thead><tr><th>الفصل</th><th>المادة</th><th>الحصص</th></tr></thead><tbody>
+          ${T[p.id].classes.map((c) => `<tr><td>${esc(c.label)}</td><td>${esc(c.subject)}</td><td>${c.periods ?? '—'}</td></tr>`).join('')}</tbody></table></div>
+          <p class="hint">لتعديل فصول المعلم أو مادته: من منصة الإشراف (جدول الحصص / الإعدادات).</p>` : ''}
         <p class="hint">«الإدارة العليا» ترى كل المدرسة للقراءة. «مدير مرحلة» و«مشرف» يريان ما يحدده النطاق أدناه. «المعلم» يرى فصوله المُسندة فقط.</p>
         <h4 style="margin:14px 0 6px">النطاقات</h4>
         ${isNew ? '<p class="hint">احفظ الموظف أولًا ثم افتح «تعديل» لإضافة النطاقات.</p>' : `
@@ -495,7 +513,8 @@
           const row = { full_name: val(w, '#fn'), email: val(w, '#em').toLowerCase() || null, job_title: val(w, '#jt') || null };
           if (p.id !== ME.id) { row.role = val(w, '#rl'); row.active = val(w, '#ac') === '1'; }
           if (!row.full_name) { toast('الاسم مطلوب', 'warn'); return false; }
-          if (!row.email || !row.email.endsWith('@' + LMS.C.SCHOOL_DOMAIN)) { toast('البريد يجب أن يكون على نطاق المدرسة', 'warn'); return false; }
+          if (row.email && !row.email.endsWith('@' + LMS.C.SCHOOL_DOMAIN)) { toast('البريد يجب أن يكون على نطاق المدرسة', 'warn'); return false; }
+          if (!row.email && row.role !== 'teacher' && p.role !== 'teacher') { toast('البريد مطلوب لهذا الدور', 'warn'); return false; }
           if (isNew) await run(sb.from('profiles').insert(row)); else await run(sb.from('profiles').update(row).eq('id', p.id));
           toast('تم الحفظ'); return true;
         } },
@@ -688,6 +707,7 @@
      =================================================================== */
   async function classesTab(pane) {
     const teachers = R.staff.filter((s) => s.active);
+    const CT = Object.fromEntries((await fetchAll(() => sb.from('v_class_teaching').select('*'))).map((x) => [x.class_id, x]));
     const tName = Object.fromEntries(R.staff.map((s) => [s.id, s.full_name]));
     pane.innerHTML = `
       <div class="toolbar">
@@ -699,11 +719,14 @@
     const draw = () => {
       const f = val(pane, '#stF');
       const rows = R.classes.filter((c) => !f || String(c.stage_id) === f);
-      $('#tbl', pane).innerHTML = `<table><thead><tr><th>الفصل</th><th>القسم</th><th>الطلاب</th><th>رائد الفصل</th><th>الحالة</th><th></th></tr></thead>
-        <tbody>${rows.length ? rows.map((c) => `<tr><td><b>${esc(c.label)}</b></td><td>${esc(c.section_name)}</td><td>${c.student_count}</td>
+      $('#tbl', pane).innerHTML = `<p class="hint" style="margin:0 0 8px">${rows.length} فصل — المعلمون والمواد من جدول الحصص في منصة الإشراف.</p>
+        <table><thead><tr><th>الفصل</th><th>القسم</th><th>المعلمون</th><th>المواد</th><th>الحصص/أسبوع</th><th>الطلاب</th><th>رائد الفصل</th><th>الحالة</th><th></th></tr></thead>
+        <tbody>${rows.length ? rows.map((c) => { const t = CT[c.id]; return `<tr><td><b>${esc(c.label)}</b></td><td>${esc(c.section_name)}</td>
+          <td title="${esc(t ? t.teachers.map((x) => x.subject + ': ' + x.teacher).join('\n') : '')}">${t ? t.teacher_count : 0}</td>
+          <td>${t ? t.subject_count : 0}</td><td>${t ? t.weekly_periods : 0}</td><td>${c.student_count}</td>
           <td>${esc(tName[c.homeroom_teacher_id] || '—')}</td><td>${pill(c.active)}</td>
-          <td class="actions"><button class="btn sm" data-edit="${c.id}">تعديل</button><button class="btn sm danger" data-del="${c.id}">حذف</button></td></tr>`).join('')
-          : '<tr><td colspan="6" class="empty">لا توجد فصول — تُنشأ تلقائيًا عند استيراد الطلاب، أو أضفها يدويًا.</td></tr>'}</tbody></table>`;
+          <td class="actions"><button class="btn sm" data-edit="${c.id}">تعديل</button><button class="btn sm danger" data-del="${c.id}">حذف</button></td></tr>`; }).join('')
+          : '<tr><td colspan="9" class="empty">لا توجد فصول — تُنشأ تلقائيًا عند استيراد الطلاب، أو أضفها يدويًا.</td></tr>'}</tbody></table>`;
     };
     draw(); $('#stF', pane).onchange = draw;
     $('#add', pane).onclick = () => edit(null);

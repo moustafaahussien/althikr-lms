@@ -333,12 +333,6 @@ dialog::backdrop{background:#0006}
         <div class="bar" style="margin:0"><input id="pushKeyIn" type="password" dir="ltr" autocomplete="off" placeholder="os_v2_app_..." style="flex:1 1 260px;padding:8px 10px;border:1px solid var(--line);border-radius:10px"><button class="btn pri" id="pushKeySave" type="button">حفظ المفتاح</button></div>
       </div>
       <div style="margin:6px 0 14px">
-        <b>👩‍🏫 مزامنة المعلمين مع منصة المدرسة</b> <span class="sync" id="tsyncMsg"></span>
-        <p class="h" style="margin:4px 0">ينقل كل المعلمين من جداول المشرفين إلى منصة المدرسة (حساب «معلم» لكل واحد + فصوله ومواده وعدد حصصه + مشرفه). تتم تلقائيًا كلما فتحت هذه الصفحة وتغيّرت الجداول، ويمكنك تشغيلها يدويًا هنا. المعلمون بلا بريد حاليًا (لن يستطيعوا الدخول) وعند استيراد إيميلاتهم لاحقًا تُربط بنفس الحسابات.</p>
-        <div class="bar" style="margin:0"><button class="btn" id="tsyncPrev" type="button">معاينة</button><button class="btn pri" id="tsyncRun" type="button">مزامنة الآن</button></div>
-        <div id="tsyncBox" class="h" style="margin-top:8px"></div>
-      </div>
-      <div style="margin:6px 0 14px">
         <b>📤 تصدير البيانات إلى Excel</b>
         <div class="bar" style="margin:6px 0 0"><button class="btn sm" type="button" data-exp="evals">تقييمات المعلمين</button><button class="btn sm" type="button" data-exp="sessions">الجلسات الفردية</button><button class="btn sm" type="button" data-exp="plans">خطط التطوير</button><span class="sync" id="expMsg"></span></div>
       </div>
@@ -548,9 +542,62 @@ function parseSheets(raw){
   return {sheets, entries:uniq, nper:maxP||9};
 }
 
+/* ===== جدول الحصص من قاعدة بيانات منصة المدرسة (tt_*) — مصدر واحد للمعلمين والفصول والمواد ===== */
+let TT = null; // {mirror, sheets:[{k,idx,owner,owner_name,dept,name,label}], slots:[...], subjects:{}, stages:{}}
+function ttEntries(d){
+  const sheets=(d.sheets||[]).map(x=>({idx:x.k, name:x.name, title:x.label||"", owner:x.owner, ownerName:x.owner_name, dept:x.dept}));
+  const entries=[]; let maxP=0;
+  (d.slots||[]).forEach(x=>{
+    const e={kind:x.k, sheet:x.s, day:x.d, period:x.p};
+    if(x.k==="event") e.text=x.x||x.t||"";
+    else Object.assign(e,{teacher:x.t||"", cls:x.c||"", track:x.tr||"arabic", gradeNum:x.g==null?null:+x.g, section:x.sc||"", subj:x.sj||"", room:x.r||""});
+    e.key=[e.sheet,e.day,e.period,e.teacher||e.text,e.cls||""].join("|");
+    maxP=Math.max(maxP,e.period||0); entries.push(e);
+  });
+  const seen=new Set(); return {sheets, entries:entries.filter(e=>{ if(seen.has(e.key)) return false; seen.add(e.key); return true; }), nper:maxP||9};
+}
+function ttMaps(){ // أسماء الجداول ومواد المعلمين ومراحل الصفوف تأتي من قاعدة البيانات
+  const sn={}; ((TT&&TT.sheets)||[]).forEach(x=>{ if(x.label) sn[x.k]=x.label; });
+  cfg.sheetNames=sn; cfg.subjects=Object.assign({},(TT&&TT.subjects)||{}); cfg.stages=Object.assign({},(TT&&TT.stages)||{});
+  if(TT&&TT.mirror) cfg.schoolMirror=true; else delete cfg.schoolMirror;
+  delete cfg.raw;
+}
+function ttKey(){ return "tt_tt_"+CODE; }
+async function ttLoad(){
+  if(!SB||!CODE) return;
+  try{
+    let {data,error}=await SB.rpc("sv_tt_get",{p_all:false}); if(error||!data||!data.ok) throw new Error((error&&error.message)||(data&&data.error)||"tt");
+    if(!data.sheets.length && LEGACY_RAW){ const pr=parseSheets(LEGACY_RAW.raw);
+      if(pr.sheets.length){ const res=await SB.rpc("sv_tt_put",{p:ttPayload(pr,LEGACY_RAW)}); if(!res.error&&res.data&&res.data.ok){ LEGACY_RAW=null; const r2=await SB.rpc("sv_tt_get",{p_all:false}); if(r2.data&&r2.data.ok) data=r2.data; } } }
+    if(!data.sheets.length && IS_SYS()){ await ttMigrateLegacy(); const r2=await SB.rpc("sv_tt_get",{p_all:false}); if(r2.data&&r2.data.ok) data=r2.data; }
+    if(!data.sheets.length && IS_SYS()){ const r=await SB.rpc("sv_tt_get",{p_all:true}); if(!r.error&&r.data&&r.data.ok) data=r.data; }
+    TT=data; LS.set(ttKey(),TT); SCH=null; rebuild(); renderAll(true);
+  }catch(e){ setSync("تعذّر تحميل جدول الحصص من الخادم — يعمل من نسخة هذا الجهاز"); }
+}
+// تحويل الجداول القديمة (المخزّنة داخل بيانات المشرفين) إلى جداول المنصة — يعمل تلقائيًا لمسؤول النظام مرة واحدة
+async function ttMigrateLegacy(){
+  try{
+    const r=await jsonp({code:CODE,action:"admin_school"},40000); if(!r||!r.ok||!r.school||!r.school.length) return 0;
+    let n=0;
+    for(const sp of r.school){ const c=sp.cfg||{}; const raw=c.raw||[]; if(!raw.length) continue;
+      const pr=parseSheets(raw); if(!pr.sheets.length) continue;
+      const res=await SB.rpc("sv_tt_put",{p:ttPayload(pr,{owner:sp.code, labels:c.sheetNames||{}, stages:c.stages||{}, subjects:c.subjects||{}})});
+      if(!res.error&&res.data&&res.data.ok) n++; }
+    return n;
+  }catch(e){ return 0; }
+}
+function ttPayload(pr,o){
+  o=o||{};
+  return {owner:o.owner||null,
+    sheets:pr.sheets.map(x=>{ const s={idx:x.idx,name:x.name}; if(o.labels && o.labels[x.idx]!==undefined) s.label=o.labels[x.idx]; return s; }),
+    entries:pr.entries.map(e=>({sheet:e.sheet,day:e.day,period:e.period,kind:e.kind,teacher:e.teacher||"",cls:e.cls||"",track:e.track||"",gradeNum:e.gradeNum==null?"":e.gradeNum,section:e.section||"",subj:e.subj||"",room:e.room||"",text:e.text||""})),
+    stages:o.stages||{}, subjects:o.subjects||{}};
+}
+async function ttMeta(p){ const {data,error}=await SB.rpc("sv_tt_meta",{p}); if(error||!data||!data.ok) throw new Error((error&&error.message)||(data&&data.error)||"meta"); }
+
 function rebuild(){
-  const raw = cfg.raw || RAW_DEFAULT;
-  const r = parseSheets(raw);
+  ttMaps();
+  const r = TT ? ttEntries(TT) : {sheets:[],entries:[],nper:9};
   SHEETS=r.sheets; ENTRIES=r.entries; NPER=r.nper; for(const k in _tsCache) delete _tsCache[k];
   if(cfg.schoolMirror){ // جدول المدرسة الموحد: نفس الحصة قد تتكرر عند أكثر من مشرف
     const seen=new Set(), busy=new Set(); ENTRIES.forEach(e=>{ if(e.kind==="class") busy.add(e.teacher+"|"+e.day+"|"+e.period); });
@@ -1026,15 +1073,24 @@ document.getElementById("p-set").addEventListener("change",ev=>{
     if(el.dataset.tf==="s" && !t[+el.dataset.ti].e && el.value){ t[+el.dataset.ti].e=fmtHM(toMin(el.value)+45); renderSettings(); }
   }
   else if(cfg.schoolMirror && (el.dataset.sn!==undefined || el.dataset.sub || el.dataset.stg)){ renderSettings(); return toast("هذه الخانة يعدّلها كل مشرف من حسابه"); }
-  else if(el.dataset.sn!==undefined){ const v=el.value.trim(); if(v) cfg.sheetNames[el.dataset.sn]=v; else delete cfg.sheetNames[el.dataset.sn]; }
-  else if(el.dataset.sub){ const v=el.value.trim(); if(v) cfg.subjects[el.dataset.sub]=v; else delete cfg.subjects[el.dataset.sub]; el.style.cssText=v?"":"border-color:#e4a842;background:#fffaf0"; }
+  else if(el.dataset.sn!==undefined || el.dataset.sub || el.dataset.stg){ ttSettingChange(el); return; }
   else if(el.id==="titleIn"){ cfg.title=el.value.trim(); applyTitle(); }
-  else if(el.dataset.stg){ cfg.stages[el.dataset.stg]=el.value; renderSettings(); }
   else if(el.dataset.prof){ cfg.profOf[el.dataset.prof]=el.value; }
   else return;
   saveCfg(); fillFilters(); toast("تم الحفظ ✓");
 });
 
+// أسماء الجداول / مادة المعلم / مرحلة الصف: تُحفظ في قاعدة بيانات المنصة مباشرة
+async function ttSettingChange(el){
+  const v=el.value.trim();
+  try{
+    if(el.dataset.sn!==undefined){ const idx=+el.dataset.sn; await ttMeta({action:"label",idx,value:v}); const sh=(TT.sheets||[]).find(x=>x.k===idx); if(sh) sh.label=v||null; }
+    else if(el.dataset.sub){ const k=el.dataset.sub, j=k.indexOf("|"), idx=+k.slice(0,j), teacher=k.slice(j+1);
+      await ttMeta({action:"subject",idx,teacher,value:v}); if(v) TT.subjects[k]=v; else delete TT.subjects[k]; el.style.cssText=v?"":"border-color:#e4a842;background:#fffaf0"; }
+    else if(el.dataset.stg){ const [idx,track,grade]=el.dataset.stg.split("|"); await ttMeta({action:"stage",idx:+idx,track,grade:+grade,value:el.value}); TT.stages[el.dataset.stg]=el.value; }
+    LS.set(ttKey(),TT); rebuild(); renderAll(); if(el.dataset.stg) renderSettings(); fillFilters(); toast("تم الحفظ ✓");
+  }catch(e){ toast("تعذّر الحفظ على الخادم — حاول مرة أخرى"); renderSettings(); }
+}
 document.getElementById("xlsIn").addEventListener("change", async ev=>{
   const f=ev.target.files[0]; if(!f) return; const msg=document.getElementById("xlsMsg");
   if(!canEditCfg){ msg.textContent="التحديث متاح لصاحب الصفحة فقط."; return; }
@@ -1045,7 +1101,9 @@ document.getElementById("xlsIn").addEventListener("change", async ev=>{
     const raw=wb.SheetNames.map(n=>({name:n, rows:XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,defval:"",raw:false}).map(r=>r.map(c=>String(c??"")))}));
     const test=parseSheets(raw);
     if(!test.entries.length) throw new Error("لم أجد أيامًا وأرقام حصص في الملف");
-    cfg.raw=raw; delete cfg.schoolMirror; saveCfg(); rebuild(); renderAll();
+    msg.textContent="جارٍ الحفظ في قاعدة بيانات المنصة…";
+    const {data,error}=await SB.rpc("sv_tt_put",{p:ttPayload(test,{})}); if(error||!data||!data.ok) throw new Error((error&&error.message)||(data&&data.error)||"save");
+    await ttLoad();
     msg.textContent=`تم ✓ — ${test.sheets.length} جداول، ${test.entries.filter(e=>e.kind==="class").length} حصة أسبوعيًا.`;
   }catch(e){ msg.textContent="تعذّرت قراءة الملف: "+(e.message||e); }
   ev.target.value="";
@@ -1081,7 +1139,7 @@ async function jsonp(params, timeout=20000){
 }
 async function jsonpRetry(params){ for(let i=0;i<3;i++){ try{ return await jsonp(params); }catch(e){ if(i===2) throw e; await new Promise(r=>setTimeout(r,1200*(i+1))); } } }
 function localKey(){ return "tt_data_"+CODE; }
-function cfgForSave(){ return cfg.schoolMirror ? Object.assign({},cfg,{raw:[],sheetNames:{},stages:{},subjects:{},schoolMirror:false}) : cfg; }
+function cfgForSave(){ const c=Object.assign({},cfg); ["raw","sheetNames","stages","subjects","schoolMirror"].forEach(k=>delete c[k]); return c; }
 function saveLocal(){ LS.set(localKey(),{cfg:cfgForSave(),prefs,stamp:lastStamp}); }
 function saveCfg(){ saveLocal(); queueSave(); }
 function savePrefs(){ saveLocal(); queueSave(); }
@@ -1111,7 +1169,9 @@ async function flushSave(){
   if(saveAgain){ saveAgain=false; flushSave(); }
   else if(!ok){ clearTimeout(saveTimer); saveTimer=setTimeout(flushSave,30000); }
 }
+let LEGACY_RAW=null; // جدول قديم كان مخزّنًا داخل بيانات المشرف (يُنقل لقاعدة البيانات مرة واحدة)
 function applyData(d){
+  if(d && d.cfg && Array.isArray(d.cfg.raw) && d.cfg.raw.length) LEGACY_RAW={raw:d.cfg.raw, labels:d.cfg.sheetNames||{}, stages:d.cfg.stages||{}, subjects:d.cfg.subjects||{}};
   cfg = migrateCfg(d && d.cfg);
   prefs = Object.assign({reminders:[],lead:5,showFree:false,hidePast:false}, (d&&d.prefs)||{});
   if(migrateEvalsV2()) setTimeout(()=>{ try{ savePrefs(); }catch(e){} },0);
@@ -1131,7 +1191,7 @@ function mergeData(local,server){
   lp.evals=byId(lp.evals,sp.evals,x=>Number(x.updated||x.created||0));
   lp.reminders=byId(lp.reminders,sp.reminders);
   if(!lp.tpl && sp.tpl) lp.tpl=sp.tpl;
-  if((!L.cfg || !L.cfg.raw || !L.cfg.raw.length) && S.cfg) L.cfg=S.cfg;
+  if(!L.cfg && S.cfg) L.cfg=S.cfg;
   return L;
 }
 async function loadRemote(silent){
@@ -1146,14 +1206,14 @@ async function loadRemote(silent){
   if(local && LS.get(pendKey())){
     const d = (r.data && Number(r.stamp)>Number(local.stamp||0)) ? mergeData(local,r.data) : local;
     lastStamp=Number(r.stamp)||0; applyData(d); saveLocal(); queueSave();
-    if(IS_SYS() && (!cfg.raw || !cfg.raw.length || cfg.schoolMirror)) mirrorSchool();
+    ttLoad();
     remSynced=true; purgeEndedReminders();
     return r;
   }
   if(r.data){ lastStamp=Number(r.stamp)||0; applyData(r.data); saveLocal(); if(JSON.stringify(buildPushQueue())!==JSON.stringify(prefs.push||[])) queueSave(); }
   else if(local){ applyData(local); queueSave(); }
   else { applyData(null); }
-  if(IS_SYS() && (!cfg.raw || !cfg.raw.length || cfg.schoolMirror)) mirrorSchool();
+  ttLoad();
   setSync("متزامن ✓");
   remSynced=true; purgeEndedReminders();
   return r;
@@ -1185,9 +1245,10 @@ async function startWithCode(code){
   if(CODE && CODE!==code){ LS.set("tt_who",null); WHO=null; } // حساب مختلف على نفس الجهاز
   CODE=code; LS.set("tt_code",CODE);
   document.getElementById("login").classList.add("off");
+  TT=LS.get(ttKey())||null;
   const local=LS.get(localKey()); if(local){ lastStamp=Number(local.stamp)||0; applyData(local); }
   applyTitle(); applyAdmin(); restoreTab(); setSync("جارٍ المزامنة…");
-  try{ const r=await loadRemote(); if(!r.ok){ if(r.error==="not_member"||r.error==="no_session") forceLogout(""); else setSync("تعذّرت المزامنة — يعمل من نسخة هذا الجهاز"); } else { if(WHO&&WHO.name) toast("أهلًا "+WHO.name); setTimeout(autoSyncTeachers,4000); } }
+  try{ const r=await loadRemote(); if(!r.ok){ if(r.error==="not_member"||r.error==="no_session") forceLogout(""); else setSync("تعذّرت المزامنة — يعمل من نسخة هذا الجهاز"); } else if(WHO&&WHO.name) toast("أهلًا "+WHO.name); }
   catch(e){ setSync(local?"بدون اتصال — يعمل من نسخة هذا الجهاز":"تعذّر الاتصال بالخادم"); }
 }
 async function initCloud(){
@@ -1348,20 +1409,7 @@ document.getElementById("admList").addEventListener("click",async ev=>{
 
 
 // حساب مسؤول النظام بلا جدول خاص: «حصص اليوم» و«جدول معلم» تعرض حصص المدرسة كلها من جداول كل المشرفين
-async function mirrorSchool(){
-  try{
-    const r=await jsonp({code:CODE,action:"admin_school"},40000); if(!r||!r.ok||!r.school) return;
-    const raw=[], sheetNames={}, stages={}, subjects={};
-    r.school.forEach(sp=>{ const c=sp.cfg||{}; (c.raw||[]).forEach((sh,i)=>{ const k=raw.length; raw.push(sh);
-      sheetNames[k]=(c.sheetNames||{})[i]||sh.name;
-      Object.entries(c.stages||{}).forEach(([key,v])=>{ const ps=key.split("|"); if(ps[0]===String(i)) stages[[k,ps[1],ps[2]].join("|")]=v; });
-      Object.entries(c.subjects||{}).forEach(([key,v])=>{ const j=key.indexOf("|"); if(key.slice(0,j)===String(i)) subjects[k+key.slice(j)]=v; }); }); });
-    if(!raw.length) return;
-    if(cfg.raw && cfg.raw.length && !cfg.schoolMirror) return; // لو رُفع جدول خاص أثناء التحميل
-    Object.assign(cfg,{raw,sheetNames,stages,subjects,schoolMirror:true});
-    rebuild(); renderAll(true); SCH=null;
-  }catch(e){}
-}
+async function mirrorSchool(){ return ttLoad(); }
 /* ================= جدول المدرسة الموحد (مسؤول النظام) ================= */
 let SCH=null, SCH_DAY=null;
 function schStage(e,c){ if(e.kind!=="class") return ""; let st=(c.stages||{})[e.sheet+"|"+e.track+"|"+e.gradeNum]; if(!st){ st=e.track==="american"?"المسار الأمريكي":(e.gradeNum>=4&&e.gradeNum<=6)?"ابتدائي":"غير محدد"; } if(st==="ابتدائي"&&e.track!=="american"&&e.gradeNum) return e.gradeNum<=3?"الصفوف الأولية":"ابتدائي (4–6)"; return st; }
@@ -1370,11 +1418,11 @@ async function loadSchool(force){
   if(SCH && !force){ renderSchool(); return; }
   msg.textContent="جارٍ تحميل جداول المشرفين…";
   try{
-    const r=await jsonp({code:CODE,action:"admin_school"},40000);
-    if(!r.ok){ msg.textContent=r.error==="not_sys"?"هذه الصلاحية لمسؤول النظام فقط":"تعذّر التحميل ("+(r.error||"")+")"; return; }
-    const sups=[], ents=[];
-    r.school.forEach(sp=>{ const c=sp.cfg||{}; const pr=parseSheets(c.raw||[]); sups.push({code:sp.code,name:sp.name,dept:sp.dept});
-      pr.entries.forEach(e=>{ if(e.kind!=="class"&&e.kind!=="free") return; e.sup=sp.name; e.supCode=sp.code; e.stage=schStage(e,c); e.subject=e.subj||(c.subjects||{})[e.sheet+"|"+e.teacher]||""; ents.push(e); }); });
+    const {data:r,error}=await SB.rpc("sv_tt_get",{p_all:true});
+    if(error||!r||!r.ok){ msg.textContent=r&&r.error==="not_sys"?"هذه الصلاحية لمسؤول النظام فقط":"تعذّر التحميل ("+((r&&r.error)||(error&&error.message)||"")+")"; return; }
+    const sups=[], ents=[], seenSup=new Set(), owner={}; const c={stages:r.stages||{},subjects:r.subjects||{}};
+    r.sheets.forEach(x=>{ owner[x.k]=x; if(!seenSup.has(x.owner)){ seenSup.add(x.owner); sups.push({code:x.owner,name:x.owner_name,dept:x.dept}); } });
+    ttEntries(r).entries.forEach(e=>{ if(e.kind!=="class"&&e.kind!=="free") return; const o=owner[e.sheet]||{}; e.sup=o.owner_name||""; e.supCode=o.owner||""; e.stage=schStage(e,c); e.subject=e.subj||c.subjects[e.sheet+"|"+e.teacher]||""; ents.push(e); });
     let maxP=0; ents.forEach(e=>maxP=Math.max(maxP,e.period||0));
     SCH={sups,ents,maxP,at:Date.now()};
     msg.textContent="آخر تحديث "+new Date().toLocaleTimeString(LOCT(),{hour:"2-digit",minute:"2-digit"});
@@ -1511,58 +1559,6 @@ document.getElementById("svSysCard").addEventListener("click",async ev=>{
   catch(e){ m.textContent="تعذّر التصدير"; }
 });
 
-/* ================= مزامنة المعلمين مع منصة المدرسة (LMS) ================= */
-function tsStage(e,c,shName){
-  if(e.kind!=="class"||!e.gradeNum) return null;
-  const g=+e.gradeNum, st=schStage(e,c), girls=/بنات/.test(shName||"");
-  const cls=String(e.section||"").replace(/^-+/,"").trim(); if(!cls) return null;
-  if(e.track==="american"||st==="المسار الأمريكي") return g>=4&&g<=12?{stage:"american",grade:g,cls}:null;
-  const prim=girls?"girls-primary":"boys-primary";
-  if(st==="الصفوف الأولية"||st==="ابتدائي (4–6)"||st==="ابتدائي") return g>=1&&g<=6?{stage:prim,grade:g,cls}:null;
-  if(st==="متوسط"){ const n=g>=7?g-6:g; return n>=1&&n<=3?{stage:"boys-intermediate",grade:n,cls}:null; }
-  if(st==="ثانوي"){ const n=g>=10?g-9:g; return n>=1&&n<=3?{stage:"boys-secondary",grade:n,cls}:null; }
-  if(g>=7&&g<=9) return {stage:"boys-intermediate",grade:g-6,cls};
-  if(g>=10&&g<=12) return {stage:"boys-secondary",grade:g-9,cls};
-  return null; // صف 1–6 بلا مرحلة محددة: غير واضح
-}
-async function tsBuild(){
-  const r=await jsonp({code:CODE,action:"admin_school"},40000);
-  if(!r||!r.ok) throw new Error((r&&r.error)||"admin_school");
-  const T={}, A={}; let unmapped=0, noSubj=0; const unmappedEx=new Set();
-  r.school.forEach(sp=>{ const c=sp.cfg||{}; const raw=c.raw||[]; const pr=parseSheets(raw);
-    pr.entries.forEach(e=>{ if(e.kind!=="class"||!e.teacher) return;
-      const subj=(e.subj||(c.subjects||{})[e.sheet+"|"+e.teacher]||"").trim();
-      const t=T[e.teacher]||(T[e.teacher]={name:e.teacher,subj:{},sups:new Set()}); t.sups.add(sp.code); if(subj) t.subj[subj]=(t.subj[subj]||0)+1;
-      const shName=(c.sheetNames||{})[e.sheet]||(raw[e.sheet]||{}).name||"";
-      const m=tsStage(e,c,shName); if(!m){ unmapped++; unmappedEx.add(e.cls+" ("+shName+")"); return; }
-      if(!subj){ noSubj++; return; }
-      const k=[e.teacher,m.stage,m.grade,m.cls,subj].join("|"); (A[k]=A[k]||{teacher:e.teacher,stage:m.stage,grade:String(m.grade),cls:m.cls,subject:subj,periods:0}).periods++;
-    }); });
-  const teachers=Object.values(T).map(t=>({name:t.name,subject:(Object.entries(t.subj).sort((a,b)=>b[1]-a[1])[0]||[""])[0],sups:[...t.sups]})).sort((a,b)=>a.name.localeCompare(b.name,"ar"));
-  const assign=Object.values(A).sort((a,b)=>(a.teacher+a.stage+a.grade+a.cls).localeCompare(b.teacher+b.stage+b.grade+b.cls,"ar"));
-  return {teachers,assign,unmapped,noSubj,unmappedEx:[...unmappedEx].slice(0,12)};
-}
-function tsHash(x){ const s=JSON.stringify(x); let h=0; for(let i=0;i<s.length;i++){ h=(h*31+s.charCodeAt(i))|0; } return String(h)+":"+s.length; }
-async function tsRun(dry,silent){
-  const msg=document.getElementById("tsyncMsg"), box=document.getElementById("tsyncBox");
-  if(!silent){ msg.textContent="جارٍ قراءة جداول المشرفين…"; box.innerHTML=""; }
-  const b=await tsBuild(); const payload={teachers:b.teachers,assign:b.assign}; const h=tsHash(payload);
-  if(silent && LS.get("tt_tsync")===h) return;
-  if(!silent) msg.textContent=dry?"جارٍ المعاينة…":"جارٍ المزامنة…";
-  const { data, error } = await SB.rpc("sv_sync_teachers",{p:payload, dry_run:!!dry});
-  if(error||!data||!data.ok) throw new Error((error&&error.message)||"sync");
-  if(!dry) LS.set("tt_tsync",h);
-  if(silent){ if(data.teachers_new||data.teachers_deactivated) toast(`تمت مزامنة المعلمين مع منصة المدرسة ✓ (${b.teachers.length} معلم)`); return; }
-  msg.textContent=dry?"معاينة (لم يُحفظ شيء)":"✓ تمت المزامنة";
-  box.innerHTML=`<b>${b.teachers.length}</b> معلم في الجداول — جديد: <b>${data.teachers_new}</b>، موجود: <b>${data.teachers_existing}</b>، أُوقف (لم يعد في الجداول): <b>${data.teachers_deactivated}</b><br>
-    إسناد (معلم × فصل × مادة): <b>${data.assignments}</b> — فصول جديدة: <b>${data.classes_new}</b>، مواد جديدة: <b>${data.subjects_new}</b>`
-    +(b.noSubj?`<br>⚠️ ${b.noSubj} حصة بدون مادة محددة (حدّد مادة المعلم من جدول المشرف) — المعلم يُضاف لكن بدون إسناد لهذه الحصص.`:"")
-    +(b.unmapped?`<br>⚠️ ${b.unmapped} حصة لم يُعرف صفها/مرحلتها، مثل: ${b.unmappedEx.map(esc).join("، ")}`:"")
-    +(data.errors&&data.errors.length?`<br>⚠️ أخطاء: `+data.errors.slice(0,8).map(x=>esc(x.teacher+": "+x.msg)).join(" · "):"");
-}
-document.getElementById("tsyncPrev").onclick=()=>tsRun(true,false).catch(e=>{ document.getElementById("tsyncMsg").textContent="تعذّرت المعاينة ("+String(e.message||e).slice(0,80)+")"; });
-document.getElementById("tsyncRun").onclick=()=>tsRun(false,false).catch(e=>{ document.getElementById("tsyncMsg").textContent="تعذّرت المزامنة ("+String(e.message||e).slice(0,80)+")"; });
-function autoSyncTeachers(){ if(IS_SYS()) tsRun(false,true).catch(()=>{}); }
 // —— النقل من المنصة القديمة ——
 const OLD_API="https://script.google.com/macros/s/AKfycbyQHMzK0MW2w8FaZZzZ-ZcnisYGu9IXSMMtse1GcmPvz8QvVN_bj5lCQF221F6J5y35kQ/exec";
 function oldJsonp(params, timeout=40000){
@@ -1645,6 +1641,7 @@ async function runMig(){
     }
     m.textContent="جارٍ الحفظ في منصة المدرسة…";
     const { data, error } = await SB.rpc("sv_import",{p:payload}); if(error||!data||!data.ok) throw new Error((error&&error.message)||(data&&data.error)||"");
+    m.textContent="جارٍ نقل جداول الحصص إلى قاعدة بيانات المنصة…"; await ttMigrateLegacy(); await ttLoad();
     m.textContent=`✓ تم: ${data.members} مشرف، ${data.messages} رسالة، ${data.schedules} إشعار مجدول. أعد تحميل الصفحة لترى بياناتك.`;
     loadAdmin();
   }catch(e){ m.textContent="توقف النقل: "+e.message; }

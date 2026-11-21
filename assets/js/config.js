@@ -14,7 +14,7 @@ window.LMS_CONFIG = {
 
   /* الوحدات التي تظهر في الصفحة الرئيسية.
      roles: الأدوار التي ترى الوحدة (اتركها [] لتظهر للجميع)
-     url:   رابط الوحدة — اتركه '' لتظهر بعلامة «قريبًا»
+     url:   رابط الوحدة — اتركه '' لتظهر بعلامة «قريبًا». الرابط الداخلي (بدون https) يفتح في نفس الصفحة
      الأدوار: admin, leadership, principal, supervisor, teacher, staff, student, parent */
   MODULES: [
     // —— وحدات المنصة الجديدة (تُبنى في المراحل القادمة) ——
@@ -28,7 +28,7 @@ window.LMS_CONFIG = {
 
     // —— منصاتك الحالية (تُدمج تدريجيًا) ——
     { key: 'online',      title: 'التعليم عن بعد',       icon: '🎥', url: 'https://moustafaahussien.github.io/21csu/online-learning.html', roles: [], desc: 'روابط الحصص والحضور' },
-    { key: 'supervision', title: 'منصة الإشراف التربوي', icon: '🧭', url: 'https://moustafaahussien.github.io/21csu/timetable/', roles: ['admin','leadership','principal','supervisor'], desc: 'جداول الحصص وتقييم المعلمين' },
+    { key: 'supervision', title: 'منصة الإشراف التربوي', icon: '🧭', url: 'supervision/', roles: ['admin','leadership','principal','supervisor'], desc: 'جداول الحصص والزيارات وتقييم المعلمين' },
     { key: '21csu',       title: 'مهارات القرن 21',      icon: '🚀', url: 'https://moustafaahussien.github.io/21csu/', roles: [], desc: 'البرامج الستة للوحدة' },
     { key: 'ai',          title: 'المعلم الذكي',         icon: '🤖', url: 'https://moustafaahussien.github.io/21csu/ai/', roles: ['admin','leadership','principal','supervisor','teacher','staff'], desc: 'أدوات الذكاء الاصطناعي للمعلمين' },
     { key: 'talent',      title: 'منصة الموهبة',         icon: '🌟', url: 'https://moustafaahussien.github.io/Mawhiba/', roles: [], desc: 'برامج موهبة والمسابقات' },

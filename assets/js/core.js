@@ -100,7 +100,7 @@
 
   // ---------- الدخول ----------
   // صفحة داخلية للرجوع إليها بعد الدخول (مثل supervision/) — مسارات نسبية فقط
-  function safeNext(n) { return n && /^[a-z0-9][a-z0-9/_.?=&%-]*$/i.test(n) && !n.includes('..') ? n : ''; }
+  function safeNext(n) { return n && /^(\/(Mawhiba|21csu)\/)?[a-z0-9][a-z0-9/_.?=&%-]*$/i.test(n) && !n.includes('..') ? n : ''; }   // منصتا الموهبة والقرن 21 على نفس النطاق
   function rememberNext() {
     const n = safeNext(new URLSearchParams(location.search).get('next'));
     try { if (n) sessionStorage.setItem('lms_next', n); } catch (_) {}

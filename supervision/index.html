@@ -825,8 +825,8 @@ function loadOneSignal(){
   osReady=new Promise((res,rej)=>{
     if(!PUSH_APP) return rej(new Error("no_app"));
     window.OneSignalDeferred=window.OneSignalDeferred||[];
-    const s=document.createElement("script"); s.src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js"; s.defer=true; s.onerror=()=>rej(new Error("sdk")); document.head.appendChild(s);
-    OneSignalDeferred.push(async OS=>{ try{ await OS.init({appId:PUSH_APP, serviceWorkerPath:"althikr-lms/supervision/OneSignalSDKWorker.js", serviceWorkerParam:{scope:"/althikr-lms/supervision/"}, allowLocalhostAsSecureOrigin:true}); res(OS); }catch(e){ rej(e); } });
+    const s=document.createElement("script"); s.src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js"; s.defer=true; s.onerror=()=>{ osReady=null; s.remove(); rej(new Error("sdk")); }; document.head.appendChild(s);
+    OneSignalDeferred.push(async OS=>{ try{ await OS.init({appId:PUSH_APP, serviceWorkerPath:"althikr-lms/supervision/OneSignalSDKWorker.js", serviceWorkerParam:{scope:"/althikr-lms/supervision/"}, allowLocalhostAsSecureOrigin:true}); res(OS); }catch(e){ osReady=null; rej(e); } });
   });
   return osReady;
 }
@@ -851,6 +851,12 @@ const ANDROID_FIX=`<b>لتفعيل التنبيهات على أندرويد:</b>
 3) في Chrome: ⋮ ← الإعدادات ← إعدادات المواقع ← الإشعارات ← تأكد أنها مسموحة، ولو كان موقع moustafaahussien.github.io في «محظور» احذفه منها.<br>
 4) لو جوالك هونر/هواوي: تأكد أن تطبيق <b>Google Play Services</b> موجود ومحدّث، وألغِ «تحسين البطارية» لتطبيق Chrome.<br>
 5) أغلق الصفحة وافتحها من جديد ثم اضغط «تفعيل التنبيهات».`;
+const BLOCKED_FIX=`<b>المتصفح منع تحميل خدمة الإشعارات (OneSignal).</b> غالبًا السبب مانع إعلانات أو حماية من التتبع:<br>
+1) لو عندك إضافة مانع إعلانات (AdBlock / uBlock / AdGuard…): اضغط أيقونتها وأوقفها لموقع <b>moustafaahussien.github.io</b>.<br>
+2) لو متصفحك <b>Edge</b>: الإعدادات ← الخصوصية والبحث والخدمات ← منع التتبع ← اختر <b>أساسي (Basic)</b>، أو أضف الموقع في «الاستثناءات».<br>
+3) لو متصفحك <b>Brave</b>: اضغط أيقونة الأسد بجوار العنوان وأوقف الدروع (Shields) لهذا الموقع.<br>
+4) لو متصفح <b>Firefox</b>: اضغط أيقونة الدرع بجوار العنوان وأوقف «الحماية المحسّنة من التتبع» لهذا الموقع.<br>
+5) أعد تحميل الصفحة ثم اضغط «تفعيل التنبيهات» مرة أخرى. (الأسهل: استخدم <b>Google Chrome</b> بدون إضافات.)`;
 document.getElementById("pushOn").onclick=async()=>{
   unlockAudio();
   if(isIOS && !isStandalone){ document.getElementById("iosHint").style.display="block"; toast("على الآيفون أضف الصفحة للشاشة الرئيسية أولًا"); return; }
@@ -874,7 +880,8 @@ document.getElementById("pushOn").onclick=async()=>{
   }catch(e){
     const m=String(e&&e.message||e);
     setPushState("تعذّر التفعيل"+(m?" ("+m.slice(0,80)+")":""));
-    if(isAndroid) pushHelp(ANDROID_FIX);
+    if(m==="sdk"||m==="load_timeout") pushHelp(BLOCKED_FIX);
+    else if(isAndroid) pushHelp(ANDROID_FIX);
   }
 };
 document.getElementById("pushTest").onclick=async()=>{

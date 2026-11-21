@@ -68,7 +68,9 @@
     try { rows = await fetchAll(() => sb.from('v_timetable').select('day,period,kind,cls,subject_id,txt').eq('teacher_id', r.id).eq('kind', 'class')); }
     catch (e) { toast(errMsg(e), 'err'); return; }
     const maxP = Math.max(7, ...rows.map((x) => x.period || 0));
-    const cell = {}; rows.forEach((x) => { const k = x.day + '|' + x.period; (cell[k] = cell[k] || []).push(x); });
+    // نفس الحصة قد تتكرر إذا كان الجدول مرفوعًا عند أكثر من مشرف: تُعرض مرة واحدة
+    const cell = {}, seen = new Set();
+    rows.forEach((x) => { const k = x.day + '|' + x.period, u = k + '|' + x.cls + '|' + x.subject_id; if (seen.has(u)) return; seen.add(u); (cell[k] = cell[k] || []).push(x); });
     const grid = `<table class="tt-grid"><thead><tr><th>اليوم</th>${Array.from({ length: maxP }, (_, i) => `<th>${i + 1}</th>`).join('')}</tr></thead><tbody>
       ${DAYS.map((d, di) => `<tr><th>${d}</th>${Array.from({ length: maxP }, (_, pi) => { const c = cell[di + '|' + (pi + 1)];
         return c ? `<td>${c.map((x) => `<b>${esc(SUBJ[x.subject_id] || x.txt || '')}</b>${esc(x.cls || '')}`).join('<hr style="margin:3px 0;border:0;border-top:1px dashed #ccd">')}</td>` : '<td class="off">—</td>'; }).join('')}</tr>`).join('')}

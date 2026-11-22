@@ -50,9 +50,15 @@
     box.innerHTML = L.length ? `<div class="notice warn" style="margin-bottom:14px"><b>📢 تعاميم بانتظار اطلاعك (${L.length}):</b>
       <ul style="margin:6px 0 0;padding-inline-start:18px">${L.slice(0, 5).map((c) => `<li><a href="messages.html?m=${c.id}">${esc(c.subject)}</a>${c.ref ? ` <span class="hint">رقم ${esc(c.ref)}</span>` : ''} — <span class="hint">${esc(c.from || '')}</span></li>`).join('')}</ul></div>` : ''; };
   if (window.LMS_MSG) showAcks(window.LMS_MSG);
-  // مناوبتي اليوم
-  if (STAFF) sb.rpc('duty_today').then(({ data }) => { if (!data || !data.length) return;
-    $('#dutyToday').innerHTML = (`<div class="notice" style="margin-bottom:14px">🛡️ <b>مناوبتك اليوم:</b> ${data.map((d) => `${esc(d.slot)} — ${esc(d.place)}${d.note ? ' (' + esc(d.note) + ')' : ''}`).join(' · ')} <a href="services.html#duty">الجدول</a></div>`); });
+  /* لوحة «يومي» + مناوبتي في طلب واحد (home_today — sql/31)؛ إن تعذّر نرجع للطلبات المنفصلة القديمة */
+  const DAYS = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+  const NOW = new Date(), A = window.ACAD, TODAY = LMS.ymd(NOW);
+  const HOL = A && (A.hol || []).find((h) => TODAY >= h.f && TODAY <= h.to);
+  let DAY = NOW.getDay(); const DAY_LBL = DAY >= 5 ? 'حصصي يوم الأحد' : 'حصصي اليوم'; if (DAY >= 5) DAY = 0;
+  const IS_TODAY = DAY === NOW.getDay();
+  const HT = STAFF ? sb.rpc('home_today', { p_day: HOL ? null : DAY, p_att: !HOL && IS_TODAY }).then(({ data, error }) => error ? null : data, () => null) : Promise.resolve(null);
+  if (STAFF) HT.then((ht) => ht ? { data: ht.duty } : sb.rpc('duty_today')).then(({ data }) => { if (!data || !data.length) return;
+    $('#dutyToday').innerHTML = (`<div class="notice" style="margin-bottom:14px">🛡️ <b>مناوبتك اليوم:</b> ${data.map((d) => `${esc(d.slot)} — ${esc(d.place)}${d.note ? ' (' + esc(d.note) + ')' : ''}`).join(' · ')} <a href="services.html#duty">الجدول</a></div>`); }).catch(() => {});
   document.addEventListener('lms:msg', (e) => showAcks(e.detail));
 
   // ---------- الوحدات ----------
@@ -70,17 +76,14 @@
   // ---------- يومي: حصصي اليوم + معاملات تنتظر قراري + الرسائل غير المقروءة ----------
   if (STAFF) todayPanel().catch(() => {});
   async function todayPanel() {
-    const DAYS = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
-    const now = new Date(), ymd = LMS.ymd(now), A = window.ACAD;
-    const hol = A && (A.hol || []).find((h) => ymd >= h.f && ymd <= h.to);
-    let day = now.getDay(), dayLbl = 'حصصي اليوم';
-    if (day >= 5) { day = 0; dayLbl = 'حصصي يوم الأحد'; }
-    const isToday = day === now.getDay();
-    const [tt, subs, inbox, att] = await Promise.all([
+    const hol = HOL, day = DAY, dayLbl = DAY_LBL, isToday = IS_TODAY, now = NOW;
+    const subsP = LMS.cached('subjects', 30 * 60e3, () => fetchAll(() => sb.from('subjects').select('id,name_ar'))).catch(() => []);
+    const ht = await HT;
+    const [tt, subs, inbox, att] = ht ? [ht.tt || [], await subsP, { length: ht.inbox || 0 }, ht.att || (!hol && isToday ? [] : null)] : await Promise.all([
       hol ? [] : LMS.cached('tt:' + day, 10 * 60e3, () => fetchAll(() => sb.from('v_timetable').select('day,period,cls,class_id,subject_id,txt').eq('teacher_id', p.id).eq('kind', 'class').eq('day', day))).catch(() => []),
-      LMS.cached('subjects', 30 * 60e3, () => fetchAll(() => sb.from('subjects').select('id,name_ar'))).catch(() => []),
+      subsP,
       sb.rpc('req_list', { p_box: 'inbox' }).then(({ data }) => data || [], () => []),
-      // حالة تسجيل الحضور لحصص اليوم (null إن لم تُنشأ الدالة بعد في قاعدة البيانات)
+      // حالة تسجيل الحضور لحصص اليوم
       hol || !isToday ? null : sb.rpc('att_today_mine').then(({ data, error }) => error ? null : data || [], () => null)
     ]);
     const TAKEN = att ? new Set(att.filter((x) => x.taken).map((x) => x.period + '|' + x.class_id)) : null;

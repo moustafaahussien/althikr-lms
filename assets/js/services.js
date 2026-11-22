@@ -133,9 +133,9 @@
   }
   function fieldInput(f, v) {
     const val = esc(v ?? '');
-    if (f.t === 'textarea') return `<textarea data-f="${f.k}" rows="3">${val}</textarea>`;
-    if (f.t === 'select') return `<select data-f="${f.k}"><option value="">— اختر —</option>${(f.opts || []).map((o) => `<option ${o === v ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select>`;
-    return `<input data-f="${f.k}" type="${['date', 'time', 'number'].includes(f.t) ? f.t : 'text'}" value="${val}">`;
+    if (f.t === 'textarea') return `<textarea data-f="${esc(f.k)}" rows="3">${val}</textarea>`;
+    if (f.t === 'select') return `<select data-f="${esc(f.k)}"><option value="">— اختر —</option>${(f.opts || []).map((o) => `<option ${o === v ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select>`;
+    return `<input data-f="${esc(f.k)}" type="${['date', 'time', 'number'].includes(f.t) ? f.t : 'text'}" value="${val}">`;
   }
   function newReq() {
     const body = document.createElement('div');

@@ -39,7 +39,7 @@ function meetDay_(date) { return MEET_[date] || null; }
 /* =====================================================================
    نقطة الدخول
    ===================================================================== */
-const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-ol-secret", "Access-Control-Allow-Methods": "GET, POST, OPTIONS" };
+const CORS = { "Access-Control-Allow-Origin": "https://moustafaahussien.github.io", "Vary": "Origin", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-ol-secret", "Access-Control-Allow-Methods": "GET, POST, OPTIONS" };
 const json = (o, st) => new Response(JSON.stringify(o), { status: st || 200, headers: { ...CORS, "Content-Type": "application/json; charset=utf-8" } });
 const SCHOOL_DOMAIN_ = "althikr.edu.sa";
 async function whoAmI(req) {

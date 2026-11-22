@@ -80,7 +80,7 @@
     const subsP = LMS.cached('subjects', 30 * 60e3, () => fetchAll(() => sb.from('subjects').select('id,name_ar'))).catch(() => []);
     const ht = await HT;
     const [tt, subs, inbox, att] = ht ? [ht.tt || [], await subsP, { length: ht.inbox || 0 }, ht.att || (!hol && isToday ? [] : null)] : await Promise.all([
-      hol ? [] : LMS.cached('tt:' + day, 10 * 60e3, () => fetchAll(() => sb.from('v_timetable').select('day,period,cls,class_id,subject_id,txt').eq('teacher_id', p.id).eq('kind', 'class').eq('day', day))).catch(() => []),
+      hol ? [] : LMS.cached('tt:' + day, 3 * 60e3, () => fetchAll(() => sb.from('v_timetable').select('day,period,cls,class_id,subject_id,txt').eq('teacher_id', p.id).eq('kind', 'class').eq('day', day))).catch(() => []),
       subsP,
       sb.rpc('req_list', { p_box: 'inbox' }).then(({ data }) => data || [], () => []),
       // حالة تسجيل الحضور لحصص اليوم
@@ -154,13 +154,13 @@
   // ---------- الموظفون: فصولي + الفصول ضمن النطاق ----------
   async function staffPanel() {
     const [mine, homeroom] = await Promise.all([
-      LMS.cached('ta', 10 * 60e3, () => fetchAll(() => sb.from('teaching_assignments')
+      LMS.cached('ta', 3 * 60e3, () => fetchAll(() => sb.from('teaching_assignments')
         .select('id, class_id, weekly_periods, subject:subjects(name_ar)').eq('teacher_id', p.id).order('class_id'))),
-      LMS.cached('homeroom', 10 * 60e3, () => fetchAll(() => sb.from('classes').select('id').eq('homeroom_teacher_id', p.id)))]);
+      LMS.cached('homeroom', 3 * 60e3, () => fetchAll(() => sb.from('classes').select('id').eq('homeroom_teacher_id', p.id)))]);
     const scoped = (ctx.scopes || []).length > 0;
     if (!mine.length && !homeroom.length && !scoped && role !== 'admin' && role !== 'leadership') return;
 
-    const classes = await LMS.cached('v_classes', 10 * 60e3, () => fetchAll(() => sb.from('v_classes').select('*').order('stage_sort').order('grade_number').order('name')));
+    const classes = await LMS.cached('v_classes', 3 * 60e3, () => fetchAll(() => sb.from('v_classes').select('*').order('stage_sort').order('grade_number').order('name')));
     const byId = Object.fromEntries(classes.map((c) => [c.id, c]));
 
     if (mine.length || homeroom.length) {

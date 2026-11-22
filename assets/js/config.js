@@ -19,7 +19,7 @@ window.LMS_CONFIG = {
   MODULES: [
     // —— وحدات المنصة الجديدة (تُبنى في المراحل القادمة) ——
     { key: 'lessons',     title: 'تحضير الدروس',        icon: '📘', url: 'lessons.html', roles: ['admin','leadership','principal','supervisor','teacher'], desc: 'خطط الدروس بالقوالب واعتماد المشرف' },
-    { key: 'course',      title: 'صفحات المواد',        icon: '🗂️', url: '', roles: [],  desc: 'المحتوى الأسبوعي والإعلانات لكل فصل' },
+    { key: 'course',      title: 'صفحات المواد',        icon: '🗂️', url: 'course.html', roles: [],  desc: 'المحتوى الأسبوعي والإعلانات لكل فصل' },
     { key: 'homework',    title: 'الواجبات',            icon: '📝', url: 'homework.html', roles: [],  desc: 'إنشاء الواجبات والتسليم والتصحيح' },
     { key: 'exams',       title: 'الاختبارات وبنك الأسئلة', icon: '🧪', url: '', roles: [],  desc: 'اختبارات إلكترونية بتصحيح تلقائي' },
     { key: 'analytics',   title: 'التحليل والمقارنة',    icon: '📊', url: '', roles: ['admin','leadership','principal','supervisor','teacher'], desc: 'تحليل الأسئلة ومقارنة الفصول والمعلمين' },

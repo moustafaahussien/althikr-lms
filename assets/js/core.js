@@ -3,6 +3,8 @@
    ===================================================================== */
 (function () {
   const C = window.LMS_CONFIG;
+  // جذر المنصة (المجلد الذي فيه assets/) — من مسار هذا الملف نفسه
+  const BASE = (document.currentScript && document.currentScript.src || location.href).replace(/assets\/js\/core\.js.*$/, '').replace(/[^/]*([?#].*)?$/, '');
   const configured = C && !/YOUR-/.test(C.SUPABASE_URL + C.SUPABASE_ANON_KEY);
   const sb = configured
     ? window.supabase.createClient(C.SUPABASE_URL, C.SUPABASE_ANON_KEY, {
@@ -24,7 +26,7 @@
   // ---------- رسائل منبثقة ----------
   function toast(msg, type = 'ok', ms = 3800) {
     let box = $('#toasts');
-    if (!box) { box = document.createElement('div'); box.id = 'toasts'; document.body.appendChild(box); }
+    if (!box) { box = document.createElement('div'); box.id = 'toasts'; box.setAttribute('role', 'status'); box.setAttribute('aria-live', 'polite'); document.body.appendChild(box); }
     const t = document.createElement('div');
     t.className = 'toast ' + type;
     t.textContent = msg;
@@ -112,7 +114,7 @@
 
   // parent = true: حساب Google الشخصي لولي الأمر (بدون تقييد نطاق المدرسة)
   async function signInWithGoogle(parent) {
-    const redirectTo = new URL('index.html', location.href.replace(/[^/]*([?#].*)?$/, '')).href;
+    const redirectTo = BASE + 'index.html';
     const queryParams = parent === true ? { prompt: 'select_account' } : { hd: C.SCHOOL_DOMAIN, prompt: 'select_account' };
     const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo, queryParams } });
     if (error) toast(errMsg(error), 'err');
@@ -120,7 +122,7 @@
 
   async function signOut() {
     try { await sb.auth.signOut(); } catch (_) {}
-    location.href = 'index.html';
+    location.href = BASE + 'index.html';
   }
 
   async function getContext() {
@@ -148,81 +150,114 @@
   }
 
   async function requireAuth(roles = []) {
-    if (!sb) { location.href = 'index.html'; return new Promise(() => {}); }
+    if (!sb) { location.href = BASE + 'index.html'; return new Promise(() => {}); }
     const { data: { session } } = await sb.auth.getSession();
-    if (!session) { location.href = 'index.html'; return new Promise(() => {}); }
+    if (!session) { location.href = BASE + 'index.html'; return new Promise(() => {}); }
     let ctx;
     try { ctx = await getContext(); } catch (e) { toast(errMsg(e), 'err'); throw e; }
-    if (!ctx || !ctx.registered) { location.href = 'index.html'; return new Promise(() => {}); }
+    if (!ctx || !ctx.registered) { location.href = BASE + 'index.html'; return new Promise(() => {}); }
     applyView(ctx);
-    if (roles.length && !roles.includes(ctx.profile.role)) { location.href = 'home.html'; return new Promise(() => {}); }
+    if (roles.length && !roles.includes(ctx.profile.role)) { location.href = BASE + 'home.html'; return new Promise(() => {}); }
     renderTopbar(ctx);
     return ctx;
+  }
+
+  /* ---------- الشريط العلوي الموحّد ----------
+     الروابط مطلقة من جذر المنصة (BASE) فيعمل الشريط في الصفحات الفرعية أيضًا (مثل online/) */
+  function pageKey() {
+    let k = location.href.split(/[?#]/)[0];
+    k = k.startsWith(BASE) ? k.slice(BASE.length) : k.split('/').pop();
+    return k.replace(/(^|\/)index\.html$/, '$1') || 'index.html';
+  }
+  // قائمة منسدلة عامة (المزيد / ☰) — تُرسم خارج الشريط حتى لا يقصّها التمرير الأفقي
+  function dropMenu(btn, html, full) {
+    let menu = null;
+    const close = () => { if (!menu) return; menu.remove(); menu = null; btn.setAttribute('aria-expanded', 'false');
+      document.removeEventListener('mousedown', outside); document.removeEventListener('keydown', onEsc); };
+    const outside = (e) => { if (menu && !menu.contains(e.target) && !btn.contains(e.target)) close(); };
+    const onEsc = (e) => { if (e.key === 'Escape') { close(); btn.focus(); } };
+    btn.onclick = () => {
+      if (menu) return close();
+      menu = document.createElement('div'); menu.className = 'more-menu' + (full ? ' full' : ''); menu.setAttribute('role', 'menu');
+      menu.innerHTML = html;
+      const n = (window.LMS_MSG && window.LMS_MSG.unread) || 0;   // عدّاد الرسائل داخل القائمة
+      $$('.nbadge', menu).forEach((b) => { b.removeAttribute('id'); b.hidden = !n; b.textContent = n; });
+      document.body.appendChild(menu);
+      const r = (full ? $('#topbar') : btn).getBoundingClientRect(), w = menu.offsetWidth;
+      menu.style.top = (r.bottom + (full ? 0 : 4)) + 'px';
+      if (!full) menu.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, r.right - w)) + 'px';
+      btn.setAttribute('aria-expanded', 'true');
+      document.addEventListener('mousedown', outside); document.addEventListener('keydown', onEsc);
+      const f = $('a,button', menu); if (f) f.focus();
+    };
+    window.addEventListener('resize', close);
   }
 
   function renderTopbar(ctx) {
     const bar = $('#topbar');
     if (!bar) return;
-    const p = ctx.profile;
-    const here = location.pathname.split('/').pop() || 'index.html';
-    const R = p.role, STAFF = !['student', 'parent'].includes(R), MGR = ['admin', 'leadership', 'principal'].includes(R);
+    const p = ctx.profile, LIM = !!ctx.limited;   // limited: طالب يدخل «التعليم عن بعد» ودخول الطلاب للمنصة مقفول
+    const here = pageKey();
+    const R = p.role, STAFF = !LIM && !['student', 'parent'].includes(R), MGR = ['admin', 'leadership', 'principal'].includes(R);
     // روابط أساسية دائمًا في الشريط، والباقي في قائمة «المزيد»
-    const links = [['home.html', '🏠 الرئيسية', true],
-      ['messages.html', '✉️ الرسائل <span class="nbadge" id="navMsg" hidden></span>', true],
-      ['services.html', '🗂️ الخدمات', true],
+    const links = [['home.html', '🏠 الرئيسية', !LIM],
+      ['online/', '🎥 التعليم عن بعد', true],
+      ['messages.html', '✉️ الرسائل <span class="nbadge" id="navMsg" hidden></span>', !LIM],
+      ['services.html', '🗂️ الخدمات', !LIM],
       ['attendance.html', '🗓️ الحضور والغياب', STAFF],
-      ['supervision/', '🧭 مكتب الإشراف', MGR || R === 'supervisor']];
+      ['supervision/', '🧭 مكتب الإشراف', MGR || R === 'supervisor']].filter((l) => l[2]);
     const more = [['admin.html', '⚙️ لوحة الإدارة', R === 'admin'],
       ['settings.html', '🏫 إعدادات المدرسة', MGR],
       ['teaching-load.html', '📊 نصاب الحصص', MGR || R === 'supervisor'],
       ['staff-directory.html', '📇 دليل الموظفين', STAFF],
-      ['guardians.html', '👪 أولياء الأمور', MGR]].filter((l) => l[2]);
-    const moreOn = more.some((l) => l[0] === here);
-    const navA = ([href, label]) => `<a href="${href}" class="${here === href ? 'on' : ''}"${here === href ? ' aria-current="page"' : ''}>${label}</a>`;
+      ['guardians.html', '👪 أولياء الأمور', MGR]].filter((l) => l[2] && !LIM);
+    const curMore = more.find((l) => l[0] === here);
+    const navA = ([href, label]) => `<a href="${BASE + href}" class="${here === href ? 'on' : ''}"${here === href ? ' aria-current="page"' : ''}>${label}</a>`;
+    const roleTxt = LIM ? 'طالب' : ctx.viewAs ? (p.job_title || ROLE_LABELS.supervisor) : ctx.canSwitch ? ROLE_LABELS[p.role] : (p.job_title || ROLE_LABELS[p.role]);
     bar.innerHTML = `
+      <a class="skip-link" href="#main">تخطَّ إلى المحتوى</a>
       <div class="hrow">
-        <a class="brand" href="home.html"><span class="logo-tile"><img src="assets/img/logo-mark.png" alt="مدارس دار الذكر"></span><span>${esc(C.PLATFORM_NAME)}<small>${esc(C.SCHOOL_NAME)}</small></span></a>
+        <a class="brand" href="${BASE + (LIM ? 'online/' : 'home.html')}"><span class="logo-tile"><img src="${BASE}assets/img/logo-mark.png" alt="مدارس دار الذكر"></span><span>${esc(C.PLATFORM_NAME)}<small>${esc(C.SCHOOL_NAME)}</small></span></a>
         <div class="clock">
-          <span class="who"><b>${esc(p.full_name)}</b><small>${esc(ctx.viewAs ? (p.job_title || ROLE_LABELS.supervisor) : ctx.canSwitch ? ROLE_LABELS[p.role] : (p.job_title || ROLE_LABELS[p.role]))}</small></span>
-          <button class="btn sm hbtn" id="logoutBtn">خروج</button>
+          <span class="who"><b>${esc(p.full_name)}</b><small>${esc(roleTxt)}</small></span>
+          <button class="btn sm hbtn" id="lmsLogout" type="button">خروج</button>
           <span id="todayLbl"></span><b id="clk">--:--</b>
+          <button type="button" class="menu-btn" id="menuBtn" aria-label="القائمة" aria-haspopup="true" aria-expanded="false">☰</button>
         </div>
       </div>
-      <nav class="nav" aria-label="القائمة الرئيسية">
-        ${links.filter((l) => l[2]).map(navA).join('')}
-        ${more.length ? `<button type="button" class="more-btn ${moreOn ? 'on' : ''}" id="moreBtn" aria-haspopup="true" aria-expanded="false">${moreOn ? esc(more.find((l) => l[0] === here)[1].replace(/^\S+\s/, '')) : 'المزيد'} ▾</button>` : ''}
+      <nav class="lms-nav" aria-label="القائمة الرئيسية">
+        ${links.map(navA).join('')}
+        ${more.length ? `<button type="button" class="more-btn ${curMore ? 'on' : ''}" id="moreBtn" aria-haspopup="true" aria-expanded="false">${curMore ? esc(curMore[1].replace(/^\S+\s/, '')) : 'المزيد'} ▾</button>` : ''}
         <div id="calBar" class="calbar" role="button" tabindex="0" title="التقويم الدراسي"></div>
       </nav>`;
-    $('#logoutBtn').onclick = signOut;
-    // قائمة «المزيد»: تُرسم خارج الشريط (position:fixed) حتى لا يقصّها التمرير الأفقي على الجوال
-    const mb = $('#moreBtn');
-    if (mb) {
-      let menu = null;
-      const closeMenu = () => { if (menu) { menu.remove(); menu = null; mb.setAttribute('aria-expanded', 'false'); document.removeEventListener('mousedown', outside); document.removeEventListener('keydown', onEsc); } };
-      const outside = (e) => { if (menu && !menu.contains(e.target) && e.target !== mb) closeMenu(); };
-      const onEsc = (e) => { if (e.key === 'Escape') { closeMenu(); mb.focus(); } };
-      mb.onclick = () => {
-        if (menu) return closeMenu();
-        menu = document.createElement('div'); menu.className = 'more-menu'; menu.setAttribute('role', 'menu');
-        menu.innerHTML = more.map(navA).join('');
-        document.body.appendChild(menu);
-        const r = mb.getBoundingClientRect(), w = menu.offsetWidth;
-        menu.style.top = (r.bottom + 4) + 'px';
-        menu.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, r.right - w)) + 'px';
-        mb.setAttribute('aria-expanded', 'true');
-        document.addEventListener('mousedown', outside); document.addEventListener('keydown', onEsc);
-        const f = $('a', menu); if (f) f.focus();
-      };
-      window.addEventListener('resize', closeMenu); window.addEventListener('scroll', closeMenu, { passive: true });
-    }
+    $('#lmsLogout').onclick = signOut;
+    if ($('#moreBtn')) dropMenu($('#moreBtn'), more.map(navA).join(''));
+    // الجوال: كل الروابط في قائمة ☰ (مع الاسم والمسمى)
+    dropMenu($('#menuBtn'), `<div class="mm-who"><b>${esc(p.full_name)}</b><small>${esc(roleTxt)}</small></div>${links.concat(more).map(navA).join('')}`, true);
+    if (!$('#main')) { const m = $('main'); if (m) m.id = 'main'; }
     // عدّاد الرسائل غير المقروءة والتعاميم التي تنتظر «تم الاطلاع»
-    const msgBadge = async () => { try { const { data } = await sb.rpc('msg_counts'); const b = $('#navMsg'); if (!b || !data) return;
-      const n = (data.unread || 0); b.hidden = !n; b.textContent = n; window.LMS_MSG = data; document.dispatchEvent(new CustomEvent('lms:msg', { detail: data })); } catch (_) {} };
-    msgBadge(); clearInterval(window.__msgT); window.__msgT = setInterval(msgBadge, 90000);
+    const msgBadge = async () => { try { const { data } = await sb.rpc('msg_counts'); if (!data) return;
+      const n = (data.unread || 0); $$('#navMsg').forEach((b) => { b.hidden = !n; b.textContent = n; });
+      window.LMS_MSG = data; document.dispatchEvent(new CustomEvent('lms:msg', { detail: data })); } catch (_) {} };
+    if (!LIM) { msgBadge(); clearInterval(window.__msgT); window.__msgT = setInterval(msgBadge, 90000); }
     const cal = $('#calBar');
     cal.onclick = openCalendar;
     cal.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openCalendar(); } };
     startClock();
+  }
+
+  /* شريط المنصة في صفحة لها دخولها الخاص (مثل «التعليم عن بعد»):
+     بلا جلسة ← صفحة الدخول ثم الرجوع (next)، والطالب غير المفعّل في المنصة يرى شريطًا مختصرًا */
+  async function mountTopbar(next) {
+    if (!sb) return null;
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { location.replace(BASE + 'index.html' + (next ? '?next=' + encodeURIComponent(next) : '')); return new Promise(() => {}); }
+    let ctx = null;
+    try { ctx = await getContext(); } catch (_) {}
+    if (ctx && ctx.registered) applyView(ctx);
+    else ctx = { limited: true, profile: { full_name: (ctx && ctx.email) || session.user.email || '', role: 'student' } };
+    renderTopbar(ctx);
+    return ctx;
   }
 
   /* ---------- الساعة والتاريخ والتقويم الدراسي (نفس شريط مكتب الإشراف التربوي) ---------- */
@@ -368,7 +403,7 @@
     if (root.matches && root.matches('.table-wrap')) addTableTools(root);
     $$('.table-wrap', root).forEach(addTableTools);
   }
-  if (typeof MutationObserver !== 'undefined') {
+  if (typeof MutationObserver !== 'undefined' && !window.LMS_NO_ENHANCE) {
     const start = () => { enhance(document.body);
       new MutationObserver((ms) => ms.forEach((m) => m.addedNodes.forEach((n) => n.nodeType === 1 && enhance(n)))).observe(document.body, { childList: true, subtree: true });
       // تغيير قيمة حقل التاريخ من الكود (بدون حدث) — نحدّث الهجري دوريًا وبخفة
@@ -379,5 +414,5 @@
 
   window.LMS = { sb, C, configured, ROLE_LABELS, esc, $, $$, toast, modal, confirmBox, errMsg,
                  fetchAll, signInWithGoogle, signOut, getContext, requireAuth, downloadCSV, rememberNext, takeNext,
-                 getView, setView, canSwitch, applyView, hijri, dateLine, printHTML, printTable, exportTable, tableRows, ymd };
+                 getView, setView, canSwitch, applyView, mountTopbar, BASE, hijri, dateLine, printHTML, printTable, exportTable, tableRows, ymd };
 })();

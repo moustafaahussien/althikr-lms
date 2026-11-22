@@ -75,24 +75,30 @@
     const hol = A && (A.hol || []).find((h) => ymd >= h.f && ymd <= h.to);
     let day = now.getDay(), dayLbl = 'حصصي اليوم';
     if (day >= 5) { day = 0; dayLbl = 'حصصي يوم الأحد'; }
-    const [tt, subs, inbox] = await Promise.all([
-      hol ? [] : fetchAll(() => sb.from('v_timetable').select('day,period,cls,subject_id,txt').eq('teacher_id', p.id).eq('kind', 'class').eq('day', day)).catch(() => []),
+    const isToday = day === now.getDay();
+    const [tt, subs, inbox, att] = await Promise.all([
+      hol ? [] : fetchAll(() => sb.from('v_timetable').select('day,period,cls,class_id,subject_id,txt').eq('teacher_id', p.id).eq('kind', 'class').eq('day', day)).catch(() => []),
       fetchAll(() => sb.from('subjects').select('id,name_ar')).catch(() => []),
-      sb.rpc('req_list', { p_box: 'inbox' }).then(({ data }) => data || [], () => [])
+      sb.rpc('req_list', { p_box: 'inbox' }).then(({ data }) => data || [], () => []),
+      // حالة تسجيل الحضور لحصص اليوم (null إن لم تُنشأ الدالة بعد في قاعدة البيانات)
+      hol || !isToday ? null : sb.rpc('att_today_mine').then(({ data, error }) => error ? null : data || [], () => null)
     ]);
+    const TAKEN = att ? new Set(att.filter((x) => x.taken).map((x) => x.period + '|' + x.class_id)) : null;
     const SUBJ = Object.fromEntries(subs.map((x) => [x.id, x.name_ar]));
     // نفس الحصة قد تتكرر إذا كان الجدول مرفوعًا عند أكثر من مشرف
     const seen = new Set(), periods = tt.filter((x) => { const k = x.period + '|' + x.cls + '|' + x.subject_id; if (seen.has(k)) return false; seen.add(k); return true; })
       .sort((a, b) => a.period - b.period);
     const box = $('#today'); if (!box) return;
     const unread = () => (window.LMS_MSG && window.LMS_MSG.unread) || 0;
+    const nTaken = TAKEN ? periods.filter((x) => TAKEN.has(x.period + '|' + x.class_id)).length : 0;
     const tiles = () => [
-      ['🗓️', 'تسجيل الحضور', 'attendance.html', ''],
+      ['🗓️', TAKEN && periods.length ? 'حصص سُجّل حضورها' : 'تسجيل الحضور', 'attendance.html', TAKEN && periods.length ? `${nTaken}/${periods.length}` : ''],
       ['📨', 'معاملات بانتظار قرارك', 'services.html#req', inbox.length],
       ['✉️', 'رسائل غير مقروءة', 'messages.html', unread()]
     ].map(([ic, l, href, n]) => `<a class="today-tile${n ? ' hot' : ''}" href="${href}"><span>${ic}</span><b>${n === '' ? '' : n}</b><small>${l}</small></a>`).join('');
     const ppl = hol ? `<div class="hint">🏖️ ${esc(hol.ar)} — لا حصص اليوم</div>`
-      : periods.length ? `<div class="today-periods">${periods.map((x) => `<div class="tp"><i>${x.period}</i><b>${esc(SUBJ[x.subject_id] || x.txt || '')}</b><small>${esc(x.cls || '')}</small></div>`).join('')}</div>`
+      : periods.length ? `<div class="today-periods">${periods.map((x) => { const ok = TAKEN && TAKEN.has(x.period + '|' + x.class_id);
+        return `<div class="tp${ok ? ' ok' : ''}"><i>${x.period}</i><b>${esc(SUBJ[x.subject_id] || x.txt || '')}</b><small>${esc(x.cls || '')}${TAKEN ? (ok ? ' · <span class="att-ok">✓ الحضور مسجّل</span>' : ' · <span class="att-no">الحضور لم يُسجّل</span>') : ''}</small></div>`; }).join('')}</div>`
       : `<div class="hint">لا توجد لك حصص مسجلة في الجدول ${day === now.getDay() ? 'اليوم' : 'يوم ' + DAYS[day]}.</div>`;
     // لغير المعلم: اللوحة تظهر فقط إذا كان عنده ما يخصه
     if (role !== 'teacher' && !periods.length && !inbox.length && !unread()) return;

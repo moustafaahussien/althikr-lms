@@ -7,7 +7,11 @@
 <link rel="icon" type="image/png" href="../favicon.png">
 <meta name="theme-color" content="#0f6e6a">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../assets/js/config.js?v=202611221000"></script>
+<script src="../assets/js/config.js?v=202611221045"></script>
+<script>window.LMS_NO_ENHANCE = true;</script>
+<script src="../assets/js/academic-calendar.js?v=202611221045"></script>
+<script src="../assets/js/core.js?v=202611221045"></script>
+<link rel="stylesheet" href="../assets/css/topbar.css?v=202611221045">
 <meta name="description" content="روابط الفصول الافتراضية وجداول الحصص لجميع صفوف مدارس دار الذكر">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -431,7 +435,8 @@
   .nav .home-link{color:#d6ecea;border:1px solid #ffffff55;border-radius:10px;padding:6px 12px}
   .nav .home-link:hover{background:#ffffff18;color:#fff}
   .nav .home-link svg{stroke:currentColor}
-  .nav .lang{background:transparent;color:#fff;border:1px solid #ffffff55}
+  .status-bar .lang{padding:3px;border:0;border-radius:14px;background:rgba(20,23,58,.07);gap:0}
+  .hero{padding-top:22px}
   .hero{padding:28px 0 18px}
   .hero h1{background:none;-webkit-text-fill-color:#1b2430;color:#1b2430}
   .g-signin .sso-btn{display:inline-flex;align-items:center;gap:10px;justify-content:center;padding:12px 22px;border-radius:12px;background:#0f6e6a;color:#fff;font-weight:700;text-decoration:none;font-size:16px}
@@ -439,21 +444,12 @@
   .g-signin .sso-btn svg{width:22px;height:22px;background:#fff;border-radius:50%;padding:2px}
 </style>
 </head>
-<body>
+<body class="lms-solo">
 <div class="aurora" aria-hidden="true"></div>
 
-<header class="nav">
-  <a class="brandlink" href="../home.html" title="منصة دار الذكر التعليمية">
-    <span class="logo-tile logo-dt"><img src="../assets/img/logo-mark.png" alt="مدارس دار الذكر"></span>
-    <span><b data-t="title"></b><small>منصة دار الذكر التعليمية</small></span>
-  </a>
-  <div class="nav-right">
-    <a class="home-link" href="../home.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg><span data-t="home"></span></a>
-    <button class="lang" id="langBtn" type="button" aria-label="Change language / تغيير اللغة"><span data-l="ar">AR</span><span data-l="en">EN</span></button>
-  </div>
-</header>
+<header id="topbar"></header>
 
-<main class="wrap">
+<main class="wrap" id="main">
   <section class="hero">
     <span class="live-pill"><i class="dot" aria-hidden="true"></i><span data-t="pill"></span></span>
     <h1 data-t="title"></h1>
@@ -466,7 +462,8 @@
     <div class="status-bar">
       <span id="updated"></span>
       <button type="button" id="refreshBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg><span data-t="refresh"></span></button>
-      <button type="button" id="logoutBtn" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 16l-4-4 4-4"/><path d="M6 12h10"/></svg><span data-t="logout"></span></button>
+      <button class="lang" id="langBtn" type="button" aria-label="Change language / تغيير اللغة"><span data-l="ar">AR</span><span data-l="en">EN</span></button>
+      <button type="button" id="logoutBtn" hidden style="display:none!important"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 16l-4-4 4-4"/><path d="M6 12h10"/></svg><span data-t="logout"></span></button>
     </div>
   </section>
 
@@ -524,7 +521,7 @@
 // الجدول نفسه يبقى «مقيَّدًا»، والخادم لا يرسل إلا بيانات الفصل صاحب الرمز.
 // خادم «التعليم عن بعد» على منصة المدرسة (Supabase Edge Function) — الدخول بحساب المنصة
 const SCRIPT_URL = (window.LMS_CONFIG && LMS_CONFIG.SUPABASE_URL) ? LMS_CONFIG.SUPABASE_URL + "/functions/v1/online" : "";
-const SB = (window.supabase && window.LMS_CONFIG) ? window.supabase.createClient(LMS_CONFIG.SUPABASE_URL, LMS_CONFIG.SUPABASE_ANON_KEY, { auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:false } }) : null;
+const SB = (window.LMS && LMS.sb) || ((window.supabase && window.LMS_CONFIG) ? window.supabase.createClient(LMS_CONFIG.SUPABASE_URL, LMS_CONFIG.SUPABASE_ANON_KEY, { auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:false } }) : null);
 const LMS_LOGIN = new URL("../index.html?next=online/", location.href).href;
 let SSO_EMAIL = "";
 async function lmsToken(){ try{ const { data } = await SB.auth.getSession(); const s = data && data.session; SSO_EMAIL = s ? (s.user.email || "").toLowerCase() : ""; return s ? s.access_token : ""; }catch(e){ return ""; } }
@@ -2128,7 +2125,8 @@ window.addEventListener("hashchange", ()=>{ const hc = takeHashCode(); if (hc) l
 
 (async function init(){
   const q = new URLSearchParams(location.search).get("lang");
-  // الدخول بحساب المنصة: إن وُجدت جلسة فالرمز «SSO»، وإلا تظهر شاشة الدخول
+  // الدخول عبر المنصة: بلا جلسة ← صفحة دخول المنصة ثم الرجوع هنا، ومع الجلسة يظهر شريط المنصة
+  if (window.LMS && LMS.mountTopbar) await LMS.mountTopbar("online/");
   const tok = await lmsToken();
   if (LS.get("ol-user") !== SSO_EMAIL){ LS.set("ol-cache", ""); LS.set("ol-pend", ""); LS.set("ol-pend-n", ""); LS.set("ol-user", SSO_EMAIL); }
   CODE = tok ? "SSO" : ""; LS.set("ol-code", CODE);

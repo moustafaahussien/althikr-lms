@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <!-- سياسة أمان: المواقع المسموح للصفحة تحميل الأكواد منها والاتصال بها -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.sheetjs.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://zpbhzhpvpvehowxvlsgp.supabase.co https://drive.google.com https://*.googleusercontent.com; connect-src 'self' https://zpbhzhpvpvehowxvlsgp.supabase.co wss://zpbhzhpvpvehowxvlsgp.supabase.co; frame-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>التحليل والمقارنة — منصة دار الذكر التعليمية</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <meta name="theme-color" content="#0f6e6a">
+  <link rel="manifest" href="supervision/manifest.json?v=2">
+    <link rel="stylesheet" href="assets/css/app.css?v=202611221955">
+  <link rel="stylesheet" href="assets/css/topbar.css?v=202611221955">
+  <style>
+    .sec-h { margin: 18px 0 8px; font-size: 1rem; color: var(--muted); }
+    .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 10px 0; }
+    .kpi { padding: 12px 14px; } .kpi small { color: var(--muted); display: block; } .kpi b { font-size: 1.5rem; font-variant-numeric: tabular-nums; }
+    .bars { padding: 10px 14px; } .bar { display: grid; grid-template-columns: minmax(120px, 220px) 1fr 54px; gap: 8px; align-items: center; margin: 5px 0; font-size: .88rem; }
+    .bar .lbl { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .bar .lbl small { color: var(--muted); }
+    .bar .trk { height: 12px; background: #eef2f4; border-radius: 99px; overflow: hidden; } .bar .trk i { display: block; height: 100%; border-radius: 99px; background: var(--brand); }
+    .bar .trk i.c { background: #e9a23b; } .bar .trk i.d { background: #d1495b; } .bar .v { font-weight: 700; text-align: left; font-variant-numeric: tabular-nums; }
+    .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px; }
+    .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; } .seg button { font: inherit; border: 0; background: #fff; padding: 6px 12px; cursor: pointer; }
+    .seg button.on { background: var(--brand); color: #fff; }
+    .hq { padding: 8px 12px; border-bottom: 1px solid var(--line); } .hq:last-child { border-bottom: 0; } .hq p { margin: 0 0 2px; white-space: pre-wrap; }
+    #fullT td, #fullT th { white-space: nowrap; }
+  </style>
+</head>
+<body>
+  <header id="topbar"></header>
+  <main class="page" id="main">
+    <section class="hero glass">
+      <h1>📊 التحليل والمقارنة</h1>
+      <p>مؤشرات الواجبات والاختبارات الإلكترونية لكل فصل ومادة: نسب التسليم ومتوسطات الدرجات، مع مقارنة الفصول والمعلمين والمواد وأصعب الأسئلة.</p>
+    </section>
+    <div class="toolbar glass" style="padding:10px;flex-wrap:wrap" id="flt">
+      <label>من <input type="date" id="fFrom"></label><label>إلى <input type="date" id="fTo"></label>
+      <select id="fGrade"><option value="">كل الصفوف</option></select>
+      <select id="fSubj"><option value="">كل المواد</option></select>
+      <label id="fMineL" hidden><input type="checkbox" id="fMine"> مقرراتي فقط</label>
+      <button class="btn primary" id="fGo">تحديث</button>
+    </div>
+    <div id="view"><div class="empty">جارٍ التحميل…</div></div>
+  </main>
+  <footer class="credit">إعداد وتصميم: مصطفى حسين</footer>
+
+  <script src="assets/vendor/supabase-js-2.119.2.js"></script>
+  <script src="assets/js/config.js?v=202611222350"></script>
+  <script src="assets/js/academic-calendar.js?v=202611221130"></script>
+  <script src="assets/js/core.js?v=202611222010"></script>
+  <script src="assets/js/analytics.js?v=1"></script>
+</body>
+</html>

@@ -22,7 +22,7 @@ window.LMS_CONFIG = {
     { key: 'course',      title: 'صفحات المواد',        icon: '🗂️', url: 'course.html', roles: [],  desc: 'المحتوى الأسبوعي والإعلانات لكل فصل' },
     { key: 'homework',    title: 'الواجبات',            icon: '📝', url: 'homework.html', roles: [],  desc: 'إنشاء الواجبات والتسليم والتصحيح' },
     { key: 'exams',       title: 'الاختبارات وبنك الأسئلة', icon: '🧪', url: 'exams.html', roles: [],  desc: 'اختبارات إلكترونية بتصحيح تلقائي' },
-    { key: 'analytics',   title: 'التحليل والمقارنة',    icon: '📊', url: '', roles: ['admin','leadership','principal','supervisor','teacher'], desc: 'تحليل الأسئلة ومقارنة الفصول والمعلمين' },
+    { key: 'analytics',   title: 'التحليل والمقارنة',    icon: '📊', url: 'analytics.html', roles: ['admin','leadership','principal','supervisor','teacher'], desc: 'تحليل الأسئلة ومقارنة الفصول والمعلمين' },
     { key: 'gradebook',   title: 'سجل الدرجات',         icon: '🏅', url: 'gradebook.html', roles: [],  desc: 'الدرجات مجمّعة تلقائيًا' },
     { key: 'portfolio',   title: 'ملف إنجاز الطالب',     icon: '🎒', url: '', roles: [],  desc: 'مشاريع الطالب ومسابقاته وإنجازاته' },
 

@@ -18,7 +18,7 @@ window.LMS_CONFIG = {
      الأدوار: admin, leadership, principal, supervisor, teacher, staff, student, parent */
   MODULES: [
     // —— وحدات المنصة الجديدة (تُبنى في المراحل القادمة) ——
-    { key: 'lessons',     title: 'تحضير الدروس',        icon: '📘', url: '', roles: ['admin','leadership','principal','supervisor','teacher'], desc: 'خطط الدروس بالقوالب واعتماد المشرف' },
+    { key: 'lessons',     title: 'تحضير الدروس',        icon: '📘', url: 'lessons.html', roles: ['admin','leadership','principal','supervisor','teacher'], desc: 'خطط الدروس بالقوالب واعتماد المشرف' },
     { key: 'course',      title: 'صفحات المواد',        icon: '🗂️', url: '', roles: [],  desc: 'المحتوى الأسبوعي والإعلانات لكل فصل' },
     { key: 'homework',    title: 'الواجبات',            icon: '📝', url: '', roles: [],  desc: 'إنشاء الواجبات والتسليم والتصحيح' },
     { key: 'exams',       title: 'الاختبارات وبنك الأسئلة', icon: '🧪', url: '', roles: [],  desc: 'اختبارات إلكترونية بتصحيح تلقائي' },

@@ -37,7 +37,7 @@
   function show(tab) {
     if (!TABS[tab]) tab = Object.keys(TABS).find((k) => TABS[k]);
     $$('#tabs button').forEach((x) => x.classList.toggle('on', x.dataset.tab === tab));
-    $$('.tab-pane').forEach((p) => { p.hidden = p.id !== 'tab-' + tab; });
+    $$('.tab-pane').forEach((p) => p.classList.toggle('on', p.id === 'tab-' + tab));
     history.replaceState(null, '', '#' + tab);
     LOAD[tab]();
   }

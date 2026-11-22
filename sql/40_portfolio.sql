@@ -57,7 +57,16 @@ begin
       'grade', (select g.name_ar || ' ' || st.name_ar from grades g join stages st on st.id = g.stage_id where g.id = s.grade_id)),
     'can_add', sid = me or staff, 'can_review', staff, 'is_self', sid = me,
     'items', coalesce((select jsonb_agg(private.pf_card(i) order by i.item_date desc, i.id desc) from pf_items i
-                        where i.student_id = sid and (sid = me or staff or i.status = 'approved')), '[]'::jsonb));
+                        where i.student_id = sid and (sid = me or staff or i.status = 'approved')), '[]'::jsonb),
+    -- النتائج الأكاديمية: الاختبارات الإلكترونية المسلّمة (إن سمح المعلم بإظهار النتيجة) والواجبات المصحّحة
+    'exams', coalesce((select jsonb_agg(jsonb_build_object('title', e.title, 'subject', (select name_ar from subjects where id = e.subject_id),
+                  'date', (e.opens_at at time zone 'Asia/Riyadh')::date, 'score', a.score, 'max', a.max_score, 'review', a.needs_review) order by e.opens_at desc)
+                from ex_attempts a join ex_exams e on e.id = a.exam_id
+               where a.student_id = sid and a.submitted_at is not null and (staff or e.show_results)), '[]'::jsonb),
+    'homework', coalesce((select jsonb_agg(jsonb_build_object('title', h.title, 'subject', (select name_ar from subjects where id = h.subject_id),
+                  'date', (h.due_at at time zone 'Asia/Riyadh')::date, 'score', x.score, 'max', h.max_score, 'feedback', x.feedback) order by h.due_at desc)
+                from hw_submissions x join hw_assignments h on h.id = x.hw_id
+               where x.student_id = sid and x.status = 'graded' and x.score is not null), '[]'::jsonb));
 end $$;
 
 create or replace function public.pf_save(p jsonb) returns jsonb

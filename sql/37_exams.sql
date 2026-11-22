@@ -75,7 +75,7 @@ language plpgsql stable security definer set search_path = public as $$
 begin
   if not public.is_staff() or not private.qb_can_use(p_subject) then raise exception 'غير مصرح'; end if;
   return coalesce((select jsonb_agg(jsonb_build_object('id', q.id, 'qtype', q.qtype, 'body', q.body, 'options', q.options, 'answer', q.answer,
-            'points', q.points, 'topic', q.topic, 'grade', q.grade_num, 'mine', q.owner_id = public.me_id(),
+            'points', q.points, 'topic', q.topic, 'grade', q.grade_num, 'image', q.image, 'mine', q.owner_id = public.me_id(),
             'owner', (select full_name from profiles where id = q.owner_id), 'used', (select count(*) from ex_exams e where e.questions @> jsonb_build_array(jsonb_build_object('id', q.id))))
           order by q.owner_id = public.me_id() desc, q.created_at desc)
      from qb_questions q where q.subject_id = p_subject and (p_grade is null or q.grade_num is null or q.grade_num = p_grade)), '[]'::jsonb);
@@ -84,12 +84,13 @@ end $$;
 create or replace function public.qb_save(p jsonb) returns jsonb
 language plpgsql security definer set search_path = public as $$
 declare me uuid := public.me_id(); qid bigint := nullif(p->>'id','')::bigint; sid int := nullif(p->>'subject_id','')::int;
-        t text := p->>'qtype'; b text := btrim(coalesce(p->>'body','')); opts jsonb; nok int;
+        t text := p->>'qtype'; b text := btrim(coalesce(p->>'body','')); opts jsonb; nok int; img text := nullif(p->>'image','');
 begin
+  if img is not null and (img !~ '^data:image/(png|jpeg|webp|gif);base64,' or length(img) > 450000) then raise exception 'الصورة غير صالحة أو كبيرة جدًا'; end if;
   if not public.is_staff() then raise exception 'غير مصرح'; end if;
   if sid is null or not exists (select 1 from teaching_assignments where teacher_id = me and subject_id = sid) then
     raise exception 'اختر مادة من موادك المسندة إليك'; end if;
-  if t not in ('mcq','tf','short') then raise exception 'نوع السؤال غير صالح'; end if;
+  if t not in ('mcq','tf','short','match') then raise exception 'نوع السؤال غير صالح'; end if;
   if b = '' then raise exception 'اكتب نص السؤال'; end if;
   if length(b) > 5000 then raise exception 'نص السؤال طويل جدًا'; end if;
   if t = 'mcq' then
@@ -98,18 +99,22 @@ begin
     select count(*) into nok from jsonb_array_elements(opts) o where (o->>'ok')::boolean;
     if jsonb_array_length(opts) < 2 or jsonb_array_length(opts) > 8 then raise exception 'الاختيار من متعدد يحتاج من 2 إلى 8 خيارات'; end if;
     if nok <> 1 then raise exception 'حدّد إجابة صحيحة واحدة'; end if;
+  elsif t = 'match' then
+    select coalesce(jsonb_agg(jsonb_build_object('l', left(btrim(o->>'l'), 300), 'r', left(btrim(o->>'r'), 300))), '[]'::jsonb)
+      into opts from jsonb_array_elements(coalesce(p->'pairs','[]'::jsonb)) o where btrim(coalesce(o->>'l','')) <> '' and btrim(coalesce(o->>'r','')) <> '';
+    if jsonb_array_length(opts) < 2 or jsonb_array_length(opts) > 8 then raise exception 'المزاوجة تحتاج من 2 إلى 8 أزواج مكتملة'; end if;
   elsif t = 'tf' then
     opts := jsonb_build_array(jsonb_build_object('t','صح','ok', coalesce((p->>'tf')::boolean, true)), jsonb_build_object('t','خطأ','ok', not coalesce((p->>'tf')::boolean, true)));
   else
     opts := '[]'::jsonb;
   end if;
   if qid is null then
-    insert into qb_questions(owner_id, subject_id, grade_num, qtype, body, options, answer, points, topic)
-    values (me, sid, nullif(p->>'grade','')::smallint, t, b, opts, nullif(btrim(coalesce(p->>'answer','')), ''), coalesce(nullif(p->>'points','')::numeric, 1), nullif(btrim(coalesce(p->>'topic','')), ''))
+    insert into qb_questions(owner_id, subject_id, grade_num, qtype, body, options, answer, points, topic, image)
+    values (me, sid, nullif(p->>'grade','')::smallint, t, b, opts, nullif(btrim(coalesce(p->>'answer','')), ''), coalesce(nullif(p->>'points','')::numeric, 1), nullif(btrim(coalesce(p->>'topic','')), ''), img)
     returning id into qid;
   else
     update qb_questions set subject_id = sid, grade_num = nullif(p->>'grade','')::smallint, qtype = t, body = b, options = opts,
-           answer = nullif(btrim(coalesce(p->>'answer','')), ''), points = coalesce(nullif(p->>'points','')::numeric, 1), topic = nullif(btrim(coalesce(p->>'topic','')), ''), updated_at = now()
+           answer = nullif(btrim(coalesce(p->>'answer','')), ''), points = coalesce(nullif(p->>'points','')::numeric, 1), topic = nullif(btrim(coalesce(p->>'topic','')), ''), image = img, updated_at = now()
      where id = qid and owner_id = me;
     if not found then raise exception 'لا يمكنك تعديل سؤال زميل — يمكنك استخدامه فقط'; end if;
   end if;
@@ -128,7 +133,7 @@ end $$;
 create or replace function private.ex_card(e public.ex_exams) returns jsonb
 language sql stable security definer set search_path = public as $$
   select jsonb_build_object('id', e.id, 'title', e.title, 'opens_at', e.opens_at, 'closes_at', e.closes_at, 'duration_min', e.duration_min,
-    'subject', (select name_ar from subjects where id = e.subject_id), 'subject_id', e.subject_id,
+    'subject', (select name_ar from subjects where id = e.subject_id), 'subject_id', e.subject_id, 'period', e.period,
     'teacher', (select full_name from profiles where id = e.teacher_id), 'teacher_id', e.teacher_id, 'n_questions', jsonb_array_length(e.questions),
     'max_score', (select coalesce(sum((q->>'points')::numeric), 0) from jsonb_array_elements(e.questions) q), 'show_results', e.show_results,
     'classes', coalesce((select jsonb_agg(vc.label order by vc.stage_sort, vc.grade_number, vc.name) from v_classes vc where vc.id = any (e.class_ids)), '[]'::jsonb),
@@ -139,7 +144,9 @@ create or replace function public.ex_save(p jsonb) returns jsonb
 language plpgsql security definer set search_path = public as $$
 declare me uuid := public.me_id(); eid bigint := nullif(p->>'id','')::bigint; sid int := nullif(p->>'subject_id','')::int; cls int[];
         ttl text := btrim(coalesce(p->>'title','')); qs jsonb; op timestamptz := (p->>'opens_at')::timestamptz; cl timestamptz := (p->>'closes_at')::timestamptz;
+        per text := nullif(p->>'period','');
 begin
+  if per is not null and per not in ('p1','p2','mid','final') then raise exception 'فترة غير صالحة'; end if;
   if not public.is_staff() then raise exception 'غير مصرح'; end if;
   if ttl = '' then raise exception 'اكتب عنوان الاختبار'; end if;
   if op is null or cl is null or cl <= op then raise exception 'حدّد وقت الفتح والإغلاق بشكل صحيح'; end if;
@@ -148,27 +155,27 @@ begin
   if exists (select 1 from unnest(cls) c where not exists (select 1 from teaching_assignments ta where ta.teacher_id = me and ta.class_id = c and (sid is null or ta.subject_id = sid))) then
     raise exception 'اختر من فصولك التي تدرّس لها هذه المادة فقط'; end if;
   -- لقطة الأسئلة المختارة (بالترتيب) — من أسئلة المادة في البنك فقط
-  select coalesce(jsonb_agg(jsonb_build_object('id', q.id, 'qtype', q.qtype, 'body', q.body, 'options', q.options, 'answer', q.answer,
+  select coalesce(jsonb_agg(jsonb_build_object('id', q.id, 'qtype', q.qtype, 'body', q.body, 'options', q.options, 'answer', q.answer, 'image', q.image,
            'points', coalesce(nullif(x->>'points','')::numeric, q.points)) order by x.ord), '[]'::jsonb)
     into qs
     from jsonb_array_elements(coalesce(p->'questions','[]'::jsonb)) with ordinality x(x, ord)
     join qb_questions q on q.id = (x->>'id')::bigint and q.subject_id = sid;
   if jsonb_array_length(qs) = 0 then raise exception 'أضف سؤالًا واحدًا على الأقل من بنك الأسئلة'; end if;
   if eid is null then
-    insert into ex_exams(teacher_id, subject_id, class_ids, title, instructions, questions, opens_at, closes_at, duration_min, shuffle, show_results)
+    insert into ex_exams(teacher_id, subject_id, class_ids, title, instructions, questions, opens_at, closes_at, duration_min, shuffle, show_results, period)
     values (me, sid, cls, left(ttl, 200), nullif(btrim(coalesce(p->>'instructions','')), ''), qs, op, cl,
-            coalesce(nullif(p->>'duration_min','')::int, 30), coalesce((p->>'shuffle')::boolean, true), coalesce((p->>'show_results')::boolean, true))
+            coalesce(nullif(p->>'duration_min','')::int, 30), coalesce((p->>'shuffle')::boolean, true), coalesce((p->>'show_results')::boolean, true), per)
     returning id into eid;
   else
     if exists (select 1 from ex_attempts where exam_id = eid) then
       -- بعد بدء الطلاب: يُسمح فقط بتعديل المواعيد والعنوان والتعليمات وإظهار النتائج
       update ex_exams set title = left(ttl, 200), instructions = nullif(btrim(coalesce(p->>'instructions','')), ''), closes_at = cl,
-             show_results = coalesce((p->>'show_results')::boolean, show_results), updated_at = now()
+             show_results = coalesce((p->>'show_results')::boolean, show_results), period = per, updated_at = now()
        where id = eid and teacher_id = me;
     else
       update ex_exams set subject_id = sid, class_ids = cls, title = left(ttl, 200), instructions = nullif(btrim(coalesce(p->>'instructions','')), ''),
              questions = qs, opens_at = op, closes_at = cl, duration_min = coalesce(nullif(p->>'duration_min','')::int, 30),
-             shuffle = coalesce((p->>'shuffle')::boolean, true), show_results = coalesce((p->>'show_results')::boolean, true), updated_at = now()
+             shuffle = coalesce((p->>'shuffle')::boolean, true), show_results = coalesce((p->>'show_results')::boolean, true), period = per, updated_at = now()
        where id = eid and teacher_id = me;
     end if;
     if not found then raise exception 'غير مصرح'; end if;
@@ -242,7 +249,7 @@ begin
     if now() > e.closes_at then raise exception 'انتهى وقت الاختبار'; end if;
     -- ترتيب خاص بالطالب للأسئلة والخيارات (إن كان الخلط مفعّلًا)
     select coalesce(jsonb_agg(jsonb_build_object('id', q->>'id',
-             'opts', case when q->>'qtype' = 'mcq' then (select jsonb_agg(i - 1 order by case when e.shuffle then random() else i end)
+             'opts', case when q->>'qtype' in ('mcq','match') then (select jsonb_agg(i - 1 order by case when e.shuffle then random() else i end)
                                                          from generate_series(1, jsonb_array_length(q->'options')) i) else '[]'::jsonb end)
              order by case when e.shuffle then random() else qn end), '[]'::jsonb)
       into ord from jsonb_array_elements(e.questions) with ordinality t(q, qn);
@@ -252,8 +259,12 @@ begin
     returning * into a;
   end if;
   return jsonb_build_object('attempt', a.id, 'title', e.title, 'instructions', e.instructions, 'deadline', a.deadline, 'now', now(), 'answers', a.answers,
-    'questions', (select jsonb_agg(jsonb_build_object('id', q->>'id', 'qtype', q->>'qtype', 'body', q->>'body', 'points', q->'points',
-                   'options', case when q->>'qtype' in ('mcq','tf') then (select jsonb_agg(jsonb_build_object('i', oi::int, 't', q->'options'->(oi::int)->>'t') order by n)
+    'questions', (select jsonb_agg(jsonb_build_object('id', q->>'id', 'qtype', q->>'qtype', 'body', q->>'body', 'points', q->'points', 'image', q->>'image',
+                   -- المزاوجة: العمود الأول بترتيبه، والثاني مخلوط ويُرسل بموضعه فقط (لا يكشف الزوج الصحيح)
+                   'left', case when q->>'qtype' = 'match' then (select jsonb_agg(jsonb_build_object('k', i - 1, 't', v->>'l') order by i) from jsonb_array_elements(q->'options') with ordinality w(v, i)) end,
+                   'options', case when q->>'qtype' = 'match' then (select jsonb_agg(jsonb_build_object('i', n - 1, 't', q->'options'->(oi::int)->>'r') order by n)
+                                                                     from jsonb_array_elements_text(o->'opts') with ordinality z(oi, n))
+                                   when q->>'qtype' in ('mcq','tf') then (select jsonb_agg(jsonb_build_object('i', oi::int, 't', q->'options'->(oi::int)->>'t') order by n)
                                                                            from jsonb_array_elements_text(case when q->>'qtype' = 'mcq' then o->'opts' else '[0,1]'::jsonb end) with ordinality z(oi, n))
                                    else '[]'::jsonb end) order by k)
                   from jsonb_array_elements(a.q_order) with ordinality y(o, k)
@@ -264,7 +275,7 @@ end $$;
 create or replace function public.ex_submit(p_id bigint, p_answers jsonb, p_final boolean default true) returns jsonb
 language plpgsql security definer set search_path = public as $$
 declare e ex_exams; a ex_attempts; me uuid := public.me_id(); q jsonb; res jsonb := '{}'::jsonb; tot numeric := 0; ans text; ok boolean; review boolean := false;
-        okidx int;
+        okidx int; ord jsonb; np int; nc int; kv text;
 begin
   select * into e from ex_exams where id = p_id;
   select * into a from ex_attempts where exam_id = p_id and student_id = me for update;
@@ -279,7 +290,17 @@ begin
   end if;
   for q in select * from jsonb_array_elements(e.questions) loop
     ans := btrim(coalesce(p_answers->>(q->>'id'), ''));
-    if q->>'qtype' in ('mcq','tf') then
+    if q->>'qtype' = 'match' then
+      -- الإجابة: "k:j,k:j" حيث j موضع الخيار المعروض للطالب
+      select o->'opts' into ord from jsonb_array_elements(a.q_order) o where o->>'id' = q->>'id';
+      np := jsonb_array_length(q->'options'); nc := 0;
+      foreach kv in array string_to_array(ans, ',') loop
+        if kv ~ '^\d+:\d+$' and (ord->>(split_part(kv, ':', 2)::int)) = split_part(kv, ':', 1) then nc := nc + 1; end if;
+      end loop;
+      nc := least(nc, np);
+      res := res || jsonb_build_object(q->>'id', jsonb_build_object('pts', round((q->>'points')::numeric * nc / np, 2), 'ok', nc = np, 'nc', nc, 'np', np));
+      tot := tot + round((q->>'points')::numeric * nc / np, 2);
+    elsif q->>'qtype' in ('mcq','tf') then
       select (i - 1)::int into okidx from jsonb_array_elements(q->'options') with ordinality o(v, i) where (v->>'ok')::boolean limit 1;
       ok := ans <> '' and ans ~ '^\d+$' and ans::int = okidx;
       res := res || jsonb_build_object(q->>'id', jsonb_build_object('pts', case when ok then (q->>'points')::numeric else 0 end, 'ok', ok));
@@ -310,9 +331,10 @@ begin
   if not e.show_results then return jsonb_build_object('hidden', true, 'submitted', a.submitted_at); end if;
   return jsonb_build_object('score', a.score, 'max', a.max_score, 'needs_review', a.needs_review, 'submitted', a.submitted_at,
     -- تظهر الإجابات الصحيحة فقط بعد إغلاق الاختبار للجميع
-    'questions', (select jsonb_agg(jsonb_build_object('body', q->>'body', 'qtype', q->>'qtype', 'points', q->'points', 'mine', a.answers->>(q->>'id'),
-                    'result', a.results->(q->>'id'), 'options', (select jsonb_agg(v->>'t') from jsonb_array_elements(q->'options') v),
-                    'correct', case when now() > e.closes_at then coalesce((select (i - 1)::text from jsonb_array_elements(q->'options') with ordinality o(v, i) where (v->>'ok')::boolean limit 1), q->>'answer') end))
+    'questions', (select jsonb_agg(jsonb_build_object('body', q->>'body', 'qtype', q->>'qtype', 'points', q->'points', 'mine', a.answers->>(q->>'id'), 'image', q->>'image',
+                    'pairs', case when q->>'qtype' = 'match' and now() > e.closes_at then q->'options' end,
+                    'result', a.results->(q->>'id'), 'options', case when q->>'qtype' = 'match' then null else (select jsonb_agg(v->>'t') from jsonb_array_elements(q->'options') v) end,
+                    'correct', case when now() > e.closes_at and q->>'qtype' <> 'match' then coalesce((select (i - 1)::text from jsonb_array_elements(q->'options') with ordinality o(v, i) where (v->>'ok')::boolean limit 1), q->>'answer') end))
                   from jsonb_array_elements(e.questions) q));
 end $$;
 

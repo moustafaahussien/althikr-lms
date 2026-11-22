@@ -52,18 +52,18 @@ $$;
 
 -- أعمدة السجل (تلقائية + يدوية) لفصل ومادة — للاستخدام الداخلي
 create or replace function private.gb_columns(p_class int, p_subject int) returns table
-  (key text, kind text, src_id bigint, item_id bigint, title text, category text, max_score numeric, weight numeric, hidden boolean, d date)
+  (key text, kind text, src_id bigint, item_id bigint, title text, category text, max_score numeric, weight numeric, hidden boolean, d date, period text)
 language sql stable security definer set search_path = public as $$
-  select 'hw' || h.id, 'hw', h.id, g.id, h.title, 'homework', h.max_score, coalesce(g.weight, 1), coalesce(g.hidden, false), (h.due_at at time zone 'Asia/Riyadh')::date
+  select 'hw' || h.id, 'hw', h.id, g.id, h.title, 'homework', h.max_score, coalesce(g.weight, 1), coalesce(g.hidden, false), (h.due_at at time zone 'Asia/Riyadh')::date, coalesce(g.period, h.period)
     from hw_assignments h left join gb_items g on g.class_id = p_class and g.subject_id = p_subject and g.src_kind = 'hw' and g.src_id = h.id
    where p_class = any (h.class_ids) and h.subject_id = p_subject
   union all
   select 'ex' || e.id, 'ex', e.id, g.id, e.title, 'exam', (select coalesce(sum((q->>'points')::numeric), 0) from jsonb_array_elements(e.questions) q),
-         coalesce(g.weight, 1), coalesce(g.hidden, false), (e.opens_at at time zone 'Asia/Riyadh')::date
+         coalesce(g.weight, 1), coalesce(g.hidden, false), (e.opens_at at time zone 'Asia/Riyadh')::date, coalesce(g.period, e.period)
     from ex_exams e left join gb_items g on g.class_id = p_class and g.subject_id = p_subject and g.src_kind = 'ex' and g.src_id = e.id
    where p_class = any (e.class_ids) and e.subject_id = p_subject
   union all
-  select 'm' || g.id, 'manual', null, g.id, g.title, g.category, g.max_score, g.weight, g.hidden, g.item_date
+  select 'm' || g.id, 'manual', null, g.id, g.title, g.category, g.max_score, g.weight, g.hidden, g.item_date, g.period
     from gb_items g where g.class_id = p_class and g.subject_id = p_subject and g.src_kind = 'manual'
 $$;
 
@@ -96,7 +96,7 @@ declare cols jsonb;
 begin
   if not private.gb_can_view(p_class, p_subject) then raise exception 'غير مصرح'; end if;
   select coalesce(jsonb_agg(jsonb_build_object('key', c.key, 'kind', c.kind, 'src_id', c.src_id, 'item_id', c.item_id, 'title', c.title, 'category', c.category,
-           'max', c.max_score, 'weight', c.weight, 'hidden', c.hidden, 'date', c.d) order by c.d, c.key), '[]'::jsonb)
+           'max', c.max_score, 'weight', c.weight, 'hidden', c.hidden, 'date', c.d, 'period', c.period) order by c.d, c.key), '[]'::jsonb)
     into cols from private.gb_columns(p_class, p_subject) c;
   return jsonb_build_object('can_edit', private.gb_can_edit(p_class, p_subject), 'columns', cols,
     'class', (select label from v_classes where id = p_class), 'subject', (select name_ar from subjects where id = p_subject),
@@ -112,13 +112,15 @@ language plpgsql security definer set search_path = public as $$
 declare me uuid := public.me_id(); cid int := nullif(p->>'class_id','')::int; sid int := nullif(p->>'subject_id','')::int;
         k text := coalesce(p->>'kind', 'manual'); iid bigint := nullif(p->>'item_id','')::bigint; src bigint := nullif(p->>'src_id','')::bigint;
         w numeric := coalesce(nullif(p->>'weight','')::numeric, 1); hid boolean := coalesce((p->>'hidden')::boolean, false); ttl text := btrim(coalesce(p->>'title',''));
+        per text := nullif(p->>'period','');
 begin
+  if per is not null and per not in ('p1','p2','mid','final') then raise exception 'فترة غير صالحة'; end if;
   if cid is null or sid is null or not private.gb_can_edit(cid, sid) then raise exception 'غير مصرح'; end if;
   if w < 0 or w > 100 then raise exception 'الوزن بين 0 و 100'; end if;
   if k in ('hw','ex') then
     if src is null or not exists (select 1 from private.gb_columns(cid, sid) c where c.kind = k and c.src_id = src) then raise exception 'العمود غير موجود'; end if;
-    insert into gb_items(teacher_id, class_id, subject_id, src_kind, src_id, weight, hidden) values (me, cid, sid, k, src, w, hid)
-      on conflict (class_id, subject_id, src_kind, src_id) where src_kind <> 'manual' do update set weight = excluded.weight, hidden = excluded.hidden
+    insert into gb_items(teacher_id, class_id, subject_id, src_kind, src_id, weight, hidden, period) values (me, cid, sid, k, src, w, hid, per)
+      on conflict (class_id, subject_id, src_kind, src_id) where src_kind <> 'manual' do update set weight = excluded.weight, hidden = excluded.hidden, period = excluded.period
       returning id into iid;
     return jsonb_build_object('ok', true, 'id', iid);
   end if;
@@ -126,14 +128,14 @@ begin
   if ttl = '' then raise exception 'اكتب اسم العمود'; end if;
   if nullif(p->>'max_score','')::numeric is null or (p->>'max_score')::numeric <= 0 then raise exception 'حدّد الدرجة العظمى'; end if;
   if iid is null then
-    insert into gb_items(teacher_id, class_id, subject_id, title, category, max_score, weight, hidden, item_date)
-    values (me, cid, sid, left(ttl, 120), coalesce(nullif(p->>'category',''), 'other'), (p->>'max_score')::numeric, w, hid, coalesce(nullif(p->>'date','')::date, current_date))
+    insert into gb_items(teacher_id, class_id, subject_id, title, category, max_score, weight, hidden, item_date, period)
+    values (me, cid, sid, left(ttl, 120), coalesce(nullif(p->>'category',''), 'other'), (p->>'max_score')::numeric, w, hid, coalesce(nullif(p->>'date','')::date, current_date), per)
     returning id into iid;
   else
     if (p->>'max_score')::numeric < coalesce((select max(score) from gb_scores where item_id = iid), 0) then
       raise exception 'توجد درجات مرصودة أعلى من الدرجة العظمى الجديدة'; end if;
     update gb_items set title = left(ttl, 120), category = coalesce(nullif(p->>'category',''), category), max_score = (p->>'max_score')::numeric,
-           weight = w, hidden = hid, item_date = coalesce(nullif(p->>'date','')::date, item_date)
+           weight = w, hidden = hid, period = per, item_date = coalesce(nullif(p->>'date','')::date, item_date)
      where id = iid and class_id = cid and subject_id = sid and src_kind = 'manual';
     if not found then raise exception 'غير مصرح'; end if;
   end if;
@@ -183,7 +185,7 @@ begin
   return coalesce((select jsonb_agg(jsonb_build_object('subject_id', s.id, 'subject', s.name_ar, 'columns', x.cols, 'scores', x.sc, 'pct', private.gb_pct(x.cols, x.sc)) order by s.name_ar)
     from (select distinct subject_id from teaching_assignments where class_id = cid) ta join subjects s on s.id = ta.subject_id
     cross join lateral (select coalesce((select jsonb_agg(jsonb_build_object('key', c.key, 'title', c.title, 'category', c.category, 'max', c.max_score,
-                                  'weight', c.weight, 'hidden', c.hidden, 'date', c.d) order by c.d, c.key)
+                                  'weight', c.weight, 'hidden', c.hidden, 'date', c.d, 'period', c.period) order by c.d, c.key)
                                 from private.gb_columns(cid, s.id) c where not c.hidden), '[]'::jsonb) cols,
                               private.gb_student_scores(cid, s.id, me) sc) x
    where jsonb_array_length(x.cols) > 0), '[]'::jsonb);

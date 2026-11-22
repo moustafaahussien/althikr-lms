@@ -63,7 +63,7 @@ $$;
 create or replace function private.hw_card(h public.hw_assignments) returns jsonb
 language sql stable security definer set search_path = public as $$
   select jsonb_build_object('id', h.id, 'title', h.title, 'due_at', h.due_at, 'max_score', h.max_score, 'allow_late', h.allow_late, 'closed', h.closed,
-    'subject', (select name_ar from subjects where id = h.subject_id), 'subject_id', h.subject_id,
+    'subject', (select name_ar from subjects where id = h.subject_id), 'subject_id', h.subject_id, 'period', h.period,
     'teacher', (select full_name from profiles where id = h.teacher_id), 'teacher_id', h.teacher_id, 'created_at', h.created_at,
     'classes', coalesce((select jsonb_agg(vc.label order by vc.stage_sort, vc.grade_number, vc.name) from v_classes vc where vc.id = any (h.class_ids)), '[]'::jsonb))
 $$;
@@ -142,8 +142,9 @@ create or replace function public.hw_save(p jsonb) returns jsonb
 language plpgsql security definer set search_path = public as $$
 declare me uuid := public.me_id(); hid bigint := nullif(p->>'id','')::bigint; cls int[]; sid int := nullif(p->>'subject_id','')::int;
         ttl text := btrim(coalesce(p->>'title','')); due timestamptz := nullif(p->>'due_at','')::timestamptz;
-        mx numeric := coalesce(nullif(p->>'max_score','')::numeric, 10);
+        mx numeric := coalesce(nullif(p->>'max_score','')::numeric, 10); per text := nullif(p->>'period','');
 begin
+  if per is not null and per not in ('p1','p2','mid','final') then raise exception 'فترة غير صالحة'; end if;
   if not public.is_staff() then raise exception 'غير مصرح'; end if;
   if ttl = '' then raise exception 'اكتب عنوان الواجب'; end if;
   if due is null then raise exception 'حدّد موعد التسليم'; end if;
@@ -156,12 +157,12 @@ begin
     raise exception 'اختر من موادك المسندة إليك فقط'; end if;
   if length(coalesce(p->>'instructions','')) > 20000 then raise exception 'نص الواجب طويل جدًا'; end if;
   if hid is null then
-    insert into hw_assignments(teacher_id, subject_id, class_ids, title, instructions, links, due_at, max_score, allow_late)
+    insert into hw_assignments(teacher_id, subject_id, class_ids, title, instructions, links, due_at, max_score, allow_late, period)
     values (me, sid, cls, left(ttl, 200), nullif(btrim(coalesce(p->>'instructions','')), ''), private.hw_clean_links(p->'links'), due, mx,
-            coalesce((p->>'allow_late')::boolean, true)) returning id into hid;
+            coalesce((p->>'allow_late')::boolean, true), per) returning id into hid;
   else
     update hw_assignments set subject_id = sid, class_ids = cls, title = left(ttl, 200), instructions = nullif(btrim(coalesce(p->>'instructions','')), ''),
-           links = private.hw_clean_links(p->'links'), due_at = due, max_score = mx, allow_late = coalesce((p->>'allow_late')::boolean, true), updated_at = now()
+           links = private.hw_clean_links(p->'links'), due_at = due, max_score = mx, allow_late = coalesce((p->>'allow_late')::boolean, true), period = per, updated_at = now()
      where id = hid and teacher_id = me;
     if not found then raise exception 'غير مصرح'; end if;
   end if;

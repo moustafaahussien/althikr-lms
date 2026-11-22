@@ -39,6 +39,12 @@ language sql stable security definer set search_path = public as $$
   , false) and p_teacher <> public.me_id()
 $$;
 
+-- اعتماد التحضير: المشرف التربوي للمعلم فقط
+create or replace function private.lp_can_approve(p_teacher uuid) returns boolean
+language sql stable security definer set search_path = public as $$
+  select p_teacher <> public.me_id() and exists (select 1 from public.v_teacher_supervisors ts where ts.teacher_id = p_teacher and ts.supervisor_id = public.me_id())
+$$;
+
 -- بطاقة مختصرة للقوائم
 create or replace function private.lp_card(lp public.lesson_plans) returns jsonb
 language sql stable security definer set search_path = public as $$
@@ -59,7 +65,9 @@ language sql stable security definer set search_path = public as $$
     'classes',  coalesce((select jsonb_agg(jsonb_build_object('id', vc.id, 'label', vc.label, 'subjects', x.subs) order by vc.stage_sort, vc.grade_number, vc.name)
                  from (select class_id, jsonb_agg(distinct subject_id) subs from teaching_assignments where teacher_id = public.me_id() group by class_id) x
                  join v_classes vc on vc.id = x.class_id), '[]'::jsonb),
-    'can_review', public.me_role() in ('admin','leadership','principal','supervisor')
+    -- الاعتماد للمشرف فقط، والمتابعة (اطلاع) للمشرف والمدير والقيادة
+    'can_review', exists (select 1 from v_teacher_supervisors where supervisor_id = public.me_id()),
+    'can_follow', public.me_role() in ('admin','leadership','principal','supervisor')
                   or exists (select 1 from v_teacher_supervisors where supervisor_id = public.me_id()),
     'is_teacher', exists (select 1 from teaching_assignments where teacher_id = public.me_id()))
 $$;
@@ -78,7 +86,7 @@ begin
                and (p_status is null or lp.status = p_status)
                and case p_box
                      when 'mine'   then lp.teacher_id = me
-                     when 'review' then lp.status = 'submitted' and private.lp_is_reviewer(lp.teacher_id)
+                     when 'review' then lp.status = 'submitted' and private.lp_can_approve(lp.teacher_id)
                      else (p_teacher is null or lp.teacher_id = p_teacher) and lp.status <> 'draft' and private.lp_is_reviewer(lp.teacher_id)
                    end
              order by lp.lesson_date desc, lp.id desc limit 500) lp), '[]'::jsonb);
@@ -95,7 +103,7 @@ begin
   if not mine and not (rev and lp.status <> 'draft') then raise exception 'غير مصرح'; end if;
   return private.lp_card(lp) || jsonb_build_object('content', lp.content, 'class_ids', to_jsonb(lp.class_ids),
     'can_edit', mine and lp.status in ('draft','returned'),
-    'can_review', rev and lp.status = 'submitted', 'mine', mine);
+    'can_review', lp.status = 'submitted' and private.lp_can_approve(lp.teacher_id), 'mine', mine);
 end $$;
 
 -- حفظ (إنشاء/تعديل) — للمعلم على تحضيره فقط وهو مسودة أو مُعاد
@@ -152,7 +160,7 @@ declare lp lesson_plans;
 begin
   select * into lp from lesson_plans where id = p_id for update;
   if not found then raise exception 'التحضير غير موجود'; end if;
-  if lp.status <> 'submitted' or not private.lp_is_reviewer(lp.teacher_id) then raise exception 'غير مصرح'; end if;
+  if lp.status <> 'submitted' or not private.lp_can_approve(lp.teacher_id) then raise exception 'اعتماد التحضير للمشرف التربوي فقط'; end if;
   if p_decision not in ('approve','return') then raise exception 'قرار غير صالح'; end if;
   if p_decision = 'return' and btrim(coalesce(p_note,'')) = '' then raise exception 'اكتب ملاحظاتك للمعلم عند الإعادة'; end if;
   update lesson_plans set status = case when p_decision = 'approve' then 'approved' else 'returned' end,
@@ -182,7 +190,7 @@ begin
   return jsonb_build_object('ok', true, 'id', nid);
 end $$;
 
-revoke all on function private.lp_is_reviewer(uuid), private.lp_card(public.lesson_plans) from public, anon, authenticated;
+revoke all on function private.lp_can_approve(uuid), private.lp_is_reviewer(uuid), private.lp_card(public.lesson_plans) from public, anon, authenticated;
 revoke all on function public.lp_options(), public.lp_list(text, date, date, uuid, text), public.lp_get(bigint), public.lp_save(jsonb),
   public.lp_submit(bigint), public.lp_unsubmit(bigint), public.lp_review(bigint, text, text), public.lp_delete(bigint), public.lp_copy(bigint, date) from public, anon;
 grant execute on function public.lp_options(), public.lp_list(text, date, date, uuid, text), public.lp_get(bigint), public.lp_save(jsonb),

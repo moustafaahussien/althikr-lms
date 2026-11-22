@@ -11,7 +11,7 @@
   <link rel="icon" type="image/png" href="favicon.png">
   <meta name="theme-color" content="#0f6e6a">
   <link rel="manifest" href="supervision/manifest.json?v=2">
-  <link rel="stylesheet" href="assets/css/app.css?v=202611221130">
+  <link rel="stylesheet" href="assets/css/app.css?v=202611221800">
 </head>
 <body>
   <div class="login-wrap">
@@ -26,7 +26,7 @@
 
   <script src="assets/vendor/supabase-js-2.119.2.js"></script>
   <script src="assets/js/config.js?v=202611221130"></script>
-  <script src="assets/js/core.js?v=202611221700"></script>
+  <script src="assets/js/core.js?v=202611221800"></script>
   <script>
   (async function () {
     const { sb, C, configured, esc, $, signInWithGoogle, signOut, getContext, errMsg, rememberNext, takeNext } = LMS;
@@ -46,7 +46,30 @@
         ${notice}`;
       $('#gbtn').onclick = () => signInWithGoogle();
       $('#pbtn').onclick = () => { try { sessionStorage.setItem('lms_next', 'parent.html'); } catch (_) {} signInWithGoogle(); };
+      area.insertAdjacentHTML('beforeend', '<button type="button" class="demo-link" id="demoBtn">🎬 تجربة المنصة بحسابات تجريبية</button>');
+      $('#demoBtn').onclick = showDemo;
     };
+
+    // ---------- الوضع التجريبي: اختيار الدور ----------
+    const DEMO_ROLES = [['admin', '🛠️', 'مدير النظام', 'كل الصلاحيات ولوحة الإدارة'], ['leadership', '🏛️', 'الإدارة العليا', 'إحصاءات المدرسة والاعتمادات'],
+      ['principal', '🏫', 'مدير مرحلة', 'المرحلة المتوسطة'], ['supervisor', '🧭', 'مشرف', 'مشرف الرياضيات'],
+      ['teacher', '👨‍🏫', 'معلم', 'معلم رياضيات'], ['student', '🎓', 'طالب', 'الصف الثاني المتوسط'], ['parent', '👪', 'ولي أمر', 'متابعة ابنين']];
+    function showDemo() {
+      area.innerHTML = `<h2 style="margin:0 0 4px;font-size:1.15rem">🎬 تجربة المنصة</h2>
+        <p class="hint" style="margin:0">مدرسة افتراضية ببيانات وهمية بالكامل — جرّب أي دور بضغطة، ولا شيء يُحفظ ولا يمس البيانات الحقيقية.</p>
+        <div class="demo-roles">${DEMO_ROLES.map(([k, ic, n, d]) => `<button type="button" data-role="${k}"><span>${ic}</span><b>${n}</b><small>${d}</small></button>`).join('')}</div>
+        <button type="button" class="demo-link" id="demoBack">→ رجوع لتسجيل الدخول</button>`;
+      area.querySelector('.demo-roles').onclick = (e) => { const b = e.target.closest('[data-role]'); if (!b) return;
+        try { sessionStorage.removeItem('lms_demo_db'); Object.keys(sessionStorage).filter((k) => k.startsWith('lms_c:')).forEach((k) => sessionStorage.removeItem(k)); sessionStorage.setItem('lms_demo', b.dataset.role); } catch (_) {}
+        location.href = b.dataset.role === 'parent' ? 'parent.html' : 'home.html'; };
+      $('#demoBack').onclick = () => { location.href = 'index.html'; };
+    }
+    // ?demo=1 ← الخروج من أي تجربة حالية وعرض اختيار الدور
+    if (/[?&]demo=1/.test(location.search)) {
+      try { ['lms_demo', 'lms_demo_db'].forEach((k) => sessionStorage.removeItem(k)); } catch (_) {}
+      if (LMS.DEMO) { location.replace('index.html?demo=1'); return; }
+      showDemo(); return;
+    }
 
     if (!configured) {
       area.innerHTML = `<div class="notice warn">المنصة لم تُربط بقاعدة البيانات بعد. عدّل الملف <b dir="ltr">assets/js/config.js</b> وضع فيه رابط ومفتاح Supabase (راجع دليل الإعداد).</div>`;

@@ -23,7 +23,11 @@
   }
   const toLogin = () => { location.href = '../index.html?next=' + encodeURIComponent('ai/' + (page === 'index.html' ? '' : page + location.search)); };
 
+  // الوضع التجريبي للمنصة: المعلم الذكي يحتاج الخادم الحقيقي، فلا يعمل داخل التجربة
+  let DEMO_ON = false; try { DEMO_ON = !!sessionStorage.getItem('lms_demo'); } catch (_) {}
   const ready = (async () => {
+    if (DEMO_ON) { const msg = () => gateMsg('🎬<br><b>المعلم الذكي</b> غير متاح في الوضع التجريبي.<br><a href="../home.html" style="color:#6D4BFF">← العودة للمنصة التجريبية</a>');
+      document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', msg) : msg(); return new Promise(() => {}); }
     const { data: { session } } = await sb.auth.getSession();
     if (!session) { toLogin(); return new Promise(() => {}); }
     const { data: ctx, error } = await sb.rpc('my_context');

@@ -6,11 +6,31 @@
   // جذر المنصة (المجلد الذي فيه assets/) — من مسار هذا الملف نفسه
   const BASE = (document.currentScript && document.currentScript.src || location.href).replace(/assets\/js\/core\.js.*$/, '').replace(/[^/]*([?#].*)?$/, '');
   const configured = C && !/YOUR-/.test(C.SUPABASE_URL + C.SUPABASE_ANON_KEY);
-  const sb = configured
+  /* الوضع التجريبي (ديمو): مدرسة افتراضية داخل المتصفح بدل قاعدة البيانات الحقيقية — assets/js/demo.js
+     يُحمَّل مباشرة بعد هذا الملف (قبل سكربت الصفحة)، ولا يُنشأ اتصال حقيقي إطلاقًا أثناء التجربة */
+  const DEMO = (() => { try { return sessionStorage.getItem('lms_demo') || ''; } catch (_) { return ''; } })();
+  if (DEMO && !window.LMS_DEMO) document.write('<script src="' + BASE + 'assets/js/demo.js?v=202611221800"><\/script>');
+  const sb = DEMO
+    ? new Proxy({}, { get: (_, k) => (window.LMS_DEMO ? window.LMS_DEMO.client[k] : undefined) })
+    : configured
     ? window.supabase.createClient(C.SUPABASE_URL, C.SUPABASE_ANON_KEY, {
         auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: 'pkce' }
       })
     : null;
+  // شريط «وضع تجريبي» أعلى كل الصفحات + تغيير الدور + الخروج من التجربة
+  if (DEMO) {
+    const band = () => {
+      if (document.getElementById('demoBand')) return;
+      const D = window.LMS_DEMO || {}, R = D.roles || {};
+      const b = document.createElement('div'); b.id = 'demoBand'; b.className = 'demo-band no-print'; b.setAttribute('role', 'note');
+      b.innerHTML = `<span>🎬 <b>وضع تجريبي</b> — مدرسة افتراضية ببيانات وهمية، ولا شيء يُحفظ</span>
+        <span class="db-r">الدور: <b>${esc(R[DEMO] || DEMO)}</b>${DEMO === 'parent' ? ' · الرمز السري: <b dir="ltr">123456</b>' : ''}</span>
+        <a href="${BASE}index.html?demo=1">🔄 تغيير الدور</a><a href="#" id="demoExit">✕ خروج من التجربة</a>`;
+      document.body.prepend(b);
+      b.querySelector('#demoExit').onclick = (e) => { e.preventDefault(); if (D.exit) D.exit(); clearCache(); location.href = BASE + 'index.html'; };
+    };
+    document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', band) : setTimeout(band, 0);
+  }
 
   const ROLE_LABELS = {
     admin: 'مدير النظام', leadership: 'الإدارة العليا', principal: 'مدير مرحلة',
@@ -439,5 +459,5 @@
 
   window.LMS = { sb, C, configured, ROLE_LABELS, esc, $, $$, toast, modal, confirmBox, errMsg,
                  fetchAll, signInWithGoogle, signOut, getContext, cached, clearCache, requireAuth, downloadCSV, rememberNext, takeNext,
-                 getView, setView, canSwitch, applyView, mountTopbar, BASE, hijri, dateLine, printHTML, printTable, exportTable, tableRows, ymd, clsText, isGroupCls };
+                 getView, setView, canSwitch, applyView, mountTopbar, BASE, hijri, dateLine, printHTML, printTable, exportTable, tableRows, ymd, clsText, isGroupCls, DEMO };
 })();

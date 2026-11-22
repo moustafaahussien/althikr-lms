@@ -643,7 +643,10 @@
     const myStage = () => (DB.staff_scopes.find((x) => x.profile_id === ME_ID) || {}).stage_id;
     const reviewer = (tid) => tid !== ME_ID && (isLeader() || DB.supervision.some((x) => x.supervisor_id === ME_ID && x.teacher_id === tid) || DB.managers[tid] === ME_ID
       || (MYROLE() === 'principal' && DB.teaching_assignments.some((t) => t.teacher_id === tid && grade(klass(t.class_id).grade_id).stage_id === myStage())));
-    const canApprove = (tid) => tid !== ME_ID && DB.supervision.some((x) => x.supervisor_id === ME_ID && x.teacher_id === tid);
+    // الاعتماد: مشرف المعلم، فإن لم يكن له مشرف فمدير مرحلته
+    const hasSup = (tid) => DB.supervision.some((x) => x.teacher_id === tid && x.supervisor_id !== tid);
+    const canApprove = (tid) => tid !== ME_ID && (DB.supervision.some((x) => x.supervisor_id === ME_ID && x.teacher_id === tid)
+      || (MYROLE() === 'principal' && !hasSup(tid) && DB.teaching_assignments.some((t) => t.teacher_id === tid && grade(klass(t.class_id).grade_id).stage_id === myStage())));
     const canFollow = () => isSuper() || DB.supervision.some((x) => x.supervisor_id === ME_ID);
     const sname = (id) => (subj(id) || {}).name_ar || null;
     const stuIn = (cids) => DB.students.filter((s) => cids.includes(s.class_id) && (P(s.profile_id) || {}).active !== false);
@@ -655,7 +658,7 @@
     const options = () => {
       const T = myTA(); const by = {};
       T.forEach((t) => { (by[t.class_id] = by[t.class_id] || new Set()).add(t.subject_id); });
-      return { role: MYROLE(), is_teacher: T.length > 0, can_follow: canFollow(), can_review: DB.supervision.some((x) => x.supervisor_id === ME_ID),
+      return { role: MYROLE(), is_teacher: T.length > 0, can_follow: canFollow(), can_review: DB.supervision.some((x) => x.supervisor_id === ME_ID) || (MYROLE() === 'principal' && [...new Set(DB.teaching_assignments.map((t) => t.teacher_id))].some(canApprove)),
         subjects: [...new Set(T.map((t) => t.subject_id))].map((id) => ({ id, name: sname(id) })),
         classes: Object.keys(by).map(Number).sort(csort).map((id) => ({ id, label: lbl(id), subjects: [...by[id]] })) };
     };

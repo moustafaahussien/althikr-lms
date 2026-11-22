@@ -25,7 +25,7 @@
 
   <script src="assets/vendor/supabase-js-2.119.2.js"></script>
   <script src="assets/js/config.js?v=202611221130"></script>
-  <script src="assets/js/core.js?v=202611221130"></script>
+  <script src="assets/js/core.js?v=202611221610"></script>
   <script>
   (async function () {
     const { sb, C, configured, esc, $, signInWithGoogle, signOut, getContext, errMsg, rememberNext, takeNext } = LMS;
@@ -62,7 +62,7 @@
     try {
       const { data: { session } } = await sb.auth.getSession();
       if (!session) { showLogin(); return; }
-      const ctx = await getContext();
+      const ctx = await getContext(true);
       // المشرف يبدأ من مكتب الإشراف التربوي مباشرة (الرئيسية متاحة من الشريط العلوي)
       const nxt = takeNext();
       if (ctx && ctx.registered) { LMS.applyView(ctx); location.replace(nxt || (ctx.profile && ctx.profile.role === 'supervisor' ? 'supervision/' : 'home.html')); return; }

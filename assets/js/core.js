@@ -121,14 +121,30 @@
   }
 
   async function signOut() {
+    clearCache();
     try { await sb.auth.signOut(); } catch (_) {}
     location.href = BASE + 'index.html';
   }
 
-  async function getContext() {
-    const { data, error } = await sb.rpc('my_context');
-    if (error) throw error;
-    return data;
+  /* كاش قصير داخل التبويب (sessionStorage — يُمسح بإغلاق التبويب وعند الخروج)
+     لبيانات قليلة التغيّر: يوفّر طلبًا أو أكثر في كل انتقال بين الصفحات ويخفّف الضغط وقت الذروة.
+     الصلاحيات الفعلية تُفرض في قاعدة البيانات (RLS)، فالكاش لا يمنح أي وصول. */
+  const CK = 'lms_c:';
+  async function uidKey() { try { const { data } = await sb.auth.getSession(); return (data.session && data.session.user.id) || ''; } catch (_) { return ''; } }
+  async function cached(key, ttlMs, fn) {
+    const k = CK + (await uidKey()) + ':' + key;
+    try { const v = JSON.parse(sessionStorage.getItem(k) || 'null'); if (v && Date.now() - v.t < ttlMs) return v.d; } catch (_) {}
+    const d = await fn();
+    try { sessionStorage.setItem(k, JSON.stringify({ t: Date.now(), d })); } catch (_) {}
+    return d;
+  }
+  function clearCache() { try { Object.keys(sessionStorage).filter((k) => k.startsWith(CK)).forEach((k) => sessionStorage.removeItem(k)); } catch (_) {} }
+
+  // fresh = true: تجاهل الكاش (صفحة الدخول مثلًا)
+  async function getContext(fresh) {
+    const load = async () => { const { data, error } = await sb.rpc('my_context'); if (error) throw error; return data; };
+    if (fresh) { clearCache(); }
+    return cached('ctx', 5 * 60e3, load);
   }
 
   /* حماية الصفحة: تُعيد سياق المستخدم أو تُحوّله لصفحة الدخول
@@ -413,6 +429,6 @@
   }
 
   window.LMS = { sb, C, configured, ROLE_LABELS, esc, $, $$, toast, modal, confirmBox, errMsg,
-                 fetchAll, signInWithGoogle, signOut, getContext, requireAuth, downloadCSV, rememberNext, takeNext,
+                 fetchAll, signInWithGoogle, signOut, getContext, cached, clearCache, requireAuth, downloadCSV, rememberNext, takeNext,
                  getView, setView, canSwitch, applyView, mountTopbar, BASE, hijri, dateLine, printHTML, printTable, exportTable, tableRows, ymd };
 })();

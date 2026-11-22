@@ -77,8 +77,8 @@
     if (day >= 5) { day = 0; dayLbl = 'حصصي يوم الأحد'; }
     const isToday = day === now.getDay();
     const [tt, subs, inbox, att] = await Promise.all([
-      hol ? [] : fetchAll(() => sb.from('v_timetable').select('day,period,cls,class_id,subject_id,txt').eq('teacher_id', p.id).eq('kind', 'class').eq('day', day)).catch(() => []),
-      fetchAll(() => sb.from('subjects').select('id,name_ar')).catch(() => []),
+      hol ? [] : LMS.cached('tt:' + day, 10 * 60e3, () => fetchAll(() => sb.from('v_timetable').select('day,period,cls,class_id,subject_id,txt').eq('teacher_id', p.id).eq('kind', 'class').eq('day', day))).catch(() => []),
+      LMS.cached('subjects', 30 * 60e3, () => fetchAll(() => sb.from('subjects').select('id,name_ar'))).catch(() => []),
       sb.rpc('req_list', { p_box: 'inbox' }).then(({ data }) => data || [], () => []),
       // حالة تسجيل الحضور لحصص اليوم (null إن لم تُنشأ الدالة بعد في قاعدة البيانات)
       hol || !isToday ? null : sb.rpc('att_today_mine').then(({ data, error }) => error ? null : data || [], () => null)
@@ -150,13 +150,14 @@
 
   // ---------- الموظفون: فصولي + الفصول ضمن النطاق ----------
   async function staffPanel() {
-    const mine = await fetchAll(() => sb.from('teaching_assignments')
-      .select('id, class_id, weekly_periods, subject:subjects(name_ar)').eq('teacher_id', p.id).order('class_id'));
-    const homeroom = await fetchAll(() => sb.from('classes').select('id').eq('homeroom_teacher_id', p.id));
+    const [mine, homeroom] = await Promise.all([
+      LMS.cached('ta', 10 * 60e3, () => fetchAll(() => sb.from('teaching_assignments')
+        .select('id, class_id, weekly_periods, subject:subjects(name_ar)').eq('teacher_id', p.id).order('class_id'))),
+      LMS.cached('homeroom', 10 * 60e3, () => fetchAll(() => sb.from('classes').select('id').eq('homeroom_teacher_id', p.id)))]);
     const scoped = (ctx.scopes || []).length > 0;
     if (!mine.length && !homeroom.length && !scoped && role !== 'admin' && role !== 'leadership') return;
 
-    const classes = await fetchAll(() => sb.from('v_classes').select('*').order('stage_sort').order('grade_number').order('name'));
+    const classes = await LMS.cached('v_classes', 10 * 60e3, () => fetchAll(() => sb.from('v_classes').select('*').order('stage_sort').order('grade_number').order('name')));
     const byId = Object.fromEntries(classes.map((c) => [c.id, c]));
 
     if (mine.length || homeroom.length) {

@@ -516,7 +516,7 @@
           if (row.email && !row.email.endsWith('@' + LMS.C.SCHOOL_DOMAIN)) { toast('البريد يجب أن يكون على نطاق المدرسة', 'warn'); return false; }
           if (!row.email && row.role !== 'teacher' && p.role !== 'teacher') { toast('البريد مطلوب لهذا الدور', 'warn'); return false; }
           if (isNew) await run(sb.from('profiles').insert(row)); else await run(sb.from('profiles').update(row).eq('id', p.id));
-          toast('تم الحفظ'); return true;
+          LMS.clearCache(); toast('تم الحفظ'); return true;
         } },
         { label: 'إغلاق', cls: 'ghost', value: 'closed' }] });
       if (saved === true || (!isNew && saved !== undefined)) { await changed('staff'); openTab('staff', true); }

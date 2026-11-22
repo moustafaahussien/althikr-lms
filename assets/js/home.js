@@ -32,9 +32,11 @@
     ${ctx.viewAs ? `<div class="notice" style="margin-bottom:14px">أنت الآن في <b>واجهة المشرف</b> — اضغط «${esc(ROLE_LABELS[ctx.realRole])}» تحت اسمك للرجوع للوضع الكامل.</div>` : ''}
     <div id="dutyToday"></div>
     <div id="acks"></div>
+    <div id="today"></div>
     <div id="panel"></div>
     <div class="section-title"><h2>الوحدات</h2></div>
-    <div class="grid modules" id="modules"></div>`;
+    <div class="grid modules" id="modules"></div>
+    <div id="soonBox"></div>`;
 
   main.querySelectorAll('.view-sw').forEach((b) => b.onclick = () => {
     const v = b.dataset.view;
@@ -54,12 +56,53 @@
   document.addEventListener('lms:msg', (e) => showAcks(e.detail));
 
   // ---------- الوحدات ----------
-  // المشرف يرى الوحدات الجاهزة فقط (الوحدات «قريبًا» تظهر له تلقائيًا عند تفعيلها)
-  const mods = (C.MODULES || []).filter((m) => (!m.roles || !m.roles.length || m.roles.includes(role)) && (role !== 'supervisor' || m.url));
-  $('#modules').innerHTML = mods.map((m) => m.url
-    ? `<a class="module glass" href="${esc(m.url)}" ${/^https?:/i.test(m.url) ? 'target="_blank" rel="noopener"' : ''}><span class="ic">${m.icon}</span><b>${esc(m.title)}</b><small>${esc(m.desc || '')}</small></a>`
-    : `<div class="module glass soon"><span class="badge">قريبًا</span><span class="ic">${m.icon}</span><b>${esc(m.title)}</b><small>${esc(m.desc || '')}</small></div>`
-  ).join('');
+  // الجاهزة أولًا؛ و«قريبًا» في قسم مطوي آخر الصفحة (لا تظهر للمشرف والطالب وولي الأمر)
+  const mods = (C.MODULES || []).filter((m) => !m.roles || !m.roles.length || m.roles.includes(role));
+  const ready = mods.filter((m) => m.url), soon = mods.filter((m) => !m.url);
+  const ext = (u) => /^https?:/i.test(u);
+  $('#modules').innerHTML = ready.map((m) =>
+    `<a class="module glass" href="${esc(m.url)}" ${ext(m.url) ? 'target="_blank" rel="noopener" title="يفتح في نافذة جديدة"' : ''}>${ext(m.url) ? '<span class="ext" aria-label="منصة خارجية — نافذة جديدة">↗</span>' : ''}<span class="ic">${m.icon}</span><b>${esc(m.title)}</b><small>${esc(m.desc || '')}</small></a>`).join('');
+  if (soon.length && !['supervisor', 'student', 'parent'].includes(role)) {
+    $('#soonBox').innerHTML = `<details class="soon-box"><summary><h2>🛠️ قيد الإنشاء <span class="hint">(${soon.length})</span></h2></summary>
+      <div class="grid modules">${soon.map((m) => `<div class="module glass soon"><span class="badge">قريبًا</span><span class="ic">${m.icon}</span><b>${esc(m.title)}</b><small>${esc(m.desc || '')}</small></div>`).join('')}</div></details>`;
+  }
+
+  // ---------- يومي: حصصي اليوم + معاملات تنتظر قراري + الرسائل غير المقروءة ----------
+  if (STAFF) todayPanel().catch(() => {});
+  async function todayPanel() {
+    const DAYS = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+    const now = new Date(), ymd = LMS.ymd(now), A = window.ACAD;
+    const hol = A && (A.hol || []).find((h) => ymd >= h.f && ymd <= h.to);
+    let day = now.getDay(), dayLbl = 'حصصي اليوم';
+    if (day >= 5) { day = 0; dayLbl = 'حصصي يوم الأحد'; }
+    const [tt, subs, inbox] = await Promise.all([
+      hol ? [] : fetchAll(() => sb.from('v_timetable').select('day,period,cls,subject_id,txt').eq('teacher_id', p.id).eq('kind', 'class').eq('day', day)).catch(() => []),
+      fetchAll(() => sb.from('subjects').select('id,name_ar')).catch(() => []),
+      sb.rpc('req_list', { p_box: 'inbox' }).then(({ data }) => data || [], () => [])
+    ]);
+    const SUBJ = Object.fromEntries(subs.map((x) => [x.id, x.name_ar]));
+    // نفس الحصة قد تتكرر إذا كان الجدول مرفوعًا عند أكثر من مشرف
+    const seen = new Set(), periods = tt.filter((x) => { const k = x.period + '|' + x.cls + '|' + x.subject_id; if (seen.has(k)) return false; seen.add(k); return true; })
+      .sort((a, b) => a.period - b.period);
+    const box = $('#today'); if (!box) return;
+    const unread = () => (window.LMS_MSG && window.LMS_MSG.unread) || 0;
+    const tiles = () => [
+      ['🗓️', 'تسجيل الحضور', 'attendance.html', ''],
+      ['📨', 'معاملات بانتظار قرارك', 'services.html#req', inbox.length],
+      ['✉️', 'رسائل غير مقروءة', 'messages.html', unread()]
+    ].map(([ic, l, href, n]) => `<a class="today-tile${n ? ' hot' : ''}" href="${href}"><span>${ic}</span><b>${n === '' ? '' : n}</b><small>${l}</small></a>`).join('');
+    const ppl = hol ? `<div class="hint">🏖️ ${esc(hol.ar)} — لا حصص اليوم</div>`
+      : periods.length ? `<div class="today-periods">${periods.map((x) => `<div class="tp"><i>${x.period}</i><b>${esc(SUBJ[x.subject_id] || x.txt || '')}</b><small>${esc(x.cls || '')}</small></div>`).join('')}</div>`
+      : `<div class="hint">لا توجد لك حصص مسجلة في الجدول ${day === now.getDay() ? 'اليوم' : 'يوم ' + DAYS[day]}.</div>`;
+    // لغير المعلم: اللوحة تظهر فقط إذا كان عنده ما يخصه
+    if (role !== 'teacher' && !periods.length && !inbox.length && !unread()) return;
+    const paint = () => { box.innerHTML = `<section class="card glass today">
+      <div class="section-title" style="margin-top:0"><h2>📌 يومي</h2><span class="hint">${esc(LMS.dateLine())}</span></div>
+      <div class="today-grid"><div><h3>${dayLbl}${periods.length ? ` <span class="hint">(${periods.length})</span>` : ''}</h3>${ppl}</div>
+      <div class="today-tiles">${tiles()}</div></div></section>`; };
+    paint();
+    document.addEventListener('lms:msg', paint);
+  }
 
   const panel = $('#panel');
   try {

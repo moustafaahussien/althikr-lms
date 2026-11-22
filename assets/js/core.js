@@ -165,16 +165,20 @@
     if (!bar) return;
     const p = ctx.profile;
     const here = location.pathname.split('/').pop() || 'index.html';
-    const links = [['home.html', 'الرئيسية', true],
-      ['admin.html', 'لوحة الإدارة', p.role === 'admin'],
-      ['settings.html', 'إعدادات المدرسة', ['admin', 'leadership', 'principal'].includes(p.role)],
-      ['supervision/', '🧭 مكتب الإشراف التربوي', ['admin', 'leadership', 'principal', 'supervisor'].includes(p.role)],
+    const R = p.role, STAFF = !['student', 'parent'].includes(R), MGR = ['admin', 'leadership', 'principal'].includes(R);
+    // روابط أساسية دائمًا في الشريط، والباقي في قائمة «المزيد»
+    const links = [['home.html', '🏠 الرئيسية', true],
       ['messages.html', '✉️ الرسائل <span class="nbadge" id="navMsg" hidden></span>', true],
       ['services.html', '🗂️ الخدمات', true],
-      ['attendance.html', '🗓️ الحضور والغياب', !['student', 'parent'].includes(p.role)],
-      ['teaching-load.html', '📊 نصاب الحصص', ['admin', 'leadership', 'principal', 'supervisor'].includes(p.role)],
-      ['staff-directory.html', '📇 دليل الموظفين', !['student', 'parent'].includes(p.role)],
-      ['guardians.html', '👪 أولياء الأمور', ['admin', 'leadership', 'principal'].includes(p.role)]];
+      ['attendance.html', '🗓️ الحضور والغياب', STAFF],
+      ['supervision/', '🧭 مكتب الإشراف', MGR || R === 'supervisor']];
+    const more = [['admin.html', '⚙️ لوحة الإدارة', R === 'admin'],
+      ['settings.html', '🏫 إعدادات المدرسة', MGR],
+      ['teaching-load.html', '📊 نصاب الحصص', MGR || R === 'supervisor'],
+      ['staff-directory.html', '📇 دليل الموظفين', STAFF],
+      ['guardians.html', '👪 أولياء الأمور', MGR]].filter((l) => l[2]);
+    const moreOn = more.some((l) => l[0] === here);
+    const navA = ([href, label]) => `<a href="${href}" class="${here === href ? 'on' : ''}"${here === href ? ' aria-current="page"' : ''}>${label}</a>`;
     bar.innerHTML = `
       <div class="hrow">
         <a class="brand" href="home.html"><span class="logo-tile"><img src="assets/img/logo-mark.png" alt="مدارس دار الذكر"></span><span>${esc(C.PLATFORM_NAME)}<small>${esc(C.SCHOOL_NAME)}</small></span></a>
@@ -184,11 +188,33 @@
           <span id="todayLbl"></span><b id="clk">--:--</b>
         </div>
       </div>
-      <nav class="nav">
-        ${links.filter((l) => l[2]).map(([href, label]) => `<a href="${href}" class="${here === href ? 'on' : ''}">${label}</a>`).join('')}
+      <nav class="nav" aria-label="القائمة الرئيسية">
+        ${links.filter((l) => l[2]).map(navA).join('')}
+        ${more.length ? `<button type="button" class="more-btn ${moreOn ? 'on' : ''}" id="moreBtn" aria-haspopup="true" aria-expanded="false">${moreOn ? esc(more.find((l) => l[0] === here)[1].replace(/^\S+\s/, '')) : 'المزيد'} ▾</button>` : ''}
         <div id="calBar" class="calbar" role="button" tabindex="0" title="التقويم الدراسي"></div>
       </nav>`;
     $('#logoutBtn').onclick = signOut;
+    // قائمة «المزيد»: تُرسم خارج الشريط (position:fixed) حتى لا يقصّها التمرير الأفقي على الجوال
+    const mb = $('#moreBtn');
+    if (mb) {
+      let menu = null;
+      const closeMenu = () => { if (menu) { menu.remove(); menu = null; mb.setAttribute('aria-expanded', 'false'); document.removeEventListener('mousedown', outside); document.removeEventListener('keydown', onEsc); } };
+      const outside = (e) => { if (menu && !menu.contains(e.target) && e.target !== mb) closeMenu(); };
+      const onEsc = (e) => { if (e.key === 'Escape') { closeMenu(); mb.focus(); } };
+      mb.onclick = () => {
+        if (menu) return closeMenu();
+        menu = document.createElement('div'); menu.className = 'more-menu'; menu.setAttribute('role', 'menu');
+        menu.innerHTML = more.map(navA).join('');
+        document.body.appendChild(menu);
+        const r = mb.getBoundingClientRect(), w = menu.offsetWidth;
+        menu.style.top = (r.bottom + 4) + 'px';
+        menu.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, r.right - w)) + 'px';
+        mb.setAttribute('aria-expanded', 'true');
+        document.addEventListener('mousedown', outside); document.addEventListener('keydown', onEsc);
+        const f = $('a', menu); if (f) f.focus();
+      };
+      window.addEventListener('resize', closeMenu); window.addEventListener('scroll', closeMenu, { passive: true });
+    }
     // عدّاد الرسائل غير المقروءة والتعاميم التي تنتظر «تم الاطلاع»
     const msgBadge = async () => { try { const { data } = await sb.rpc('msg_counts'); const b = $('#navMsg'); if (!b || !data) return;
       const n = (data.unread || 0); b.hidden = !n; b.textContent = n; window.LMS_MSG = data; document.dispatchEvent(new CustomEvent('lms:msg', { detail: data })); } catch (_) {} };

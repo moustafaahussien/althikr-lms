@@ -24,7 +24,7 @@ window.LMS_CONFIG = {
     { key: 'exams',       title: 'الاختبارات وبنك الأسئلة', icon: '🧪', url: 'exams.html', roles: [],  desc: 'اختبارات إلكترونية بتصحيح تلقائي' },
     { key: 'analytics',   title: 'التحليل والمقارنة',    icon: '📊', url: 'analytics.html', roles: ['admin','leadership','principal','supervisor','teacher'], desc: 'تحليل الأسئلة ومقارنة الفصول والمعلمين' },
     { key: 'gradebook',   title: 'سجل الدرجات',         icon: '🏅', url: 'gradebook.html', roles: [],  desc: 'الدرجات مجمّعة تلقائيًا' },
-    { key: 'portfolio',   title: 'ملف إنجاز الطالب',     icon: '🎒', url: '', roles: [],  desc: 'مشاريع الطالب ومسابقاته وإنجازاته' },
+    { key: 'portfolio',   title: 'ملف إنجاز الطالب',     icon: '🎒', url: 'portfolio.html', roles: [],  desc: 'مشاريع الطالب ومسابقاته وإنجازاته' },
 
     // —— منصاتك الحالية (تُدمج تدريجيًا) ——
     { key: 'online',      title: 'التعليم عن بعد',       icon: '🎥', url: 'online/', roles: [], desc: 'روابط الحصص والجداول والتقرير اليومي' },

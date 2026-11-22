@@ -630,6 +630,387 @@
   };
 
   // ======================================================================
+  //  الوحدات التعليمية السبع (نسخة تجريبية من sql/33–40)
+  // ======================================================================
+  Object.assign(RPC, (function () {
+    const lbl = (cid) => { const c = klass(cid), g = grade(c.grade_id), st = stage(g.stage_id); return `${g.name_ar} ${st.name_ar} / ${c.name}`; };
+    const csort = (a, b) => { const A = klass(a), B = klass(b), gA = grade(A.grade_id), gB = grade(B.grade_id); return stage(gA.stage_id).sort - stage(gB.stage_id).sort || gA.number - gB.number || A.name.localeCompare(B.name, 'ar'); };
+    const deny = (m) => { throw new Error(m || 'غير مصرح'); };
+    const isStaff = () => !['student', 'parent'].includes(MYROLE());
+    const myCid = () => (MYROLE() === 'student' ? (DB.students.find((s) => s.profile_id === ME_ID) || {}).class_id || null : null);
+    const myTA = () => DB.teaching_assignments.filter((t) => t.teacher_id === ME_ID);
+    const teaches = (cid, sid) => myTA().some((t) => t.class_id === cid && (sid == null || t.subject_id === sid));
+    const myStage = () => (DB.staff_scopes.find((x) => x.profile_id === ME_ID) || {}).stage_id;
+    const reviewer = (tid) => tid !== ME_ID && (isLeader() || DB.supervision.some((x) => x.supervisor_id === ME_ID && x.teacher_id === tid) || DB.managers[tid] === ME_ID
+      || (MYROLE() === 'principal' && DB.teaching_assignments.some((t) => t.teacher_id === tid && grade(klass(t.class_id).grade_id).stage_id === myStage())));
+    const canFollow = () => isSuper() || DB.supervision.some((x) => x.supervisor_id === ME_ID);
+    const sname = (id) => (subj(id) || {}).name_ar || null;
+    const stuIn = (cids) => DB.students.filter((s) => cids.includes(s.class_id) && (P(s.profile_id) || {}).active !== false);
+    const now = () => new Date();
+    const nid = (t) => (M().seq[t] = (M().seq[t] || 0) + 1);
+    const cleanLinks = (L) => (Array.isArray(L) ? L : []).filter((l) => /^https?:\/\//i.test(String(l && l.url || '').trim())).slice(0, 10).map((l) => ({ url: String(l.url).trim().slice(0, 500), title: String(l.title || '').slice(0, 120) }));
+    const rnum = (x, d = 0) => (x == null || isNaN(x) ? null : Math.round(x * 10 ** d) / 10 ** d);
+    const avg = (a) => { const v = a.filter((x) => x != null); return v.length ? v.reduce((s, x) => s + x, 0) / v.length : null; };
+    const options = () => {
+      const T = myTA(); const by = {};
+      T.forEach((t) => { (by[t.class_id] = by[t.class_id] || new Set()).add(t.subject_id); });
+      return { role: MYROLE(), is_teacher: T.length > 0, can_follow: canFollow(), can_review: canFollow(),
+        subjects: [...new Set(T.map((t) => t.subject_id))].map((id) => ({ id, name: sname(id) })),
+        classes: Object.keys(by).map(Number).sort(csort).map((id) => ({ id, label: lbl(id), subjects: [...by[id]] })) };
+    };
+
+    // ---------- البيانات التجريبية (تُبنى مرة واحدة لكل جلسة تجربة) ----------
+    function M() { if (!DB.M) { DB.M = seed(); save(); } return DB.M; }
+    function seed() {
+      const S = { seq: {}, lp: [], hw: [], hs: [], cp: [], qb: [], ex: [], ea: [], gi: [], gs: [], pf: [] };
+      const MATH = DB.subjects.find((s) => s.name_ar === 'رياضيات').id;
+      const myCls = DB.teaching_assignments.filter((t) => t.teacher_id === IDS.teacher && t.subject_id === MATH).map((t) => t.class_id).sort(csort);
+      const stuCls = DB.students.find((s) => s.profile_id === IDS.student).class_id;
+      const cls = myCls.includes(stuCls) ? [stuCls, ...myCls.filter((c) => c !== stuCls)] : myCls;
+      const c1 = cls[0], c2 = cls[1] || cls[0];
+      const peer = DB.teaching_assignments.find((t) => t.subject_id === MATH && t.teacher_id !== IDS.teacher && DB.supervision.some((x) => x.supervisor_id === IDS.supervisor && x.teacher_id === t.teacher_id));
+      const at = (n, h = 9) => iso(daysAgo(n, h));
+      const id = (t) => (S.seq[t] = (S.seq[t] || 0) + 1);
+      // تحضير الدروس
+      const C = (o, w, s, p, a, h) => ({ objectives: o, warmup: w, strategies: s, procedures: p, assessment: a, homework: h });
+      const lp = (tid, sid, cl, d, title, status, content, extra = {}) => S.lp.push(Object.assign({ id: id('lp'), teacher_id: tid, subject_id: sid, class_ids: cl, lesson_date: ymd(daysAgo(d)), title, content, status,
+        submitted_at: status !== 'draft' ? at(d + 2) : null, reviewed_by: null, reviewed_at: null, review_note: null, created_at: at(d + 3), updated_at: at(d + 2) }, extra));
+      lp(IDS.teacher, MATH, [c1, c2], 7, 'جمع الكسور العشرية', 'approved', C('أن يجمع الطالب كسرين عشريين بدقة.', 'سؤال: كم يكلّف شراء قلمين بـ 2.5 و 3.75 ريال؟', 'فكّر-زاوج-شارك', 'مراجعة القيمة المنزلية، ثم أمثلة موجّهة، ثم تدريب في مجموعات.', 'بطاقة خروج من 3 مسائل.', 'تمارين ص 54'), { reviewed_by: IDS.supervisor, reviewed_at: at(6), review_note: 'تحضير متميز' });
+      lp(IDS.teacher, MATH, [c1, c2], 5, 'طرح الكسور العشرية', 'returned', C('أن يطرح الطالب كسرين عشريين.', 'لعبة الأسعار', 'التعلم التعاوني', 'أمثلة ثم تدريب.', 'أسئلة شفهية', ''), { reviewed_by: IDS.supervisor, reviewed_at: at(4), review_note: 'أضف نشاطًا لمراعاة الفروق الفردية' });
+      lp(IDS.teacher, MATH, [c1], 1, 'ضرب الكسور العشرية', 'submitted', C('أن يضرب الطالب كسرًا عشريًا في عدد كلي.', 'نمط المساحات', 'العصف الذهني', 'نمذجة بالمربعات ثم تدريب.', 'تقويم بنائي بالسبورات الصغيرة', 'تمارين ص 60'));
+      lp(IDS.teacher, MATH, [c1, c2], -1, 'قسمة الكسور العشرية', 'draft', C('أن يقسم الطالب كسرًا عشريًا على عدد كلي.', '', '', '', '', ''));
+      if (peer) { lp(peer.teacher_id, MATH, [peer.class_id], 2, 'المعادلات ذات الخطوتين', 'submitted', C('حل معادلة من خطوتين.', 'لغز الميزان', 'التعلم بالاكتشاف', 'ميزان تفاعلي ثم تدريب.', 'تذكرة خروج', ''));
+        lp(peer.teacher_id, MATH, [peer.class_id], 9, 'خصائص العمليات', 'approved', C('تمييز الخاصية التبديلية والتجميعية.', '', 'الحوار والمناقشة', '', '', ''), { reviewed_by: IDS.supervisor, reviewed_at: at(8) }); }
+      // الواجبات
+      const hw = (d, title, ins, mx, closed) => { const h = { id: id('hw'), teacher_id: IDS.teacher, subject_id: MATH, class_ids: [c1, c2].filter((v, i, a) => a.indexOf(v) === i), title, instructions: ins, links: [],
+        due_at: iso(daysAgo(d, 23)), max_score: mx, allow_late: true, closed: !!closed, created_at: at(d + 4), updated_at: at(d + 4) }; S.hw.push(h); return h; };
+      const h1 = hw(6, 'تمارين جمع الكسور العشرية', 'حل التمارين من 1 إلى 10 صفحة 54.', 10);
+      const h2 = hw(-2, 'مسائل حياتية على الطرح', 'اكتب 3 مسائل من واقع حياتك على طرح الكسور العشرية وحلّها.', 10);
+      const h3 = hw(-6, 'مشروع: ميزانية الأسبوع', 'سجّل مصروفك لأسبوع بالكسور العشرية وأرسل رابط الجدول.', 20);
+      stuIn(h1.class_ids).forEach((s, i) => { if (i % 6 === 5) return; const sc = 5 + Math.floor(rnd() * 6);
+        S.hs.push({ id: id('hs'), hw_id: h1.id, student_id: s.profile_id, body: 'الحل مرفق في الدفتر وصورته في الرابط.', links: [], submitted_at: at(7, 18), late: i % 7 === 3, status: 'graded', score: s.profile_id === IDS.student ? 9 : sc, feedback: sc >= 9 ? 'ممتاز' : 'راجع التمرين 7' }); });
+      stuIn(h2.class_ids).forEach((s, i) => { if (i % 3 || s.profile_id === IDS.student) return; S.hs.push({ id: id('hs'), hw_id: h2.id, student_id: s.profile_id, body: 'المسألة الأولى: …', links: [], submitted_at: at(0, 17), late: false, status: 'submitted', score: null, feedback: null }); });
+      void h3;
+      // صفحات المواد
+      const sun = (n) => { const d = daysAgo(n); d.setDate(d.getDate() - d.getDay()); return ymd(d); };
+      const cp = (kind, title, body, wk, pinned, n) => S.cp.push({ id: id('cp'), teacher_id: IDS.teacher, subject_id: MATH, class_ids: [c1, c2].filter((v, i, a) => a.indexOf(v) === i), kind, title, body, links: [], week_start: wk, pinned: !!pinned, created_at: at(n), updated_at: at(n) });
+      cp('announcement', 'اختبار الفترة الأولى يوم الأربعاء', 'يشمل الاختبار دروس الكسور العشرية (الجمع والطرح والضرب). راجعوا التمارين المحلولة.', null, true, 1);
+      cp('content', 'ملخص درس جمع الكسور العشرية', 'نرتّب الأعداد بحيث تتحاذى الفواصل العشرية، ثم نجمع كما نجمع الأعداد الكلية.', sun(7), false, 7);
+      cp('content', 'فيديو شرح طرح الكسور العشرية', 'شاهد الفيديو قبل الحصة القادمة وسجّل سؤالًا واحدًا.', sun(0), false, 2);
+      // بنك الأسئلة
+      const Q = (qtype, body, opts, answer, points, topic) => { const q = { id: id('qb'), owner_id: IDS.teacher, subject_id: MATH, grade_num: null, qtype, body, points, topic, answer: answer || null,
+        options: qtype === 'mcq' ? opts.map((t, i) => ({ t, ok: i === 0 })) : qtype === 'tf' ? [{ t: 'صح', ok: !!opts }, { t: 'خطأ', ok: !opts }] : [], created_at: at(20) };
+        if (q.qtype === 'mcq') { const ok = q.options[0]; q.options = [q.options[2], ok, q.options[1], q.options[3]].filter(Boolean); } S.qb.push(q); return q; };
+      const qs = [Q('mcq', 'ناتج 2.5 + 1.75 =', ['4.25', '3.25', '4.3', '3.75'], null, 2, 'الجمع'), Q('mcq', 'ناتج 5 − 2.4 =', ['2.6', '3.4', '2.4', '3.6'], null, 2, 'الطرح'),
+        Q('tf', 'العدد 0.5 أكبر من 0.45', true, null, 1, 'المقارنة'), Q('tf', '0.3 × 10 = 0.03', false, null, 1, 'الضرب'),
+        Q('mcq', 'أي الأعداد التالية يساوي ثلاثة أعشار؟', ['0.3', '3.0', '0.03', '30'], null, 1, 'القيمة المنزلية'), Q('short', 'اكتب 0.75 في صورة كسر اعتيادي في أبسط صورة', null, '3/4', 3, 'التحويل'),
+        Q('mcq', 'ناتج 1.2 × 3 =', ['3.6', '3.2', '36', '0.36'], null, 2, 'الضرب'), Q('short', 'اشرح بكلماتك لماذا نحاذي الفواصل العشرية عند الجمع', null, null, 3, 'الجمع')];
+      // الاختبارات
+      const exam = (title, open, close, cl, qq, dur) => { const e = { id: id('ex'), teacher_id: IDS.teacher, subject_id: MATH, class_ids: cl, title, instructions: 'اقرأ كل سؤال جيدًا قبل الإجابة.',
+        questions: qq.map((q) => ({ id: String(q.id), qtype: q.qtype, body: q.body, options: clone(q.options), answer: q.answer, points: q.points })), opens_at: iso(open), closes_at: iso(close), duration_min: dur, shuffle: true, show_results: true, created_at: iso(open) }; S.ex.push(e); return e; };
+      const e1 = exam('اختبار قصير: جمع وطرح الكسور العشرية', daysAgo(8, 8), daysAgo(8, 14), [c1, c2].filter((v, i, a) => a.indexOf(v) === i), qs.slice(0, 6), 20);
+      exam('اختبار الفترة الأولى', daysAgo(0, 0), daysAgo(-3, 23), [c1], [qs[0], qs[2], qs[3], qs[4], qs[6], qs[7]], 30);
+      exam('اختبار الوحدة الثالثة', daysAgo(-7, 8), daysAgo(-7, 12), [c1, c2].filter((v, i, a) => a.indexOf(v) === i), qs.slice(2), 25);
+      stuIn(e1.class_ids).forEach((s, i) => { if (i % 8 === 7) return; const ans = {}, res = {}; let sc = 0, rev = false;
+        e1.questions.forEach((q) => { const okI = q.options.findIndex((o) => o.ok); const good = s.profile_id === IDS.student ? q.qtype !== 'short' : rnd() < (q.qtype === 'tf' ? 0.85 : 0.65);
+          if (q.qtype === 'short') { ans[q.id] = good ? '3/4' : '75/100'; if (good) { res[q.id] = { pts: q.points, ok: true }; sc += q.points; } else if (i % 2) { res[q.id] = { pts: 2, ok: false, manual: true, graded: true }; sc += 2; } else { res[q.id] = { pts: 0, ok: null, manual: true }; rev = true; } }
+          else { const a = good ? okI : (okI + 1) % q.options.length; ans[q.id] = String(a); res[q.id] = { pts: good ? q.points : 0, ok: good }; if (good) sc += q.points; } });
+        S.ea.push({ id: id('ea'), exam_id: e1.id, student_id: s.profile_id, started_at: iso(daysAgo(8, 9)), deadline: iso(daysAgo(8, 9)), submitted_at: iso(daysAgo(8, 9)), q_order: [], answers: ans, results: res,
+          score: sc, max_score: e1.questions.reduce((a, q) => a + q.points, 0), needs_review: rev }); });
+      // سجل الدرجات: عمود يدوي
+      const gi = { id: id('gi'), teacher_id: IDS.teacher, class_id: c1, subject_id: MATH, src_kind: 'manual', src_id: null, title: 'المشاركة الصفية', category: 'participation', max_score: 10, weight: 1, hidden: false, item_date: ymd(daysAgo(3)) };
+      S.gi.push(gi); stuIn([c1]).forEach((s) => S.gs.push({ item_id: gi.id, student_id: s.profile_id, score: s.profile_id === IDS.student ? 9 : 6 + Math.floor(rnd() * 5), note: null }));
+      // ملف الإنجاز
+      const pf = (sid, kind, title, level, result, status, d, by, desc) => S.pf.push({ id: id('pf'), student_id: sid, kind, title, description: desc || null, item_date: ymd(daysAgo(d)), level, result, links: [],
+        status, added_by: by, reviewed_by: status === 'approved' && by === sid ? IDS.teacher : status === 'approved' ? by : null, reviewed_at: status === 'approved' ? at(d - 1) : null, review_note: null, created_at: at(d) });
+      pf(IDS.student, 'competition', 'أولمبياد الرياضيات المدرسي', 'school', 'المركز الثاني', 'approved', 40, IDS.teacher, 'شارك في التصفيات المدرسية لأولمبياد الرياضيات.');
+      pf(IDS.student, 'project', 'روبوت فرز النفايات', 'district', 'مشاركة', 'approved', 25, IDS.student, 'مشروع جماعي في نادي الروبوت لفرز العلب البلاستيكية.');
+      pf(IDS.student, 'certificate', 'دورة أساسيات البرمجة بلغة بايثون', null, 'اجتياز', 'pending', 3, IDS.student);
+      stuIn([c1]).slice(1, 4).forEach((s, i) => pf(s.profile_id, ['reading', 'volunteer', 'award'][i], ['تحدي القراءة العربي', 'حملة نظافة الحي', 'الطالب المثالي'][i], 'school', ['20 كتابًا', '', 'تكريم'][i], i === 2 ? 'approved' : 'pending', 2 + i, s.profile_id));
+      return S;
+    }
+
+    // ---------- تحضير الدروس ----------
+    const lpCard = (l) => ({ id: l.id, title: l.title, date: l.lesson_date, status: l.status, subject: sname(l.subject_id), subject_id: l.subject_id, classes: l.class_ids.slice().sort(csort).map(lbl),
+      teacher: name(l.teacher_id), teacher_id: l.teacher_id, submitted_at: l.submitted_at, reviewed_at: l.reviewed_at, reviewer: l.reviewed_by ? name(l.reviewed_by) : null, note: l.review_note, updated_at: l.updated_at });
+    const lpOf = (id) => M().lp.find((l) => l.id === +id) || deny('التحضير غير موجود');
+    const checkMine = (cls, sid) => { if (cls.some((c) => !teaches(c))) deny('اختر من فصولك المسندة إليك فقط'); if (sid != null && !myTA().some((t) => t.subject_id === sid)) deny('اختر من موادك المسندة إليك فقط'); };
+
+    // ---------- الواجبات ----------
+    const hwCard = (h) => ({ id: h.id, title: h.title, due_at: h.due_at, max_score: h.max_score, allow_late: h.allow_late, closed: h.closed, subject: sname(h.subject_id), subject_id: h.subject_id,
+      teacher: name(h.teacher_id), teacher_id: h.teacher_id, created_at: h.created_at, classes: h.class_ids.slice().sort(csort).map(lbl) });
+    const hwOf = (id) => M().hw.find((h) => h.id === +id) || deny('الواجب غير موجود');
+    const subOf = (hid, sid) => M().hs.find((s) => s.hw_id === hid && s.student_id === sid);
+
+    // ---------- الاختبارات ----------
+    const maxOf = (e) => e.questions.reduce((a, q) => a + +q.points, 0);
+    const exState = (e) => (now() < new Date(e.opens_at) ? 'upcoming' : now() > new Date(e.closes_at) ? 'closed' : 'open');
+    const exCard = (e) => ({ id: e.id, title: e.title, opens_at: e.opens_at, closes_at: e.closes_at, duration_min: e.duration_min, subject: sname(e.subject_id), subject_id: e.subject_id,
+      teacher: name(e.teacher_id), teacher_id: e.teacher_id, n_questions: e.questions.length, max_score: maxOf(e), show_results: e.show_results, classes: e.class_ids.slice().sort(csort).map(lbl), state: exState(e) });
+    const exOf = (id) => M().ex.find((e) => e.id === +id) || deny('الاختبار غير موجود');
+    const attOf = (eid, sid) => M().ea.find((a) => a.exam_id === eid && a.student_id === sid);
+    const qbCan = (sid) => isSuper() || myTA().some((t) => t.subject_id === sid);
+    const shuffle = (a) => a.map((x) => [Math.random(), x]).sort((p, q) => p[0] - q[0]).map((p) => p[1]);
+    const normA = (s) => norm(String(s || '').trim()).replace(/[ً-ْ]/g, '').replace(/\s+/g, ' ');
+
+    // ---------- سجل الدرجات ----------
+    const gbView = (cid, sid) => DB.teaching_assignments.some((t) => t.class_id === cid && t.subject_id === sid && (t.teacher_id === ME_ID || reviewer(t.teacher_id)));
+    const gbEdit = (cid, sid) => teaches(cid, sid);
+    function gbCols(cid, sid) {
+      const S = M(), ov = (k, id) => S.gi.find((g) => g.class_id === cid && g.subject_id === sid && g.src_kind === k && g.src_id === id);
+      return [...S.hw.filter((h) => h.class_ids.includes(cid) && h.subject_id === sid).map((h) => { const g = ov('hw', h.id);
+          return { key: 'hw' + h.id, kind: 'hw', src_id: h.id, item_id: g ? g.id : null, title: h.title, category: 'homework', max: h.max_score, weight: g ? g.weight : 1, hidden: g ? g.hidden : false, date: h.due_at.slice(0, 10) }; }),
+        ...S.ex.filter((e) => e.class_ids.includes(cid) && e.subject_id === sid).map((e) => { const g = ov('ex', e.id);
+          return { key: 'ex' + e.id, kind: 'ex', src_id: e.id, item_id: g ? g.id : null, title: e.title, category: 'exam', max: maxOf(e), weight: g ? g.weight : 1, hidden: g ? g.hidden : false, date: e.opens_at.slice(0, 10) }; }),
+        ...S.gi.filter((g) => g.class_id === cid && g.subject_id === sid && g.src_kind === 'manual').map((g) => ({ key: 'm' + g.id, kind: 'manual', src_id: null, item_id: g.id, title: g.title, category: g.category, max: g.max_score, weight: g.weight, hidden: g.hidden, date: g.item_date }))]
+        .sort((a, b) => a.date.localeCompare(b.date) || a.key.localeCompare(b.key));
+    }
+    function gbScores(cid, sid, stu) {
+      const S = M(), o = {};
+      S.hs.forEach((s) => { const h = S.hw.find((x) => x.id === s.hw_id); if (s.student_id === stu && s.status === 'graded' && s.score != null && h.class_ids.includes(cid) && h.subject_id === sid) o['hw' + h.id] = s.score; });
+      S.ea.forEach((a) => { const e = S.ex.find((x) => x.id === a.exam_id); if (a.student_id === stu && a.submitted_at && a.score != null && e.class_ids.includes(cid) && e.subject_id === sid) o['ex' + e.id] = a.score; });
+      S.gs.forEach((s) => { const g = S.gi.find((x) => x.id === s.item_id); if (s.student_id === stu && g.class_id === cid && g.subject_id === sid) o['m' + g.id] = s.score; });
+      return o;
+    }
+    const gbPct = (cols, sc) => { let n = 0, w = 0; cols.forEach((c) => { if (!c.hidden && c.weight > 0 && sc[c.key] != null) { n += c.weight * sc[c.key] / c.max; w += +c.weight; } }); return w ? rnum(n / w * 100, 1) : null; };
+
+    // ---------- ملف الإنجاز ----------
+    const pfStaff = (sid) => { if (!isStaff()) return false; const s = DB.students.find((x) => x.profile_id === sid); if (!s) return false;
+      if (isLeader()) return true; if (MYROLE() === 'principal') return grade(s.grade_id).stage_id === myStage();
+      return DB.teaching_assignments.some((t) => t.class_id === s.class_id && (t.teacher_id === ME_ID || (MYROLE() === 'supervisor' && DB.supervision.some((x) => x.supervisor_id === ME_ID && x.teacher_id === t.teacher_id))))
+        || klass(s.class_id).homeroom_teacher_id === ME_ID; };
+    const pfCard = (i) => ({ id: i.id, student_id: i.student_id, kind: i.kind, title: i.title, description: i.description, date: i.item_date, level: i.level, result: i.result, links: i.links, status: i.status,
+      review_note: i.review_note, created_at: i.created_at, added_by: i.added_by ? name(i.added_by) : null, self_added: i.added_by === i.student_id, reviewed_by: i.reviewed_by ? name(i.reviewed_by) : null });
+    const pfOf = (id) => M().pf.find((i) => i.id === +id) || deny('غير موجود');
+    const KINDS = ['project', 'competition', 'award', 'certificate', 'volunteer', 'reading', 'talent', 'other'], LEVELS = ['class', 'school', 'district', 'national', 'international'];
+
+    const cpCan = (cid, sid) => isLeader() || myCid() === cid || DB.teaching_assignments.some((t) => t.class_id === cid && t.subject_id === sid && (t.teacher_id === ME_ID || reviewer(t.teacher_id)));
+
+    return {
+      // ===== تحضير الدروس =====
+      lp_options: () => options(),
+      lp_list({ p_box = 'mine', p_from, p_to, p_teacher, p_status }) {
+        if (!isStaff()) deny();
+        return M().lp.filter((l) => (!p_from || l.lesson_date >= p_from) && (!p_to || l.lesson_date <= p_to) && (!p_status || l.status === p_status)
+          && (p_box === 'mine' ? l.teacher_id === ME_ID : p_box === 'review' ? l.status === 'submitted' && reviewer(l.teacher_id) : (!p_teacher || l.teacher_id === p_teacher) && l.status !== 'draft' && reviewer(l.teacher_id)))
+          .sort((a, b) => b.lesson_date.localeCompare(a.lesson_date) || b.id - a.id).map(lpCard);
+      },
+      lp_get({ p_id }) { const l = lpOf(p_id), mine = l.teacher_id === ME_ID, rev = reviewer(l.teacher_id);
+        if (!mine && !(rev && l.status !== 'draft')) deny();
+        return Object.assign(lpCard(l), { content: l.content, class_ids: l.class_ids, can_edit: mine && ['draft', 'returned'].includes(l.status), can_review: rev && l.status === 'submitted', mine }); },
+      lp_save({ p }) { if (!isStaff()) deny(); const ttl = String(p.title || '').trim(); if (!ttl) deny('اكتب عنوان الدرس'); if (!p.date) deny('اختر تاريخ الدرس');
+        const cls = [...new Set((p.class_ids || []).map(Number))], sid = p.subject_id ? +p.subject_id : null; checkMine(cls, sid);
+        if (p.id) { const l = lpOf(p.id); if (l.teacher_id !== ME_ID || !['draft', 'returned'].includes(l.status)) deny('لا يمكن تعديل هذا التحضير (أُرسل للاعتماد أو اعتُمد)');
+          Object.assign(l, { subject_id: sid, class_ids: cls, lesson_date: p.date, title: ttl.slice(0, 200), content: p.content || {}, updated_at: iso(now()) }); save(); return { ok: true, id: l.id }; }
+        const l = { id: nid('lp'), teacher_id: ME_ID, subject_id: sid, class_ids: cls, lesson_date: p.date, title: ttl.slice(0, 200), content: p.content || {}, status: 'draft', submitted_at: null, reviewed_by: null, reviewed_at: null, review_note: null, created_at: iso(now()), updated_at: iso(now()) };
+        M().lp.push(l); save(); return { ok: true, id: l.id }; },
+      lp_submit({ p_id }) { const l = lpOf(p_id); if (l.teacher_id !== ME_ID || !['draft', 'returned'].includes(l.status)) deny('لا يمكن إرسال هذا التحضير'); Object.assign(l, { status: 'submitted', submitted_at: iso(now()) }); save(); return { ok: true }; },
+      lp_unsubmit({ p_id }) { const l = lpOf(p_id); if (l.teacher_id !== ME_ID || l.status !== 'submitted') deny('لا يمكن سحب هذا التحضير'); l.status = 'draft'; save(); return { ok: true }; },
+      lp_review({ p_id, p_decision, p_note }) { const l = lpOf(p_id); if (l.status !== 'submitted' || !reviewer(l.teacher_id)) deny();
+        if (p_decision === 'return' && !String(p_note || '').trim()) deny('اكتب ملاحظاتك للمعلم عند الإعادة');
+        Object.assign(l, { status: p_decision === 'approve' ? 'approved' : 'returned', reviewed_by: ME_ID, reviewed_at: iso(now()), review_note: String(p_note || '').trim() || null }); save(); return { ok: true }; },
+      lp_delete({ p_id }) { const l = lpOf(p_id); if (l.teacher_id !== ME_ID || !['draft', 'returned'].includes(l.status)) deny('لا يمكن حذف هذا التحضير'); M().lp = M().lp.filter((x) => x !== l); save(); return { ok: true }; },
+      lp_copy({ p_id, p_date }) { const l = lpOf(p_id); if (l.teacher_id !== ME_ID) deny(); const n = Object.assign(clone(l), { id: nid('lp'), lesson_date: p_date || l.lesson_date, status: 'draft', submitted_at: null, reviewed_by: null, reviewed_at: null, review_note: null, created_at: iso(now()) });
+        M().lp.push(n); save(); return { ok: true, id: n.id }; },
+
+      // ===== الواجبات =====
+      hw_options: () => options(),
+      hw_list({ p_box = 'mine' }) { const S = M();
+        if (p_box === 'student') { const cid = myCid(); if (!cid) return [];
+          return S.hw.filter((h) => h.class_ids.includes(cid)).sort((a, b) => b.due_at.localeCompare(a.due_at)).map((h) => { const s = subOf(h.id, ME_ID) || {};
+            return Object.assign(hwCard(h), { my_status: s.status || null, my_score: s.score ?? null, my_late: s.late ?? null, submitted_at: s.submitted_at || null }); }); }
+        if (!isStaff()) deny();
+        return S.hw.filter((h) => (p_box === 'mine' ? h.teacher_id === ME_ID : reviewer(h.teacher_id))).sort((a, b) => b.due_at.localeCompare(a.due_at)).map((h) => { const sub = S.hs.filter((s) => s.hw_id === h.id), gr = sub.filter((s) => s.status === 'graded');
+          return Object.assign(hwCard(h), { students: stuIn(h.class_ids).length, submitted: sub.length, graded: gr.length, avg: gr.length ? Math.round(avg(gr.map((s) => s.score / h.max_score * 100))) : null }); }); },
+      hw_get({ p_id }) { const h = hwOf(p_id), mine = h.teacher_id === ME_ID, rev = reviewer(h.teacher_id), cid = myCid();
+        if (mine || rev) return Object.assign(hwCard(h), { instructions: h.instructions, links: h.links, class_ids: h.class_ids, mine, can_edit: mine,
+          roster: stuIn(h.class_ids).sort((a, b) => csort(a.class_id, b.class_id) || name(a.profile_id).localeCompare(name(b.profile_id), 'ar')).map((st) => { const s = subOf(h.id, st.profile_id);
+            return { student: st.profile_id, name: name(st.profile_id), class: klass(st.class_id).name, no: st.student_number, sub: s ? { id: s.id, body: s.body, links: s.links, at: s.submitted_at, late: s.late, status: s.status, score: s.score, feedback: s.feedback } : null }; }) });
+        if (cid && h.class_ids.includes(cid)) { const s = subOf(h.id, ME_ID);
+          return Object.assign(hwCard(h), { instructions: h.instructions, links: h.links, student_view: true, can_submit: !h.closed && (h.allow_late || now() <= new Date(h.due_at)) && (!s || s.status !== 'graded'),
+            sub: s ? { body: s.body, links: s.links, at: s.submitted_at, late: s.late, status: s.status, score: s.score, feedback: s.feedback } : null }); }
+        deny(); },
+      hw_save({ p }) { if (!isStaff()) deny(); const ttl = String(p.title || '').trim(); if (!ttl) deny('اكتب عنوان الواجب'); if (!p.due_at) deny('حدّد موعد التسليم');
+        const cls = [...new Set((p.class_ids || []).map(Number))]; if (!cls.length) deny('اختر فصلًا واحدًا على الأقل'); const sid = p.subject_id ? +p.subject_id : null; checkMine(cls, sid);
+        const v = { subject_id: sid, class_ids: cls, title: ttl.slice(0, 200), instructions: String(p.instructions || '').trim() || null, links: cleanLinks(p.links), due_at: iso(p.due_at), max_score: +p.max_score || 10, allow_late: p.allow_late !== false, updated_at: iso(now()) };
+        if (p.id) { const h = hwOf(p.id); if (h.teacher_id !== ME_ID) deny(); Object.assign(h, v); save(); return { ok: true, id: h.id }; }
+        const h = Object.assign({ id: nid('hw'), teacher_id: ME_ID, closed: false, created_at: iso(now()) }, v); M().hw.push(h); save(); return { ok: true, id: h.id }; },
+      hw_close({ p_id, p_closed }) { const h = hwOf(p_id); if (h.teacher_id !== ME_ID) deny(); h.closed = p_closed !== false; save(); return { ok: true }; },
+      hw_delete({ p_id }) { const h = hwOf(p_id); if (M().hs.some((s) => s.hw_id === h.id && s.status === 'graded')) deny('لا يمكن حذف واجب فيه تسليمات مصحّحة — أغلقه بدلًا من ذلك'); if (h.teacher_id !== ME_ID) deny();
+        M().hw = M().hw.filter((x) => x !== h); M().hs = M().hs.filter((s) => s.hw_id !== h.id); save(); return { ok: true }; },
+      hw_submit({ p_id, p_body, p_links }) { const h = hwOf(p_id), cid = myCid(); if (!cid || !h.class_ids.includes(cid)) deny(); if (h.closed) deny('أُغلق هذا الواجب');
+        const late = now() > new Date(h.due_at); if (late && !h.allow_late) deny('انتهى موعد التسليم'); const lk = cleanLinks(p_links); if (!String(p_body || '').trim() && !lk.length) deny('اكتب إجابتك أو أضف رابطًا');
+        let s = subOf(h.id, ME_ID); if (s && s.status === 'graded') deny('صُحّح تسليمك، لا يمكن تعديله');
+        if (!s) { s = { id: nid('hs'), hw_id: h.id, student_id: ME_ID, feedback: null }; M().hs.push(s); }
+        Object.assign(s, { body: String(p_body || '').trim() || null, links: lk, submitted_at: iso(now()), late, status: 'submitted', score: null }); save(); return { ok: true }; },
+      hw_grade({ p_id, p_student, p_action, p_score, p_feedback }) { const h = hwOf(p_id); if (h.teacher_id !== ME_ID) deny(); let s = subOf(h.id, p_student);
+        if (p_action === 'grade') { if (p_score == null || p_score < 0 || p_score > h.max_score) deny('الدرجة يجب أن تكون بين 0 و ' + h.max_score);
+          if (!s) { s = { id: nid('hs'), hw_id: h.id, student_id: p_student, body: null, links: [], submitted_at: iso(now()), late: false }; M().hs.push(s); }
+          Object.assign(s, { status: 'graded', score: +p_score, feedback: String(p_feedback || '').trim() || null }); }
+        else { if (!String(p_feedback || '').trim()) deny('اكتب ملاحظتك للطالب عند الإعادة'); if (!s) deny('لا يوجد تسليم لإعادته'); Object.assign(s, { status: 'returned', score: null, feedback: String(p_feedback).trim() }); }
+        save(); return { ok: true }; },
+
+      // ===== صفحات المواد =====
+      cp_courses() { const cid = myCid(), by = {};
+        DB.teaching_assignments.filter((t) => t.teacher_id === ME_ID || t.class_id === cid || (isStaff() && reviewer(t.teacher_id))).forEach((t) => { const k = t.class_id + '-' + t.subject_id;
+          const o = by[k] = by[k] || { class_id: t.class_id, subject_id: t.subject_id, teachers: new Set(), mine: false }; o.teachers.add(name(t.teacher_id)); o.mine = o.mine || t.teacher_id === ME_ID; });
+        return Object.values(by).sort((a, b) => b.mine - a.mine || csort(a.class_id, b.class_id) || sname(a.subject_id).localeCompare(sname(b.subject_id), 'ar')).map((o) => { const P2 = M().cp.filter((p) => p.subject_id === o.subject_id && p.class_ids.includes(o.class_id));
+          return { class_id: o.class_id, subject_id: o.subject_id, subject: sname(o.subject_id), class: lbl(o.class_id), teachers: [...o.teachers], mine: o.mine, posts: P2.length, last_at: P2.length ? P2.map((p) => p.created_at).sort().pop() : null }; }); },
+      cp_list({ p_class, p_subject }) { if (!cpCan(p_class, p_subject)) deny();
+        return { can_post: teaches(p_class, p_subject), posts: M().cp.filter((p) => p.subject_id === p_subject && p.class_ids.includes(p_class))
+          .sort((a, b) => b.pinned - a.pinned || (b.week_start || b.created_at.slice(0, 10)).localeCompare(a.week_start || a.created_at.slice(0, 10)) || b.created_at.localeCompare(a.created_at))
+          .map((p) => ({ id: p.id, kind: p.kind, title: p.title, body: p.body, links: p.links, week: p.week_start, pinned: p.pinned, at: p.created_at, updated: p.updated_at, class_ids: p.class_ids, teacher: name(p.teacher_id), mine: p.teacher_id === ME_ID })) }; },
+      cp_save({ p }) { if (!isStaff()) deny(); const ttl = String(p.title || '').trim(); if (!ttl) deny('اكتب عنوان المنشور'); const sid = +p.subject_id; if (!sid) deny('المادة مطلوبة');
+        const cls = [...new Set((p.class_ids || []).map(Number))]; if (!cls.length) deny('اختر فصلًا واحدًا على الأقل'); if (cls.some((c) => !teaches(c, sid))) deny('اختر من فصولك التي تدرّس لها هذه المادة فقط');
+        const v = { class_ids: cls, kind: p.kind === 'announcement' ? 'announcement' : 'content', title: ttl.slice(0, 200), body: String(p.body || '').trim() || null, links: cleanLinks(p.links), week_start: p.week || null, pinned: !!p.pinned, updated_at: iso(now()) };
+        if (p.id) { const x = M().cp.find((c) => c.id === +p.id); if (!x || x.teacher_id !== ME_ID) deny(); Object.assign(x, v); save(); return { ok: true, id: x.id }; }
+        const x = Object.assign({ id: nid('cp'), teacher_id: ME_ID, subject_id: sid, created_at: iso(now()) }, v); M().cp.push(x); save(); return { ok: true, id: x.id }; },
+      cp_delete({ p_id }) { const x = M().cp.find((c) => c.id === +p_id); if (!x || x.teacher_id !== ME_ID) deny(); M().cp = M().cp.filter((c) => c !== x); save(); return { ok: true }; },
+
+      // ===== بنك الأسئلة والاختبارات =====
+      qb_list({ p_subject, p_grade }) { if (!isStaff() || !qbCan(p_subject)) deny();
+        return M().qb.filter((q) => q.subject_id === p_subject && (!p_grade || !q.grade_num || q.grade_num === p_grade)).sort((a, b) => (b.owner_id === ME_ID) - (a.owner_id === ME_ID) || b.created_at.localeCompare(a.created_at))
+          .map((q) => ({ id: q.id, qtype: q.qtype, body: q.body, options: q.options, answer: q.answer, points: q.points, topic: q.topic, grade: q.grade_num, mine: q.owner_id === ME_ID, owner: name(q.owner_id),
+            used: M().ex.filter((e) => e.questions.some((x) => x.id === String(q.id))).length })); },
+      qb_save({ p }) { if (!isStaff()) deny(); const sid = +p.subject_id; if (!sid || !myTA().some((t) => t.subject_id === sid)) deny('اختر مادة من موادك المسندة إليك');
+        if (!['mcq', 'tf', 'short'].includes(p.qtype)) deny('نوع السؤال غير صالح'); const b = String(p.body || '').trim(); if (!b) deny('اكتب نص السؤال');
+        let opts = [];
+        if (p.qtype === 'mcq') { opts = (p.options || []).filter((o) => String(o.t || '').trim()).map((o) => ({ t: String(o.t).trim().slice(0, 500), ok: !!o.ok }));
+          if (opts.length < 2 || opts.length > 8) deny('الاختيار من متعدد يحتاج من 2 إلى 8 خيارات'); if (opts.filter((o) => o.ok).length !== 1) deny('حدّد إجابة صحيحة واحدة'); }
+        else if (p.qtype === 'tf') { const t = p.tf !== false; opts = [{ t: 'صح', ok: t }, { t: 'خطأ', ok: !t }]; }
+        const v = { subject_id: sid, grade_num: p.grade || null, qtype: p.qtype, body: b, options: opts, answer: String(p.answer || '').trim() || null, points: +p.points || 1, topic: String(p.topic || '').trim() || null };
+        if (p.id) { const q = M().qb.find((x) => x.id === +p.id); if (!q || q.owner_id !== ME_ID) deny('لا يمكنك تعديل سؤال زميل — يمكنك استخدامه فقط'); Object.assign(q, v); save(); return { ok: true, id: q.id }; }
+        const q = Object.assign({ id: nid('qb'), owner_id: ME_ID, created_at: iso(now()) }, v); M().qb.push(q); save(); return { ok: true, id: q.id }; },
+      qb_delete({ p_id }) { const q = M().qb.find((x) => x.id === +p_id); if (!q || q.owner_id !== ME_ID) deny(); M().qb = M().qb.filter((x) => x !== q); save(); return { ok: true }; },
+      ex_save({ p }) { if (!isStaff()) deny(); const ttl = String(p.title || '').trim(); if (!ttl) deny('اكتب عنوان الاختبار');
+        const op = new Date(p.opens_at), cl = new Date(p.closes_at); if (!p.opens_at || !p.closes_at || cl <= op) deny('حدّد وقت الفتح والإغلاق بشكل صحيح');
+        const sid = p.subject_id ? +p.subject_id : null, cls = [...new Set((p.class_ids || []).map(Number))]; if (!cls.length) deny('اختر فصلًا واحدًا على الأقل'); if (cls.some((c) => !teaches(c, sid))) deny('اختر من فصولك التي تدرّس لها هذه المادة فقط');
+        const qs = (p.questions || []).map((x) => { const q = M().qb.find((y) => y.id === +x.id && y.subject_id === sid); return q && { id: String(q.id), qtype: q.qtype, body: q.body, options: clone(q.options), answer: q.answer, points: x.points ? +x.points : q.points }; }).filter(Boolean);
+        if (p.id) { const e = exOf(p.id); if (e.teacher_id !== ME_ID) deny();
+          if (M().ea.some((a) => a.exam_id === e.id)) Object.assign(e, { title: ttl.slice(0, 200), instructions: String(p.instructions || '').trim() || null, closes_at: iso(cl), show_results: p.show_results !== false });
+          else { if (!qs.length) deny('أضف سؤالًا واحدًا على الأقل من بنك الأسئلة'); Object.assign(e, { subject_id: sid, class_ids: cls, title: ttl.slice(0, 200), instructions: String(p.instructions || '').trim() || null, questions: qs, opens_at: iso(op), closes_at: iso(cl), duration_min: +p.duration_min || 30, shuffle: p.shuffle !== false, show_results: p.show_results !== false }); }
+          save(); return { ok: true, id: e.id }; }
+        if (!qs.length) deny('أضف سؤالًا واحدًا على الأقل من بنك الأسئلة');
+        const e = { id: nid('ex'), teacher_id: ME_ID, subject_id: sid, class_ids: cls, title: ttl.slice(0, 200), instructions: String(p.instructions || '').trim() || null, questions: qs, opens_at: iso(op), closes_at: iso(cl), duration_min: +p.duration_min || 30, shuffle: p.shuffle !== false, show_results: p.show_results !== false, created_at: iso(now()) };
+        M().ex.push(e); save(); return { ok: true, id: e.id }; },
+      ex_delete({ p_id }) { const e = exOf(p_id); if (M().ea.some((a) => a.exam_id === e.id && a.submitted_at)) deny('لا يمكن حذف اختبار سلّمه طلاب — غيّر موعد إغلاقه بدلًا من ذلك'); if (e.teacher_id !== ME_ID) deny();
+        M().ex = M().ex.filter((x) => x !== e); M().ea = M().ea.filter((a) => a.exam_id !== e.id); save(); return { ok: true }; },
+      ex_list({ p_box = 'mine' }) { const S = M();
+        if (p_box === 'student') { const cid = myCid(); if (!cid) return [];
+          return S.ex.filter((e) => e.class_ids.includes(cid)).sort((a, b) => b.opens_at.localeCompare(a.opens_at)).map((e) => { const a = attOf(e.id, ME_ID);
+            return Object.assign(exCard(e), { my: a ? { started: a.started_at, submitted: a.submitted_at, deadline: a.deadline, score: e.show_results ? a.score : null, needs_review: a.needs_review } : null }); }); }
+        if (!isStaff()) deny();
+        return S.ex.filter((e) => (p_box === 'mine' ? e.teacher_id === ME_ID : reviewer(e.teacher_id))).sort((a, b) => b.opens_at.localeCompare(a.opens_at)).map((e) => { const A = S.ea.filter((a) => a.exam_id === e.id), sub = A.filter((a) => a.submitted_at);
+          return Object.assign(exCard(e), { students: stuIn(e.class_ids).length, submitted: sub.length, review: A.filter((a) => a.needs_review).length, avg: sub.length ? Math.round(avg(sub.map((a) => a.score / a.max_score * 100))) : null }); }); },
+      ex_get({ p_id }) { const e = exOf(p_id), mine = e.teacher_id === ME_ID; if (!mine && !reviewer(e.teacher_id)) deny();
+        return Object.assign(exCard(e), { instructions: e.instructions, questions: e.questions, class_ids: e.class_ids, shuffle: e.shuffle, mine, locked: M().ea.some((a) => a.exam_id === e.id),
+          attempts: stuIn(e.class_ids).sort((a, b) => csort(a.class_id, b.class_id) || name(a.profile_id).localeCompare(name(b.profile_id), 'ar')).map((st) => { const a = attOf(e.id, st.profile_id) || {};
+            return { id: a.id || null, student: st.profile_id, name: name(st.profile_id), class: klass(st.class_id).name, started: a.started_at || null, submitted: a.submitted_at || null, score: a.score ?? null, max: a.max_score ?? null,
+              needs_review: !!a.needs_review, answers: a.answers || null, results: a.results || null }; }) }); },
+      ex_start({ p_id }) { const e = exOf(p_id), cid = myCid(); if (!cid || !e.class_ids.includes(cid)) deny(); let a = attOf(e.id, ME_ID);
+        if (a && a.submitted_at) deny('سلّمت هذا الاختبار من قبل');
+        if (!a) { if (now() < new Date(e.opens_at)) deny('لم يُفتح الاختبار بعد'); if (now() > new Date(e.closes_at)) deny('انتهى وقت الاختبار');
+          const ord = (e.shuffle ? shuffle(e.questions) : e.questions).map((q) => ({ id: q.id, opts: q.qtype === 'mcq' ? (e.shuffle ? shuffle(q.options.map((_, i) => i)) : q.options.map((_, i) => i)) : [] }));
+          a = { id: nid('ea'), exam_id: e.id, student_id: ME_ID, started_at: iso(now()), deadline: iso(Math.min(new Date(e.closes_at), Date.now() + e.duration_min * 60e3)), submitted_at: null, q_order: ord, answers: {}, results: {}, score: null, max_score: maxOf(e), needs_review: false };
+          M().ea.push(a); save(); }
+        return { attempt: a.id, title: e.title, instructions: e.instructions, deadline: a.deadline, now: iso(now()), answers: a.answers,
+          questions: a.q_order.map((o) => { const q = e.questions.find((x) => x.id === o.id);
+            return { id: q.id, qtype: q.qtype, body: q.body, points: q.points, options: q.qtype === 'mcq' ? o.opts.map((i) => ({ i, t: q.options[i].t })) : q.qtype === 'tf' ? [0, 1].map((i) => ({ i, t: q.options[i].t })) : [] }; }) }; },
+      ex_submit({ p_id, p_answers, p_final = true }) { const e = exOf(p_id), a = attOf(e.id, ME_ID); if (!a) deny('ابدأ الاختبار أولًا'); if (a.submitted_at) deny('سلّمت هذا الاختبار من قبل');
+        let ans = p_answers || {}; if (Date.now() > new Date(a.deadline).getTime() + 60e3) { ans = a.answers; p_final = true; }
+        if (!p_final) { a.answers = ans; save(); return { ok: true, saved: true }; }
+        const res = {}; let tot = 0, rev = false;
+        e.questions.forEach((q) => { const v = String(ans[q.id] ?? '').trim();
+          if (q.qtype !== 'short') { const ok = v !== '' && +v === q.options.findIndex((o) => o.ok); res[q.id] = { pts: ok ? q.points : 0, ok }; if (ok) tot += q.points; }
+          else if (q.answer && normA(v) === normA(q.answer)) { res[q.id] = { pts: q.points, ok: true }; tot += q.points; }
+          else if (!v) res[q.id] = { pts: 0, ok: false };
+          else { res[q.id] = { pts: 0, ok: null, manual: true }; rev = true; } });
+        Object.assign(a, { answers: ans, results: res, score: tot, submitted_at: iso(now()), needs_review: rev }); save();
+        return { ok: true, score: e.show_results ? tot : null, max: a.max_score, needs_review: rev }; },
+      ex_my_result({ p_id }) { const e = exOf(p_id), a = attOf(e.id, ME_ID); if (!a || !a.submitted_at) deny('لم تسلّم هذا الاختبار');
+        if (!e.show_results) return { hidden: true, submitted: a.submitted_at }; const closed = now() > new Date(e.closes_at);
+        return { score: a.score, max: a.max_score, needs_review: a.needs_review, submitted: a.submitted_at,
+          questions: e.questions.map((q) => ({ body: q.body, qtype: q.qtype, points: q.points, mine: a.answers[q.id] ?? null, result: a.results[q.id] || null, options: q.options.map((o) => o.t),
+            correct: closed ? (q.qtype === 'short' ? q.answer : String(q.options.findIndex((o) => o.ok))) : null })) }; },
+      ex_grade({ p_attempt, p_qid, p_points }) { const a = M().ea.find((x) => x.id === +p_attempt) || deny(); const e = exOf(a.exam_id); if (e.teacher_id !== ME_ID) deny();
+        const q = e.questions.find((x) => x.id === String(p_qid)) || deny('السؤال غير موجود'); if (p_points < 0 || p_points > q.points) deny('الدرجة بين 0 و ' + q.points);
+        a.results[q.id] = { pts: +p_points, ok: +p_points === q.points, manual: true, graded: true };
+        a.score = Object.values(a.results).reduce((s, r) => s + (+r.pts || 0), 0); a.needs_review = Object.values(a.results).some((r) => r.manual && !r.graded); save(); return { ok: true }; },
+
+      // ===== سجل الدرجات =====
+      gb_sheet({ p_class, p_subject }) { if (!gbView(p_class, p_subject)) deny(); const cols = gbCols(p_class, p_subject);
+        return { can_edit: gbEdit(p_class, p_subject), columns: cols, class: lbl(p_class), subject: sname(p_subject),
+          students: stuIn([p_class]).sort((a, b) => name(a.profile_id).localeCompare(name(b.profile_id), 'ar')).map((s) => { const sc = gbScores(p_class, p_subject, s.profile_id); return { id: s.profile_id, name: name(s.profile_id), scores: sc, pct: gbPct(cols, sc) }; }) }; },
+      gb_item_save({ p }) { const cid = +p.class_id, sid = +p.subject_id; if (!gbEdit(cid, sid)) deny(); const w = p.weight === '' || p.weight == null ? 1 : +p.weight; if (w < 0 || w > 100) deny('الوزن بين 0 و 100'); const S = M();
+        if (p.kind === 'hw' || p.kind === 'ex') { if (!gbCols(cid, sid).some((c) => c.kind === p.kind && c.src_id === +p.src_id)) deny('العمود غير موجود');
+          let g = S.gi.find((x) => x.class_id === cid && x.subject_id === sid && x.src_kind === p.kind && x.src_id === +p.src_id);
+          if (!g) { g = { id: nid('gi'), teacher_id: ME_ID, class_id: cid, subject_id: sid, src_kind: p.kind, src_id: +p.src_id, title: null, category: 'other', max_score: null, item_date: today() }; S.gi.push(g); }
+          Object.assign(g, { weight: w, hidden: !!p.hidden }); save(); return { ok: true, id: g.id }; }
+        const ttl = String(p.title || '').trim(); if (!ttl) deny('اكتب اسم العمود'); if (!(+p.max_score > 0)) deny('حدّد الدرجة العظمى');
+        const v = { title: ttl.slice(0, 120), category: p.category || 'other', max_score: +p.max_score, weight: w, hidden: !!p.hidden, item_date: p.date || today() };
+        if (p.item_id) { const g = S.gi.find((x) => x.id === +p.item_id && x.class_id === cid && x.subject_id === sid && x.src_kind === 'manual') || deny();
+          if (S.gs.some((s) => s.item_id === g.id && s.score > v.max_score)) deny('توجد درجات مرصودة أعلى من الدرجة العظمى الجديدة'); Object.assign(g, v); save(); return { ok: true, id: g.id }; }
+        const g = Object.assign({ id: nid('gi'), teacher_id: ME_ID, class_id: cid, subject_id: sid, src_kind: 'manual', src_id: null }, v); S.gi.push(g); save(); return { ok: true, id: g.id }; },
+      gb_item_delete({ p_id }) { const S = M(), g = S.gi.find((x) => x.id === +p_id && x.src_kind === 'manual'); if (!g || !gbEdit(g.class_id, g.subject_id)) deny();
+        S.gi = S.gi.filter((x) => x !== g); S.gs = S.gs.filter((s) => s.item_id !== g.id); save(); return { ok: true }; },
+      gb_scores_save({ p_item, p_rows }) { const S = M(), g = S.gi.find((x) => x.id === +p_item && x.src_kind === 'manual'); if (!g || !gbEdit(g.class_id, g.subject_id)) deny();
+        (p_rows || []).forEach((r) => { if (!DB.students.some((s) => s.profile_id === r.student && s.class_id === g.class_id)) deny('طالب ليس من هذا الفصل');
+          if (r.score != null && (r.score < 0 || r.score > g.max_score)) deny('الدرجة بين 0 و ' + g.max_score); });
+        (p_rows || []).forEach((r) => { S.gs = S.gs.filter((s) => !(s.item_id === g.id && s.student_id === r.student)); if (r.score != null) S.gs.push({ item_id: g.id, student_id: r.student, score: +r.score, note: r.note || null }); });
+        save(); return { ok: true, n: (p_rows || []).length }; },
+      gb_my() { const cid = myCid(); if (!cid) return [];
+        return [...new Set(DB.teaching_assignments.filter((t) => t.class_id === cid).map((t) => t.subject_id))].map((sid) => { const cols = gbCols(cid, sid).filter((c) => !c.hidden), sc = gbScores(cid, sid, ME_ID);
+          return { subject_id: sid, subject: sname(sid), columns: cols.map((c) => ({ key: c.key, title: c.title, category: c.category, max: c.max, weight: c.weight, hidden: c.hidden, date: c.date })), scores: sc, pct: gbPct(cols, sc) }; })
+          .filter((x) => x.columns.length).sort((a, b) => a.subject.localeCompare(b.subject, 'ar')); },
+
+      // ===== التحليل والمقارنة =====
+      an_overview({ p_from, p_to }) { if (!isStaff()) deny(); const S = M(), f = p_from || ymd(daysAgo(120)), t = p_to || today(), by = {};
+        DB.teaching_assignments.filter((x) => x.teacher_id === ME_ID || reviewer(x.teacher_id)).forEach((x) => { const k = x.class_id + '-' + x.subject_id;
+          const o = by[k] = by[k] || { class_id: x.class_id, subject_id: x.subject_id, teachers: new Set(), mine: false }; o.teachers.add(name(x.teacher_id)); o.mine = o.mine || x.teacher_id === ME_ID; });
+        const inR = (d) => d.slice(0, 10) >= f && d.slice(0, 10) <= t;
+        return Object.values(by).sort((a, b) => csort(a.class_id, b.class_id) || sname(a.subject_id).localeCompare(sname(b.subject_id), 'ar')).map((o) => { const c = klass(o.class_id), g = grade(c.grade_id), size = stuIn([o.class_id]).length;
+          const H = S.hw.filter((h) => h.class_ids.includes(o.class_id) && h.subject_id === o.subject_id && inR(h.due_at)), E = S.ex.filter((e) => e.class_ids.includes(o.class_id) && e.subject_id === o.subject_id && inR(e.opens_at));
+          const inCls = (sid) => (DB.students.find((s) => s.profile_id === sid) || {}).class_id === o.class_id;
+          const hs = S.hs.filter((s) => H.some((h) => h.id === s.hw_id) && inCls(s.student_id)), ea = S.ea.filter((a) => E.some((e) => e.id === a.exam_id) && a.submitted_at && inCls(a.student_id));
+          const hg = hs.filter((s) => s.status === 'graded' && s.score != null);
+          return { class_id: o.class_id, subject_id: o.subject_id, class: lbl(o.class_id), stage: g.stage_id, grade: g.number, subject: sname(o.subject_id), teachers: [...o.teachers], mine: o.mine, size,
+            hw_n: H.length, hw_rate: H.length && size ? Math.round(100 * hs.length / (H.length * size)) : null, hw_avg: rnum(avg(hg.map((s) => s.score / S.hw.find((h) => h.id === s.hw_id).max_score * 100)), 1),
+            ex_n: E.length, ex_rate: E.length && size ? Math.round(100 * ea.length / (E.length * size)) : null, ex_avg: rnum(avg(ea.map((a) => a.score / a.max_score * 100)), 1) }; }); },
+      an_questions({ p_subject, p_from, p_to }) { if (!isStaff()) deny(); const S = M(), f = p_from || ymd(daysAgo(120)), t = p_to || today(), out = [];
+        S.ex.filter((e) => e.subject_id === p_subject && e.opens_at.slice(0, 10) >= f && e.opens_at.slice(0, 10) <= t && (e.teacher_id === ME_ID || reviewer(e.teacher_id))).forEach((e) => {
+          const A = S.ea.filter((a) => a.exam_id === e.id && a.submitted_at);
+          e.questions.forEach((q) => { const R = A.map((a) => a.results[q.id]).filter(Boolean); if (R.length >= 3) out.push({ exam: e.title, exam_id: e.id, teacher: name(e.teacher_id), body: q.body, qtype: q.qtype, n: R.length, rate: Math.round(100 * R.filter((r) => r.ok).length / R.length) }); }); });
+        return out.sort((a, b) => a.rate - b.rate || b.n - a.n).slice(0, 40); },
+
+      // ===== ملف إنجاز الطالب =====
+      pf_get({ p_student }) { const sid = p_student || ME_ID, s = DB.students.find((x) => x.profile_id === sid) || deny('الطالب غير موجود'), staff = pfStaff(sid);
+        if (!(sid === ME_ID || staff)) deny(); const g = grade(s.grade_id);
+        return { student: { id: sid, name: name(sid), class: s.class_id ? lbl(s.class_id) : null, grade: g.name_ar + ' ' + stage(g.stage_id).name_ar }, can_add: sid === ME_ID || staff, can_review: staff, is_self: sid === ME_ID,
+          items: M().pf.filter((i) => i.student_id === sid && (sid === ME_ID || staff || i.status === 'approved')).sort((a, b) => b.item_date.localeCompare(a.item_date) || b.id - a.id).map(pfCard) }; },
+      pf_save({ p }) { let sid = p.student_id || ME_ID, i = null; if (p.id) { i = pfOf(p.id); sid = i.student_id; } const staff = pfStaff(sid);
+        if (!(staff || (sid === ME_ID && MYROLE() === 'student'))) deny();
+        if (i && !staff && (i.added_by !== ME_ID || i.status === 'approved')) deny('لا يمكن تعديل إنجاز معتمد — تواصل مع معلمك');
+        const ttl = String(p.title || '').trim(); if (!ttl) deny('اكتب عنوان الإنجاز'); if (!KINDS.includes(p.kind)) deny('اختر نوع الإنجاز'); if (p.level && !LEVELS.includes(p.level)) deny('مستوى غير صالح');
+        const v = { kind: p.kind, title: ttl.slice(0, 200), description: String(p.description || '').trim() || null, item_date: p.date || today(), level: p.level || null, result: String(p.result || '').trim() || null, links: cleanLinks(p.links) };
+        const direct = staff && sid !== ME_ID;
+        if (i) { Object.assign(i, v, { status: direct ? i.status : 'pending' }); save(); return { ok: true, id: i.id }; }
+        i = Object.assign({ id: nid('pf'), student_id: sid, status: direct ? 'approved' : 'pending', added_by: ME_ID, reviewed_by: direct ? ME_ID : null, reviewed_at: direct ? iso(now()) : null, review_note: null, created_at: iso(now()) }, v);
+        M().pf.push(i); save(); return { ok: true, id: i.id }; },
+      pf_delete({ p_id }) { const i = pfOf(p_id); if (!(pfStaff(i.student_id) || (i.student_id === ME_ID && i.added_by === ME_ID && i.status !== 'approved'))) deny();
+        M().pf = M().pf.filter((x) => x !== i); save(); return { ok: true }; },
+      pf_review({ p_id, p_action, p_note }) { const i = pfOf(p_id); if (!pfStaff(i.student_id) || i.student_id === ME_ID) deny(); if (!['approve', 'reject'].includes(p_action)) deny('إجراء غير صالح');
+        if (p_action === 'reject' && !String(p_note || '').trim()) deny('اكتب سبب عدم الاعتماد للطالب');
+        Object.assign(i, { status: p_action === 'approve' ? 'approved' : 'rejected', reviewed_by: ME_ID, reviewed_at: iso(now()), review_note: String(p_note || '').trim() || null }); save(); return { ok: true }; },
+      pf_feed({ p_status, p_kind }) { if (!isStaff()) deny();
+        return M().pf.filter((i) => (!p_status || i.status === p_status) && (!p_kind || i.kind === p_kind) && pfStaff(i.student_id)).sort((a, b) => b.created_at.localeCompare(a.created_at))
+          .map((i) => { const s = DB.students.find((x) => x.profile_id === i.student_id); return Object.assign(pfCard(i), { student: name(i.student_id), class: s.class_id ? lbl(s.class_id) : null }); }); },
+      pf_find({ p_q }) { if (!isStaff()) deny(); const q = norm(String(p_q || '').trim()); if (q.length < 2) return [];
+        return DB.students.filter((s) => (norm(name(s.profile_id)).includes(q) || s.student_number === String(p_q).trim()) && pfStaff(s.profile_id)).sort((a, b) => name(a.profile_id).localeCompare(name(b.profile_id), 'ar')).slice(0, 30)
+          .map((s) => ({ id: s.profile_id, name: name(s.profile_id), class: lbl(s.class_id), n: M().pf.filter((i) => i.student_id === s.profile_id && i.status === 'approved').length })); }
+    };
+  })());
+
+  // ======================================================================
   //  العميل التجريبي
   // ======================================================================
   const session = { access_token: 'demo', token_type: 'bearer', user: { id: ME_ID, email: (ME() || {}).email, role: 'authenticated' } };

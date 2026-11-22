@@ -42,8 +42,6 @@
     LOAD[tab]();
   }
   $('#tabs').onclick = (e) => { const b = e.target.closest('button'); if (b) show(b.dataset.tab); };
-  refreshBadge();
-  show((location.hash || '').slice(1) || (OPT.is_teacher ? 'mine' : 'review'));
 
   async function refreshBadge() {
     if (!OPT.can_review) return;
@@ -183,4 +181,8 @@
     const w = $$('.modal-wrap').pop(); paintCls(w); $('#eS', w).onchange = () => paintCls(w);
     return p;
   }
+
+  // البدء بعد تعريف كل الدوال والمتغيرات (تجنّبًا لاستخدامها قبل تعريفها)
+  refreshBadge();
+  show((location.hash || '').slice(1) || (OPT.is_teacher ? 'mine' : 'review'));
 })();

@@ -6,7 +6,8 @@
   const STAFF = !['student', 'parent'].includes(role);
   const LEADER = role === 'admin' || role === 'leadership';
   const main = $('#main');
-  const STL = { absent: 'غائب', late: 'متأخر', excused: 'غائب بعذر' };   // قبل أي await (تستخدمها بطاقة الطالب)
+  const STL = { absent: 'غائب', late: 'متأخر', excused: 'غائب بعذر' };
+  const KIDS = {};   // بيانات بطاقات الطلاب (لتفاصيل الغياب) — قبل أي await   // قبل أي await (تستخدمها بطاقة الطالب)
 
   // ---------- البطاقة الترحيبية ----------
   const chips = [];
@@ -262,7 +263,6 @@
 
   // ---------- الطالب ----------
   // ---------- بطاقة طالب (للطالب نفسه ولولي أمره) ----------
-  const KIDS = {};
   document.addEventListener('click', (e) => {
     const b = e.target.closest('[data-att]'); if (!b) return; const c = KIDS[b.dataset.kid]; if (!c) return;
     const st = b.dataset.att, L = ((c.attendance || {}).recent || []).filter((r) => r.s === st && !r.p);

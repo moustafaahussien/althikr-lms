@@ -24,6 +24,8 @@ window.LMS_CONFIG = {
     { key: 'exams',       title: 'الاختبارات وبنك الأسئلة', icon: '🧪', url: 'exams.html', roles: [],  desc: 'اختبارات إلكترونية بتصحيح تلقائي' },
     { key: 'analytics',   title: 'التحليل والمقارنة',    icon: '📊', url: 'analytics.html', roles: ['admin','leadership','principal','supervisor','teacher'], desc: 'تحليل الأسئلة ومقارنة الفصول والمعلمين' },
     { key: 'gradebook',   title: 'سجل الدرجات',         icon: '🏅', url: 'gradebook.html', roles: [],  desc: 'الدرجات مجمّعة تلقائيًا' },
+    { key: 'library',     title: 'مكتبة معلمي دار الذكر', icon: '📚', url: 'library.html', roles: ['admin','leadership','principal','supervisor','teacher'], desc: 'واجبات واختبارات ومحتوى يشاركه المعلمون' },
+    { key: 'classes',     title: 'الفصول والطلاب',       icon: '🏫', url: 'classes.html', roles: ['admin','leadership','principal','supervisor'], desc: 'فصول نطاقك وطلابها وحضورهم اليوم' },
     { key: 'portfolio',   title: 'ملف إنجاز الطالب',     icon: '🎒', url: 'portfolio.html', roles: [],  desc: 'مشاريع الطالب ومسابقاته وإنجازاته' },
 
     // —— منصاتك الحالية (تُدمج تدريجيًا) ——

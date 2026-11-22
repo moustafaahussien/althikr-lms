@@ -26,6 +26,17 @@
       <div class="acts">${P && P.can_review && i.status !== 'approved' ? '<button class="btn sm primary" data-a="approve">✓ اعتماد</button><button class="btn sm ghost" data-a="reject">✕ عدم اعتماد</button>' : ''}
         ${P && (P.can_review || (P.is_self && i.self_added && i.status !== 'approved')) ? '<button class="btn sm ghost" data-a="edit">✏️ تعديل</button><button class="btn sm ghost" data-a="del">🗑️</button>' : ''}</div></article>`;
 
+  // جدول النتائج الأكاديمية (اختبارات / واجبات) مع متوسط لكل مادة
+  const pc = (x) => (x.max ? Math.round(100 * x.score / x.max) : null);
+  function resTable(L, empty, isEx) {
+    L = L || []; if (!L.length) return `<div class="empty">${empty}</div>`;
+    const by = {}; L.forEach((x) => { const p = pc(x); if (p == null) return; (by[x.subject || '—'] = by[x.subject || '—'] || []).push(p); });
+    return `<div class="stats">${Object.entries(by).map(([k, v]) => `<span>${esc(k)}: <b>${Math.round(v.reduce((a, b) => a + b, 0) / v.length)}%</b></span>`).join('')}</div>
+      <div class="table-wrap"><table><thead><tr><th>${isEx ? 'الاختبار' : 'الواجب'}</th><th>المادة</th><th>التاريخ</th><th>الدرجة</th><th>%</th>${isEx ? '' : '<th>ملاحظة المعلم</th>'}</tr></thead><tbody>
+      ${L.map((x) => `<tr><td>${esc(x.title)}${x.review ? ' <small class="hint">(قيد التصحيح)</small>' : ''}</td><td>${esc(x.subject || '')}</td><td>${esc(fmtD(x.date))}</td>
+        <td><b>${esc(String(+x.score))}</b> / ${esc(String(+x.max))}</td><td>${pc(x) ?? ''}%</td>${isEx ? '' : `<td>${esc(x.feedback || '')}</td>`}</tr>`).join('')}</tbody></table></div>`;
+  }
+
   // ---------------- ملف طالب ----------------
   async function openProfile(sid) {
     view.innerHTML = '<div class="empty">جارٍ التحميل…</div>';
@@ -38,8 +49,12 @@
         ${P.can_add ? `<button class="btn primary" id="pAdd">➕ ${P.is_self ? 'أضف إنجازًا' : 'إضافة إنجاز'}</button>` : ''}<button class="btn ghost" id="pPrint">🖨️ طباعة الملف</button></div>
       <div class="stats"><span><b>${ap.length}</b> إنجاز معتمد</span>${Object.entries(cnt).map(([k, n]) => `<span>${esc(KIND[k])}: <b>${n}</b></span>`).join('')}
         ${I.length > ap.length ? `<span>⏳ ${I.filter((i) => i.status === 'pending').length} بانتظار الاعتماد</span>` : ''}</div>
-      ${I.length ? `<div class="tl">${I.map((i) => itemHTML(i, P)).join('')}</div>`
-        : `<div class="empty">${P.is_self ? 'لم تضف إنجازات بعد — شاركنا مشاركاتك في المسابقات والمشاريع والدورات!' : 'لا توجد إنجازات مسجّلة لهذا الطالب بعد.'}</div>`}`;
+      <nav class="tabs glass" id="pTabs" style="margin-bottom:10px"><button class="on" data-p="ach">🏆 الإنجازات والمشاريع (${I.length})</button><button data-p="ex">🧪 نتائج الاختبارات (${(P.exams || []).length})</button><button data-p="hw">📝 الواجبات (${(P.homework || []).length})</button></nav>
+      <div data-pp="ach">${I.length ? `<div class="tl">${I.map((i) => itemHTML(i, P)).join('')}</div>`
+        : `<div class="empty">${P.is_self ? 'لم تضف إنجازات بعد — شاركنا مشاركاتك في المسابقات والمشاريع والدورات!' : 'لا توجد إنجازات مسجّلة لهذا الطالب بعد.'}</div>`}</div>
+      <div data-pp="ex" hidden>${resTable(P.exams, 'لا توجد اختبارات إلكترونية مسلّمة بعد.', true)}</div>
+      <div data-pp="hw" hidden>${resTable(P.homework, 'لا توجد واجبات مصحّحة بعد.', false)}</div>`;
+    $('#pTabs').onclick = (e) => { const b = e.target.closest('[data-p]'); if (!b) return; $$('#pTabs button').forEach((x) => x.classList.toggle('on', x === b)); $$('[data-pp]', view).forEach((d) => { d.hidden = d.dataset.pp !== b.dataset.p; }); };
     if ($('#pAdd')) $('#pAdd').onclick = () => edit(null, P);
     $('#pPrint').onclick = () => printProfile(P);
     bindActs(view, P, () => openProfile(sid));
@@ -91,7 +106,10 @@
       <h1>ملف إنجاز الطالب</h1><h2>${esc(P.student.name)} — ${esc(P.student.class || P.student.grade || '')}</h2>
       <table><thead><tr><th>#</th><th>الإنجاز</th><th>النوع</th><th>المستوى</th><th>النتيجة</th><th>التاريخ</th></tr></thead><tbody>
       ${ap.map((i, n) => `<tr><td>${n + 1}</td><td><b>${esc(i.title)}</b>${i.description ? `<br><small>${esc(i.description)}</small>` : ''}</td><td>${esc((KIND[i.kind] || '').replace(/^\S+\s/, ''))}</td><td>${esc(LEVEL[i.level] || '')}</td><td>${esc(i.result || '')}</td><td>${esc(fmtD(i.date))}</td></tr>`).join('') || '<tr><td colspan="6">لا توجد إنجازات معتمدة</td></tr>'}
-      </tbody></table><footer>منصة دار الذكر التعليمية — ${esc(new Date().toLocaleDateString('ar-SA-u-ca-gregory-nu-latn'))}</footer></body></html>`);
+      </tbody></table>
+      ${(P.exams || []).length ? `<h3 style="color:#0f6e6a">نتائج الاختبارات الإلكترونية</h3><table><thead><tr><th>الاختبار</th><th>المادة</th><th>التاريخ</th><th>الدرجة</th></tr></thead><tbody>${P.exams.map((x) => `<tr><td>${esc(x.title)}</td><td>${esc(x.subject || '')}</td><td>${esc(fmtD(x.date))}</td><td>${+x.score} / ${+x.max}</td></tr>`).join('')}</tbody></table>` : ''}
+      ${(P.homework || []).length ? `<h3 style="color:#0f6e6a">الواجبات المصحّحة</h3><table><thead><tr><th>الواجب</th><th>المادة</th><th>التاريخ</th><th>الدرجة</th></tr></thead><tbody>${P.homework.map((x) => `<tr><td>${esc(x.title)}</td><td>${esc(x.subject || '')}</td><td>${esc(fmtD(x.date))}</td><td>${+x.score} / ${+x.max}</td></tr>`).join('')}</tbody></table>` : ''}
+      <footer>منصة دار الذكر التعليمية — ${esc(new Date().toLocaleDateString('ar-SA-u-ca-gregory-nu-latn'))}</footer></body></html>`);
     w.document.close(); w.focus(); setTimeout(() => w.print(), 300);
   }
 

@@ -14,14 +14,24 @@
   const FIELDS = [
     ['objectives', 'الأهداف / نواتج التعلم', 'ما الذي سيتمكن منه الطالب في نهاية الدرس؟'],
     ['warmup', 'التهيئة', 'سؤال مثير، ربط بالخبرات السابقة، نشاط قصير…'],
-    ['strategies', 'استراتيجيات التدريس', 'التعلم التعاوني، العصف الذهني، فكّر-زاوج-شارك…'],
+    ['thinking', 'مدارس التفكير', 'كيف تُوظَّف مدرسة التفكير المختارة في الدرس؟'],
+    ['strategies', 'استراتيجيات التدريس', 'كيف تُطبَّق الاستراتيجيات المختارة؟'],
     ['procedures', 'إجراءات الدرس وخطواته', 'تسلسل الأنشطة ودور المعلم والطالب والزمن التقريبي'],
     ['resources', 'الوسائل ومصادر التعلم', 'الكتاب، عرض تقديمي، فيديو، أدوات…'],
     ['differentiation', 'مراعاة الفروق الفردية', 'أنشطة للمتميزين وللطلاب المحتاجين للدعم'],
+    ['real_life', 'الربط بالواقع', 'مواقف وتطبيقات من حياة الطالب اليومية'],
+    ['cross_subject', 'الربط بالمواد الأخرى', 'العلاقة بين الدرس ومواد أخرى (مثال: العلوم، اللغة العربية…)'],
     ['assessment', 'التقويم', 'أسئلة التقويم البنائي والختامي وأدواته'],
     ['closure', 'الغلق', 'تلخيص، تذكرة خروج…'],
-    ['homework', 'الواجب', ''],
+    ['homework', 'ملاحظات الواجب', 'اختر الواجب من قسم الواجبات أعلاه، أو اكتب ملاحظة'],
     ['notes', 'ملاحظات', '']];
+  // قوائم اختيار سريعة (تُحفظ في content.thinking_list / content.strategies_list)
+  const PICK = {
+    thinking: ['قبعات التفكير الست', 'برنامج الكورت (CoRT)', 'خرائط التفكير', 'عادات العقل', 'التفكير الناقد', 'التفكير الإبداعي', 'حل المشكلات', 'التفكير المنظومي',
+      'التفكير البصري', 'تريز (TRIZ)', 'التفكير التأملي', 'التفكير فوق المعرفي'],
+    strategies: ['التعلم التعاوني', 'فكّر - زاوج - شارك', 'العصف الذهني', 'التعلم بالاكتشاف', 'حل المشكلات', 'لعب الأدوار', 'المحطات التعليمية', 'الصف المقلوب',
+      'التعلم القائم على المشاريع', 'الخرائط الذهنية', 'جيجسو (التعلم بالأحجية)', 'الرؤوس المرقمة', 'KWL', 'القصة', 'التعلم باللعب', 'الحوار والمناقشة', 'النمذجة', 'التدريس التبادلي']
+  };
   const parseD = (s) => { const [y, m, d] = String(s).split('-').map(Number); return new Date(y, m - 1, d); };
   const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
   const sunday = (d) => addDays(d, -d.getDay());
@@ -29,7 +39,7 @@
 
   let OPT = { subjects: [], classes: [], can_review: false, is_teacher: false };
   try { OPT = await call('lp_options'); } catch (e) { $('#tab-mine').innerHTML = `<div class="notice err">${esc(errMsg(e))}</div>`; }
-  const TABS = { mine: OPT.is_teacher || !OPT.can_review, review: OPT.can_review, all: OPT.can_review };
+  const TABS = { mine: OPT.is_teacher || !(OPT.can_review || OPT.can_follow), review: !!OPT.can_review, all: !!(OPT.can_review || OPT.can_follow) };
   Object.entries(TABS).forEach(([k, on]) => { $(`#tabs [data-tab="${k}"]`).hidden = !on; });
 
   let WEEK = sunday(new Date());
@@ -96,7 +106,8 @@
         <label class="hint">إلى <input type="date" id="fTo" value="${esc(FLT.to)}"></label>
         <select id="fSt"><option value="">كل الحالات</option>${['submitted', 'approved', 'returned'].map((s) => `<option value="${s}"${FLT.status === s ? ' selected' : ''}>${ST[s]}</option>`).join('')}</select>
         <input id="fQ" class="grow" type="search" placeholder="ابحث باسم المعلم أو المادة أو العنوان…" value="${esc(FLT.q || '')}">
-      </div><div id="allList"><div class="empty">جارٍ التحميل…</div></div>`;
+      </div><div id="compBox"></div><div id="allList"><div class="empty">جارٍ التحميل…</div></div>`;
+    compliance($('#compBox'), FLT.from, FLT.to);
     const reload = () => { FLT = { from: $('#fFrom').value, to: $('#fTo').value, status: $('#fSt').value, q: $('#fQ').value }; drawAll(); };
     $('#fFrom').onchange = reload; $('#fTo').onchange = reload; $('#fSt').onchange = reload;
     let L; try { L = await call('lp_list', { p_box: 'all', p_from: FLT.from || null, p_to: FLT.to || null, p_status: FLT.status || null }); }
@@ -116,13 +127,29 @@
     $('#allList').onclick = (e) => { const c = e.target.closest('[data-lp]'); if (c) view(+c.dataset.lp); };
   }
 
+  // المعلمون بدون تحضير أو بدون واجبات في الفترة (لمن يتابعهم)
+  async function compliance(box, from, to) {
+    let C; try { C = await call('an_compliance', { p_from: from || null, p_to: to || null }); } catch (_) { return; }
+    if (!C.length) return;
+    const noLp = C.filter((t) => !t.lp_sent), noHw = C.filter((t) => !t.hw);
+    box.innerHTML = `<details class="glass" style="padding:10px 14px;margin-bottom:12px" ${noLp.length ? 'open' : ''}><summary><b>متابعة الالتزام</b>
+        <span class="hint"> — ${C.length} معلم · بدون تحضير مُرسل: <b style="color:#a3244a">${noLp.length}</b> · بدون واجبات: <b style="color:#8a5a00">${noHw.length}</b></span></summary>
+      <div class="table-wrap" style="margin-top:8px"><table><thead><tr><th>المعلم</th><th>المواد</th><th>تحاضير مُرسلة</th><th>معتمدة</th><th>مُعادة</th><th>واجبات</th><th>اختبارات</th></tr></thead><tbody>
+      ${C.sort((a, b) => a.lp_sent - b.lp_sent || a.hw - b.hw).map((t) => `<tr><td>${esc(t.name)}</td><td>${esc(t.subjects || '')}</td>
+        <td>${t.lp_sent ? t.lp_sent : '<span class="st returned">لا يوجد</span>'}</td><td>${t.lp_ok}</td><td>${t.lp_ret}</td>
+        <td>${t.hw ? t.hw : '<span class="st submitted">لا يوجد</span>'}</td><td>${t.ex}</td></tr>`).join('')}</tbody></table></div></details>`;
+  }
+
   // ---------------- عرض التحضير ----------------
   const bodyHTML = (x) => `<div class="lpv"><div class="meta">${chip(x.status)}<span class="chip gray">${esc(fmtD(x.date))}</span>
       ${x.subject ? `<span class="chip teal">${esc(x.subject)}</span>` : ''}${x.classes.map((c) => `<span class="chip gray">${esc(c)}</span>`).join('')}</div>
     ${x.mine ? '' : `<div class="hint">المعلم: <b>${esc(x.teacher)}</b></div>`}
     ${x.note ? `<div class="note-box${x.status === 'returned' ? ' ret' : ''}"><b>${x.status === 'returned' ? '↩️ ملاحظات الإعادة' : '💬 ملاحظة المعتمِد'}</b> — ${esc(x.reviewer || '')}<br>${esc(x.note)}</div>`
       : x.status === 'approved' && x.reviewer ? `<div class="hint">اعتمده: ${esc(x.reviewer)}</div>` : ''}
-    ${FIELDS.filter(([k]) => (x.content || {})[k]).map(([k, l]) => `<h5>${esc(l)}</h5><p>${esc(x.content[k])}</p>`).join('') || '<p class="hint">لا يوجد محتوى.</p>'}</div>`;
+    ${FIELDS.filter(([k]) => (x.content || {})[k] || ((x.content || {})[k + '_list'] || []).length || (k === 'homework' && (x.content || {}).hw_id)).map(([k, l]) => `<h5>${esc(l)}</h5>
+      ${((x.content || {})[k + '_list'] || []).length ? `<div class="meta">${x.content[k + '_list'].map((v) => `<span class="chip teal">${esc(v)}</span>`).join('')}</div>` : ''}
+      ${k === 'homework' && x.content.hw_id ? `<p>📝 <a href="homework.html#open=${esc(x.content.hw_id)}">${esc(x.content.hw_title || 'الواجب المرتبط')}</a></p>` : ''}
+      ${x.content[k] ? `<p>${esc(x.content[k])}</p>` : ''}`).join('') || '<p class="hint">لا يوجد محتوى.</p>'}</div>`;
   async function view(id) {
     let x; try { x = await call('lp_get', { p_id: id }); } catch (e) { toast(errMsg(e), 'err'); return; }
     const A = [];
@@ -162,7 +189,10 @@
         <label class="f">تاريخ الدرس *<input type="date" id="eD" value="${esc(x.date)}"></label>
         <label class="f">المادة<select id="eS"><option value="">—</option>${subOpts}</select></label>
         <div class="f full"><span>الفصول</span><div class="cls-pick" id="eC"></div></div>
-        ${FIELDS.map(([k, l, ph]) => `<label class="f full">${esc(l)}<textarea data-k="${k}" rows="${['procedures', 'objectives'].includes(k) ? 4 : 2}" placeholder="${esc(ph)}">${esc(C[k] || '')}</textarea></label>`).join('')}
+        ${FIELDS.map(([k, l, ph]) => `<div class="f full"><span>${esc(l)}</span>
+          ${PICK[k] ? `<div class="pick" data-pk="${k}">${PICK[k].map((v) => `<label class="pk"><input type="checkbox" value="${esc(v)}"${(C[k + '_list'] || []).includes(v) ? ' checked' : ''}> ${esc(v)}</label>`).join('')}</div>` : ''}
+          ${k === 'homework' ? `<select id="eHw"><option value="">— ربط بواجب من قسم الواجبات —</option></select>` : ''}
+          <textarea data-k="${k}" rows="${['procedures', 'objectives'].includes(k) ? 4 : 2}" placeholder="${esc(ph)}">${esc(C[k] || '')}</textarea></div>`).join('')}
       </div>`;
     const paintCls = (w) => { const sid = +$('#eS', w).value || null; const sel = new Set($$('#eC input:checked', w).map((i) => +i.value).concat(paintCls.init || []));
       paintCls.init = null;
@@ -171,7 +201,9 @@
     paintCls.init = x.class_ids || [];
     const collect = (w) => ({ id: x.id || null, title: $('#eT', w).value.trim(), date: $('#eD', w).value, subject_id: +$('#eS', w).value || null,
       class_ids: $$('#eC input:checked', w).map((i) => +i.value),
-      content: Object.fromEntries($$('textarea[data-k]', w).map((t) => [t.dataset.k, t.value.trim()]).filter(([, v]) => v)) });
+      content: Object.assign(Object.fromEntries($$('textarea[data-k]', w).map((t) => [t.dataset.k, t.value.trim()]).filter(([, v]) => v)),
+        Object.fromEntries($$('[data-pk]', w).map((d) => [d.dataset.pk + '_list', $$('input:checked', d).map((i) => i.value)]).filter(([, v]) => v.length)),
+        $('#eHw', w).value ? { hw_id: +$('#eHw', w).value, hw_title: $('#eHw', w).selectedOptions[0].dataset.t } : {}) });
     const save = async (w, submit) => { const p = collect(w);
       if (!p.title) { toast('اكتب عنوان الدرس', 'warn'); return false; } if (!p.date) { toast('اختر تاريخ الدرس', 'warn'); return false; }
       const r = await call('lp_save', { p }); if (submit) await call('lp_submit', { p_id: r.id });
@@ -179,10 +211,14 @@
     const p = modal({ title: x.id ? 'تعديل التحضير' : 'تحضير جديد', wide: true, body,
       actions: [{ label: 'إلغاء', cls: 'ghost' }, { label: '💾 حفظ كمسودة', cls: 'ghost', onClick: (w) => save(w, false) }, { label: '📤 حفظ وإرسال للاعتماد', cls: 'primary', onClick: (w) => save(w, true) }] });
     const w = $$('.modal-wrap').pop(); paintCls(w); $('#eS', w).onchange = () => paintCls(w);
+    // الواجبات من قسم الواجبات (واجباتي)
+    call('hw_list', { p_box: 'mine' }).then((H) => { const sel = $('#eHw', w); if (!sel) return;
+      sel.insertAdjacentHTML('beforeend', H.map((h) => `<option value="${h.id}" data-t="${esc(h.title)}"${h.id === C.hw_id ? ' selected' : ''}>${esc(h.title)} — ${esc((h.classes || []).map((c) => c.split(' / ').pop()).join('، '))}</option>`).join(''));
+      if (!H.length) sel.insertAdjacentHTML('beforeend', '<option disabled>لا توجد واجبات بعد — أنشئها من قسم الواجبات</option>'); }).catch(() => {});
     return p;
   }
 
   // البدء بعد تعريف كل الدوال والمتغيرات (تجنّبًا لاستخدامها قبل تعريفها)
   refreshBadge();
-  show((location.hash || '').slice(1) || (OPT.is_teacher ? 'mine' : 'review'));
+  show((location.hash || '').slice(1) || (OPT.is_teacher ? 'mine' : OPT.can_review ? 'review' : 'all'));
 })();

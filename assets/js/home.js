@@ -103,16 +103,49 @@
     ].map(([ic, l, href, n]) => `<a class="today-tile${n ? ' hot' : ''}" href="${href}"><span>${ic}</span><b>${n === '' ? '' : n}</b><small>${l}</small></a>`).join('');
     const ppl = hol ? `<div class="hint">🏖️ ${esc(hol.ar)} — لا حصص اليوم</div>`
       : periods.length ? `<div class="today-periods">${periods.map((x) => { const ok = TAKEN && TAKEN.has(x.period + '|' + x.class_id);
-        return `<div class="tp${ok ? ' ok' : ''}"><i>${x.period}</i><b>${esc(SUBJ[x.subject_id] || x.txt || '')}</b><small>${esc(LMS.clsText(x.cls))}${TAKEN && x.class_id ? (ok ? ' · <span class="att-ok">✓ الحضور مسجّل</span>' : ' · <span class="att-no">الحضور لم يُسجّل</span>') : ''}</small></div>`; }).join('')}</div>`
+        return `<div class="tp${ok ? ' ok' : ''}${x.class_id ? ' clk' : ''}" ${x.class_id ? `role="button" tabindex="0" data-per="${x.period}" data-cls="${x.class_id}" data-sub="${x.subject_id || ''}" title="تفاصيل الحصة: الحضور والتحضير"` : ''}><i>${x.period}</i><b>${esc(SUBJ[x.subject_id] || x.txt || '')}</b><small>${esc(LMS.clsText(x.cls))}${TAKEN && x.class_id ? (ok ? ' · <span class="att-ok">✓ الحضور مسجّل</span>' : ' · <span class="att-no">الحضور لم يُسجّل</span>') : ''}</small></div>`; }).join('')}</div>`
       : `<div class="hint">لا توجد لك حصص مسجلة في الجدول ${day === now.getDay() ? 'اليوم' : 'يوم ' + DAYS[day]}.</div>`;
     // لغير المعلم: اللوحة تظهر فقط إذا كان عنده ما يخصه
     if (role !== 'teacher' && !periods.length && !inbox.length && !unread()) return;
+    // قسم الحصص يظهر لمن يدرّس فقط (المدير والمشرف بلا حصص لا يرونه)
+    const showP = periods.length > 0 || role === 'teacher';
     const paint = () => { box.innerHTML = `<section class="card glass today">
       <div class="section-title" style="margin-top:0"><h2>📌 يومي</h2><span class="hint">${esc(LMS.dateLine())}</span></div>
-      <div class="today-grid"><div><h3>${dayLbl}${periods.length ? ` <span class="hint">(${periods.length})</span>` : ''}</h3>${ppl}</div>
+      <div class="today-grid"${showP ? '' : ' style="grid-template-columns:1fr"'}>${showP ? `<div><h3>${dayLbl}${periods.length ? ` <span class="hint">(${periods.length})</span>` : ''}</h3>${ppl}</div>` : ''}
       <div class="today-tiles">${tiles()}</div></div></section>`; };
     paint();
+    const dayDate = (() => { const d = new Date(now); d.setDate(d.getDate() + ((day - d.getDay() + 7) % 7)); return LMS.ymd(d); })();
+    box.addEventListener('click', (e) => { const t = e.target.closest('[data-per]'); if (t) periodInfo(+t.dataset.per, +t.dataset.cls, +t.dataset.sub || null, dayDate, t.querySelector('b')?.textContent || '', isToday); });
+    box.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.matches('[data-per]')) e.target.click(); });
     document.addEventListener('lms:msg', paint);
+  }
+
+  // تفاصيل حصة: حضورها وتحضيرها، مع تنبيه إذا لم يُسجَّل أي منهما
+  async function periodInfo(per, cid, sid, d, subjName, isToday) {
+    const classes = await LMS.cached('v_classes', 3 * 60e3, () => fetchAll(() => sb.from('v_classes').select('*').order('stage_sort').order('grade_number').order('name'))).catch(() => []);
+    const c = classes.find((x) => x.id === cid);
+    const [att, plans] = await Promise.all([
+      c ? sb.rpc('att_roster', { p_day: d, p_grade: c.grade_id, p_class: cid, p_period: per }).then(({ data, error }) => error ? null : data) : null,
+      sb.rpc('lp_list', { p_box: 'mine', p_from: d, p_to: d }).then(({ data }) => (data || []), () => [])]);
+    const myPlans = plans.filter((x) => (!sid || x.subject_id === sid) && (x.classes || []).some((l) => c && (l === c.label || (String(l).split(' — ')[0].trim().endsWith('/ ' + c.name) && String(l).includes(c.grade_name)))));
+    const S = (att && att.students) || [], miss = S.filter((x) => x.status);
+    const STX = { absent: 'غائب', late: 'متأخر', excused: 'بعذر' }, LPS = { draft: 'مسودة', submitted: 'بانتظار الاعتماد', approved: 'معتمد', returned: 'مُعاد للتعديل' };
+    const warn = [];
+    if (isToday && att && !att.session) warn.push('لم تسجّل حضور هذه الحصة بعد');
+    if (!myPlans.length) warn.push('لا يوجد تحضير لهذه الحصة');
+    else if (!myPlans.some((x) => x.status !== 'draft')) warn.push('التحضير ما زال مسودة ولم يُرسل للاعتماد');
+    const body = `${warn.length ? `<div class="notice warn" style="margin-bottom:10px">⚠️ ${warn.map(esc).join(' · ')}</div>` : '<div class="notice" style="margin-bottom:10px">✓ الحضور والتحضير مكتملان</div>'}
+      <h3 style="font-size:1rem;margin:6px 0">🗓️ الحضور</h3>
+      ${!att ? '<p class="hint">تعذّر تحميل الحضور.</p>' : att.session ? `<p class="hint">سُجّل بواسطة ${esc(att.session.by || '')} · ${S.length} طالب</p>
+        ${miss.length ? `<div class="chips">${miss.map((x) => `<span class="chip ${x.status === 'absent' ? 'pink' : 'gray'}">${esc(x.name)} — ${STX[x.status] || x.status}</span>`).join('')}</div>` : '<p>✓ كل الطلاب حاضرون</p>'}`
+        : `<p class="hint">لم يُسجَّل بعد (${S.length} طالب).</p>`}
+      <h3 style="font-size:1rem;margin:14px 0 6px">📘 التحضير</h3>
+      ${myPlans.length ? myPlans.map((x) => `<div class="card-box" style="padding:8px 12px;margin-bottom:6px"><b>${esc(x.title)}</b> <span class="hint">· ${esc(LPS[x.status] || x.status)}</span>${x.note ? `<div class="hint">ملاحظة: ${esc(x.note)}</div>` : ''}</div>`).join('')
+        : '<p class="hint">لم تُحضّر هذه الحصة.</p>'}`;
+    modal({ title: `الحصة ${per} — ${subjName} · ${c ? c.label : ''}`, wide: true, body, actions: [
+      { label: '📘 ' + (myPlans.length ? 'فتح التحضير' : 'تحضير الحصة'), cls: 'ghost', onClick: () => { location.href = 'lessons.html#mine'; } },
+      { label: '🗓️ تسجيل الحضور', cls: isToday && att && !att.session ? 'primary' : 'ghost', onClick: () => { location.href = 'attendance.html'; } },
+      { label: 'إغلاق', cls: 'ghost' }] });
   }
 
   const panel = $('#panel');
@@ -181,6 +214,10 @@
     }
 
     if (scoped || role === 'admin' || role === 'leadership') {
+      panel.insertAdjacentHTML('beforeend', `<a class="card glass" href="classes.html" style="display:flex;gap:12px;align-items:center;margin:14px 0;text-decoration:none">
+        <span style="font-size:1.8rem">🏫</span><span><b>الفصول والطلاب</b><br><small class="hint">${classes.length} فصل ضمن نطاقك — الطلاب والحضور اليوم وملفات الإنجاز</small></span></a>`);
+    }
+    if (false) {
       const list = classes;
       const groups = {};
       list.forEach((c) => { (groups[c.stage_name] = groups[c.stage_name] || []).push(c); });
@@ -225,18 +262,27 @@
 
   // ---------- الطالب ----------
   // ---------- بطاقة طالب (للطالب نفسه ولولي أمره) ----------
+  const KIDS = {};
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-att]'); if (!b) return; const c = KIDS[b.dataset.kid]; if (!c) return;
+    const st = b.dataset.att, L = ((c.attendance || {}).recent || []).filter((r) => r.s === st && !r.p);
+    modal({ title: `${STL[st]} — ${c.name}`, body: L.length ? `<p class="hint">آخر 60 يومًا · ${L.length} ${st === 'late' ? 'مرة' : 'يوم'}</p><div class="table-wrap"><table><thead><tr><th>اليوم</th><th>التاريخ</th><th>هجري</th><th>الحصة</th><th>ملاحظة</th></tr></thead><tbody>
+      ${L.map((r) => `<tr><td>${esc(DAYS[new Date(r.d + 'T12:00:00').getDay()])}</td><td>${esc(r.d)}</td><td>${esc(LMS.hijri(r.d))}</td><td>${r.p ? r.p : 'يومي'}</td><td>${esc(r.n || '')}</td></tr>`).join('')}</tbody></table></div>`
+      : `<div class="empty">لا يوجد ${STL[st]} في آخر 60 يومًا 🎉</div>`, actions: [{ label: 'إغلاق', cls: 'ghost' }] });
+  });
   async function childCard(id, mine) {
     const { data: c, error } = await sb.rpc('portal_child', { p_student: id });
     if (error) return `<div class="notice err">${esc(errMsg(error))}</div>`;
+    KIDS[c.id] = c;
     const a = c.attendance || {};
     const pct = a.days_taken ? Math.round((1 - (a.absent + a.excused) / a.days_taken) * 100) : null;
     return `<div class="card glass" style="margin-bottom:14px">
       <div class="section-title" style="margin-top:0"><h2>🎓 ${esc(c.name)}</h2><span class="hint">${esc(c.grade || '')}${c.class ? ' / فصل ' + esc(c.class) : ''}${c.number ? ' · رقم ' + esc(c.number) : ''}</span></div>
       <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px">
         <div class="card-box" style="padding:10px"><b style="font-size:1.4rem;color:var(--accent)">${pct == null ? '—' : pct + '%'}</b><div class="hint">نسبة الحضور (60 يومًا)</div></div>
-        <div class="card-box" style="padding:10px"><b style="font-size:1.4rem;color:#c0392b">${a.absent || 0}</b><div class="hint">غياب</div></div>
-        <div class="card-box" style="padding:10px"><b style="font-size:1.4rem;color:#b9691b">${a.late || 0}</b><div class="hint">تأخر</div></div>
-        <div class="card-box" style="padding:10px"><b style="font-size:1.4rem;color:#2c7be5">${a.excused || 0}</b><div class="hint">غياب بعذر</div></div></div>
+        <button class="card-box att-box" data-att="absent" data-kid="${esc(c.id)}" style="padding:10px"><b style="font-size:1.4rem;color:#c0392b">${a.absent || 0}</b><div class="hint">غياب ›</div></button>
+        <button class="card-box att-box" data-att="late" data-kid="${esc(c.id)}" style="padding:10px"><b style="font-size:1.4rem;color:#b9691b">${a.late || 0}</b><div class="hint">تأخر ›</div></button>
+        <button class="card-box att-box" data-att="excused" data-kid="${esc(c.id)}" style="padding:10px"><b style="font-size:1.4rem;color:#2c7be5">${a.excused || 0}</b><div class="hint">غياب بعذر ›</div></button></div>
       ${(a.recent || []).length ? `<details style="margin-top:10px"><summary class="hint" style="cursor:pointer">سجل الغياب والتأخر</summary><div class="table-wrap" data-title="سجل حضور ${esc(c.name)}" style="margin-top:6px"><table>
         <thead><tr><th>التاريخ</th><th>هجري</th><th>الحصة</th><th>الحالة</th><th>ملاحظة</th></tr></thead><tbody>${a.recent.map((r) => `<tr><td>${esc(r.d)}</td><td>${esc(LMS.hijri(r.d))}</td>
         <td>${r.p ? r.p : 'يومي'}</td><td>${STL[r.s] || r.s}</td><td>${esc(r.n || '')}</td></tr>`).join('')}</tbody></table></div></details>` : ''}

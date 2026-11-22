@@ -11,7 +11,21 @@
   const fmt = (t) => { if (!t) return ''; const d = new Date(t); return d.toLocaleDateString('ar-SA-u-ca-gregory-nu-latn', { weekday: 'short', day: 'numeric', month: 'numeric' }) + ' ' + d.toLocaleTimeString('ar-SA-u-nu-latn', { hour: 'numeric', minute: '2-digit' }); };
   const num = (v) => (v == null ? '' : String(+v));
   const short = (c) => String(c).split(' — ')[0];
-  const QT = { mcq: 'اختيار من متعدد', tf: 'صح وخطأ', short: 'إجابة قصيرة' };
+  const QT = { mcq: 'اختيار من متعدد', tf: 'صح وخطأ', short: 'إجابة قصيرة', match: 'مزاوجة' };
+  const PER = { p1: 'الفترة الأولى', p2: 'الفترة الثانية', mid: 'منتصف الفصل', final: 'نهاية العام' };
+  const perSel = (v) => `<option value="">— غير محدد —</option>${Object.entries(PER).map(([k, l]) => `<option value="${k}"${k === v ? ' selected' : ''}>${l}</option>`).join('')}`;
+  const imgHTML = (src) => (src && /^data:image\//.test(src) ? `<img class="qimg" src="${esc(src)}" alt="صورة السؤال">` : '');
+  // ضغط الصورة في المتصفح قبل الحفظ (أقصى عرض 900 بكسل، JPEG) لتبقى صغيرة
+  const readImg = (file) => new Promise((res, rej) => {
+    if (!/^image\//.test(file.type)) { rej(new Error('اختر ملف صورة')); return; }
+    const fr = new FileReader(); fr.onerror = () => rej(new Error('تعذّرت قراءة الصورة'));
+    fr.onload = () => { const im = new Image(); im.onerror = () => rej(new Error('صورة غير صالحة'));
+      im.onload = () => { const k = Math.min(1, 900 / im.width, 900 / im.height); const c = document.createElement('canvas'); c.width = Math.round(im.width * k); c.height = Math.round(im.height * k);
+        const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(im, 0, 0, c.width, c.height);
+        let q = 0.82, out = c.toDataURL('image/jpeg', q); while (out.length > 420000 && q > 0.4) { q -= 0.1; out = c.toDataURL('image/jpeg', q); }
+        out.length > 440000 ? rej(new Error('الصورة كبيرة جدًا')) : res(out); };
+      im.src = fr.result; };
+    fr.readAsDataURL(file); });
   const STATE = { open: 'مفتوح الآن', upcoming: 'لم يبدأ', closed: 'انتهى' };
   const chip = (cls, txt) => `<span class="st ${esc(cls)}">${esc(txt)}</span>`;
 
@@ -40,7 +54,9 @@
   // عرض سؤال (للمعلم) مع إبراز الإجابة الصحيحة
   const qHTML = (q, extra) => `<div class="qb"><div class="qh"><div class="grow">${esc(q.body)}</div>
       <span class="chip gray">${esc(QT[q.qtype])}</span><span class="chip teal">${esc(num(q.points))} د</span>${extra || ''}</div>
+    ${imgHTML(q.image)}
     ${q.qtype === 'short' ? `<small class="hint">الإجابة النموذجية: ${esc(q.answer || '— (تصحيح يدوي)')}</small>`
+      : q.qtype === 'match' ? `<table class="mt">${(q.options || []).map((o) => `<tr><td>${esc(o.l)}</td><td>⟵⟶</td><td class="ok">${esc(o.r)}</td></tr>`).join('')}</table>`
       : `<ol>${(q.options || []).map((o) => `<li class="${o.ok ? 'ok' : ''}">${esc(o.t)}${o.ok ? ' ✓' : ''}</li>`).join('')}</ol>`}
     ${q.topic || q.owner ? `<small class="hint">${esc(q.topic || '')}${q.topic && q.owner && !q.mine ? ' · ' : ''}${!q.mine && q.owner ? 'من: ' + esc(q.owner) : ''}</small>` : ''}</div>`;
 
@@ -82,6 +98,9 @@
       <label class="f">الدرجة<input id="qP" type="number" min="0.5" max="100" step="0.5" value="${esc(num(q.points))}"></label>
       <label class="f">الموضوع / الدرس (اختياري)<input id="qX" maxlength="120" value="${esc(q.topic || '')}"></label>
       <label class="f" style="grid-column:1/-1">نص السؤال *<textarea id="qB" rows="3">${esc(q.body)}</textarea></label>
+      <div class="f" style="grid-column:1/-1"><span>صورة للسؤال (اختياري)</span><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <label class="btn sm ghost" style="cursor:pointer">🖼️ اختيار صورة<input type="file" id="qI" accept="image/*" hidden></label><button class="btn sm ghost" type="button" id="qIx"${q.image ? '' : ' hidden'}>✕ إزالة الصورة</button></div>
+        <div id="qIv">${imgHTML(q.image)}</div></div>
       <div class="f" style="grid-column:1/-1" id="qArea"></div></div>`;
     modal({ title: q.id ? 'تعديل سؤال' : 'سؤال جديد', wide: true, body, actions: [{ label: 'إلغاء', cls: 'ghost' }, { label: '💾 حفظ', cls: 'primary', onClick: async (w) => {
       const t = $('#qT', w).value;
@@ -92,9 +111,24 @@
         if (!p.options.some((o) => o.ok)) { toast('حدّد الإجابة الصحيحة', 'warn'); return false; } }
       if (t === 'tf') p.tf = $('input[name=qtf]:checked', w)?.value === '1';
       if (t === 'short') p.answer = $('#qA', w).value.trim();
+      if (t === 'match') { p.pairs = $$('.pair-row', w).map((r) => ({ l: $$('input', r)[0].value.trim(), r: $$('input', r)[1].value.trim() })).filter((x) => x.l || x.r);
+        if (p.pairs.some((x) => !x.l || !x.r)) { toast('أكمل طرفي كل زوج', 'warn'); return false; } if (p.pairs.length < 2) { toast('أضف زوجين على الأقل', 'warn'); return false; } }
+      p.image = IMG || null;
       const r = await call('qb_save', { p }); toast('حُفظ السؤال'); if (after) after(r.id, p.subject_id); else { BANK_SUBJ = p.subject_id; drawBank(); } } }] });
     const w = $$('.modal-wrap').pop();
+    let IMG = q.image || null;
+    $('#qI', w).onchange = async (e) => { const f = e.target.files[0]; if (!f) return;
+      try { IMG = await readImg(f); $('#qIv', w).innerHTML = imgHTML(IMG); $('#qIx', w).hidden = false; } catch (er) { toast(er.message, 'err'); } e.target.value = ''; };
+    $('#qIx', w).onclick = () => { IMG = null; $('#qIv', w).innerHTML = ''; $('#qIx', w).hidden = true; };
+    const pairRow = (o, i) => `<div class="opt-row pair-row"><input type="text" maxlength="300" value="${esc(o.l || '')}" placeholder="العمود (أ) ${i + 1}"><span>⟵⟶</span>
+      <input type="text" maxlength="300" value="${esc(o.r || '')}" placeholder="العمود (ب) ${i + 1}"><button class="btn sm ghost" type="button" data-rm title="حذف الزوج">✕</button></div>`;
     const area = () => { const t = $('#qT', w).value; const A = $('#qArea', w);
+      if (t === 'match') { const O = (q.qtype === 'match' && q.options?.length) ? q.options : [{}, {}, {}];
+        A.innerHTML = `<span>الأزواج الصحيحة — يُعرض العمود (ب) للطالب مخلوطًا ويختار لكل عنصر ما يقابله</span><div id="qO">${O.map(pairRow).join('')}</div>
+          <button class="btn sm ghost" id="qAdd" type="button">➕ زوج</button>`;
+        $('#qAdd', w).onclick = () => { const n = $$('.pair-row', w).length; if (n >= 8) return; $('#qO', w).insertAdjacentHTML('beforeend', pairRow({}, n)); };
+        $('#qO', w).onclick = (e) => { const x = e.target.closest('[data-rm]'); if (x && $$('.pair-row', w).length > 2) x.closest('.pair-row').remove(); };
+        return; }
       if (t === 'mcq') { const O = (q.qtype === 'mcq' && q.options?.length) ? q.options : [{ t: '' }, { t: '' }, { t: '' }, { t: '' }];
         A.innerHTML = `<span>الخيارات — اختر الدائرة بجوار الإجابة الصحيحة</span><div id="qO">${O.map((o, i) => optRow(o, i)).join('')}</div>
           <button class="btn sm ghost" id="qAdd" type="button">➕ خيار</button>`;
@@ -147,6 +181,7 @@
       <label class="f">يُغلق في *<input id="eC" type="datetime-local" value="${esc(localDT(x.closes_at, 25))}"></label>
       <label class="f" style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" id="eSh"${x.shuffle ? ' checked' : ''}${locked ? ' disabled' : ''}> خلط ترتيب الأسئلة والخيارات لكل طالب</label>
       <label class="f" style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" id="eR"${x.show_results ? ' checked' : ''}> إظهار الدرجة للطالب بعد التسليم</label>
+      <label class="f">فترة التقويم (لسجل الدرجات)<select id="eP">${perSel(x.period || localStorage.getItem('lms_per') || '')}</select></label>
       <div class="f" style="grid-column:1/-1"><span>الفصول *</span><div id="eCl" style="display:flex;flex-wrap:wrap;gap:6px"></div></div>
       <label class="f" style="grid-column:1/-1">تعليمات للطالب (اختياري)<textarea id="eI" rows="2">${esc(x.instructions || '')}</textarea></label>
       <div class="f" style="grid-column:1/-1"><div class="toolbar"><b class="grow" id="eSum">الأسئلة</b>${locked ? '' : '<button class="btn sm ghost" type="button" id="eNewQ">➕ سؤال جديد للبنك</button>'}</div>
@@ -154,13 +189,14 @@
     modal({ title: x.id ? 'تعديل الاختبار' : 'اختبار جديد', wide: true, body, actions: [{ label: 'إلغاء', cls: 'ghost' }, { label: x.id ? '💾 حفظ' : '📤 نشر الاختبار', cls: 'primary', onClick: async (w) => {
       const p = { id: x.id || null, title: $('#eT', w).value.trim(), subject_id: +$('#eS', w).value || null, duration_min: +$('#eM', w).value || 30,
         opens_at: $('#eO', w).value ? new Date($('#eO', w).value).toISOString() : '', closes_at: $('#eC', w).value ? new Date($('#eC', w).value).toISOString() : '',
-        shuffle: $('#eSh', w).checked, show_results: $('#eR', w).checked, instructions: $('#eI', w).value.trim(),
+        shuffle: $('#eSh', w).checked, show_results: $('#eR', w).checked, instructions: $('#eI', w).value.trim(), period: $('#eP', w).value || null,
         class_ids: locked ? x.class_ids : $$('#eCl input:checked', w).map((i) => +i.value),
         questions: locked ? x.questions.map((q) => ({ id: q.id })) : BANK.filter((q) => picked.has(q.id)).map((q) => ({ id: q.id, points: picked.get(q.id) })) };
       if (!p.title) { toast('اكتب عنوان الاختبار', 'warn'); return false; }
       if (!p.opens_at || !p.closes_at || new Date(p.closes_at) <= new Date(p.opens_at)) { toast('وقت الإغلاق يجب أن يكون بعد وقت الفتح', 'warn'); return false; }
       if (!p.class_ids.length) { toast('اختر فصلًا واحدًا على الأقل', 'warn'); return false; }
       if (!p.questions.length) { toast('اختر سؤالًا واحدًا على الأقل', 'warn'); return false; }
+      try { localStorage.setItem('lms_per', p.period || ''); } catch (_) {}
       await call('ex_save', { p }); toast(x.id ? 'حُفظ الاختبار' : 'نُشر الاختبار لطلاب الفصول المختارة'); show('mine'); } }] });
     const w = $$('.modal-wrap').pop();
     let init = new Set(x.class_ids || []);
@@ -198,7 +234,7 @@
     const qStat = Q.map((q) => { const R = sub.map((a) => a.results?.[q.id]).filter(Boolean); return R.length ? Math.round(100 * R.filter((r) => r.ok).length / R.length) : null; });
     const body = `<div class="hwv"><div class="meta" style="display:flex;flex-wrap:wrap;gap:6px">${chip(x.state, STATE[x.state])}
         <span class="chip teal">${esc(x.subject || '')}</span><span class="chip gray">${esc(fmt(x.opens_at))} ← ${esc(fmt(x.closes_at))}</span>
-        <span class="chip gray">${x.duration_min} دقيقة</span><span class="chip gray">من ${esc(num(x.max_score))}</span>${x.mine ? '' : `<span class="chip gray">المعلم: ${esc(x.teacher)}</span>`}</div>
+        <span class="chip gray">${x.duration_min} دقيقة</span>${x.period ? `<span class="chip gray">${esc(PER[x.period])}</span>` : ''}<span class="chip gray">من ${esc(num(x.max_score))}</span>${x.mine ? '' : `<span class="chip gray">المعلم: ${esc(x.teacher)}</span>`}</div>
       <p><b>سلّم ${sub.length} من ${A.length}</b>${avg != null ? ` · المتوسط ${avg}%` : ''}${rev.length ? ` · <span class="st review">${rev.length} بانتظار تصحيح الإجابات القصيرة</span>` : ''}</p>
       <nav class="tabs" id="vTabs" style="margin:6px 0"><button class="on" data-v="r">النتائج</button><button data-v="q">الأسئلة وتحليلها</button>${x.mine && rev.length ? '<button data-v="g">✍️ التصحيح اليدوي</button>' : ''}</nav>
       <div data-vp="r">${A.length ? `<div class="toolbar"><select id="rf"><option value="">الكل</option><option value="done">سلّم</option><option value="none">لم يسلّم</option><option value="rev">بانتظار التصحيح</option></select></div>
@@ -218,6 +254,7 @@
     if (x.mine) {
       acts.push({ label: '🗑️ حذف', cls: 'ghost', onClick: async () => { if (!await confirmBox('حذف الاختبار؟', 'حذف')) return false; await call('ex_delete', { p_id: id }); toast('تم الحذف'); refresh(); } });
       acts.push({ label: '✏️ تعديل', cls: 'ghost', onClick: () => { setTimeout(() => editEx(x), 0); } });
+      acts.push({ label: '📚 مشاركة في مكتبة المعلمين', cls: 'ghost', onClick: async () => { await call('lib_share', { p_kind: 'exam', p_id: id, p_note: null }); toast('شُورك الاختبار في «مكتبة معلمي دار الذكر» ✓'); return false; } });
     }
     acts.push({ label: '🖨️ طباعة النتائج', cls: 'ghost', onClick: (w) => { const t = $('[data-vp="r"] table', w); if (t) printTable(t, 'نتائج: ' + x.title); return false; } });
     acts.push({ label: 'إغلاق', cls: 'primary', onClick: () => { refresh(); } });
@@ -267,13 +304,17 @@
     pane.innerHTML = `<div class="take"><div class="timer glass"><span><b id="tLeft">--:--</b> <small class="hint">متبقٍ</small></span>
         <span class="hint" id="tSave">الإجابات تُحفظ تلقائيًا</span><span id="tCount"></span><button class="btn primary" id="tSubmit">📤 تسليم</button></div>
       <h2 style="margin:4px 0 6px">${esc(x.title)}</h2>${x.instructions ? `<p class="notice">${esc(x.instructions)}</p>` : ''}
-      ${x.questions.map((q, i) => `<div class="q" data-q="${esc(q.id)}"><h4>${i + 1}. ${esc(q.body)} <small>(${esc(num(q.points))} درجة)</small></h4>
+      ${x.questions.map((q, i) => `<div class="q" data-q="${esc(q.id)}"${q.qtype === 'match' ? ' data-match="1"' : ''}><h4>${i + 1}. ${esc(q.body)} <small>(${esc(num(q.points))} درجة)</small></h4>${imgHTML(q.image)}
         ${q.qtype === 'short' ? `<textarea rows="2" maxlength="2000" style="width:100%" aria-label="إجابة السؤال ${i + 1}">${esc(ans[q.id] || '')}</textarea>`
+          : q.qtype === 'match' ? (() => { const cur = Object.fromEntries(String(ans[q.id] || '').split(',').filter(Boolean).map((kv) => kv.split(':')));
+            return `<table class="mt">${(q.left || []).map((l) => `<tr><td><b>${esc(l.t)}</b></td><td><select data-k="${l.k}" aria-label="ما يقابل ${esc(l.t)}"><option value="">— اختر —</option>
+              ${q.options.map((o) => `<option value="${o.i}"${String(cur[l.k]) === String(o.i) ? ' selected' : ''}>${esc(o.t)}</option>`).join('')}</select></td></tr>`).join('')}</table>`; })()
           : q.options.map((o) => `<label class="opt"><input type="radio" name="q${esc(q.id)}" value="${o.i}"${String(ans[q.id]) === String(o.i) ? ' checked' : ''}> ${esc(o.t)}</label>`).join('')}</div>`).join('')}
       <div style="text-align:center;margin:16px 0"><button class="btn primary" id="tSubmit2">📤 تسليم الاختبار</button></div></div>`;
     const count = () => { const n = x.questions.filter((q) => String(ans[q.id] ?? '').trim() !== '').length; $('#tCount').textContent = `أجبت ${n} من ${x.questions.length}`; return n; };
     count();
-    pane.oninput = pane.onchange = (e) => { const box = e.target.closest('[data-q]'); if (!box) return; ans[box.dataset.q] = e.target.value; dirty = true; count(); };
+    pane.oninput = pane.onchange = (e) => { const box = e.target.closest('[data-q]'); if (!box) return;
+      ans[box.dataset.q] = box.dataset.match ? $$('select[data-k]', box).filter((x) => x.value !== '').map((x) => x.dataset.k + ':' + x.value).join(',') : e.target.value; dirty = true; count(); };
     const save = async () => { if (!dirty || saving || finished) return; saving = true; dirty = false;
       try { await call('ex_submit', { p_id: id, p_answers: ans, p_final: false }); $('#tSave').textContent = '✓ حُفظ ' + new Date().toLocaleTimeString('ar-SA-u-nu-latn', { hour: 'numeric', minute: '2-digit' }); }
       catch (e) { dirty = true; $('#tSave').textContent = '⚠️ تعذّر الحفظ — تحقق من الاتصال'; } finally { saving = false; } };
@@ -311,9 +352,12 @@
         ${r.needs_review ? '<div class="hint">بعض الإجابات القصيرة قيد تصحيح المعلم وقد تتغير الدرجة.</div>' : ''}
         ${anyCorrect ? '' : '<div class="hint">ستظهر الإجابات الصحيحة بعد انتهاء موعد الاختبار لكل الطلاب.</div>'}</div>
         ${r.questions.map((q, i) => { const res = q.result || {}; const cls = res.manual && !res.graded ? 'man' : res.ok ? 'ok' : 'bad';
+          if (q.qtype === 'match') { const pr = q.pairs; return `<div class="q ${res.ok ? 'ok' : res.nc ? 'man' : 'bad'}"><h4>${i + 1}. ${esc(q.body)} <small>(${esc(num(res.pts ?? 0))} / ${esc(num(q.points))})</small></h4>${imgHTML(q.image)}
+            <div>أزواج صحيحة: <b>${res.nc ?? 0} من ${res.np ?? (pr ? pr.length : '?')}</b> ${res.ok ? '✅' : ''}</div>
+            ${pr ? `<table class="mt">${pr.map((o) => `<tr><td>${esc(o.l)}</td><td>⟵⟶</td><td class="ok">${esc(o.r)}</td></tr>`).join('')}</table>` : ''}</div>`; }
           const mine = q.qtype === 'short' ? (q.mine || '—') : (q.options?.[+q.mine] ?? '—');
           const corr = q.correct == null ? '' : q.qtype === 'short' ? q.correct : q.options?.[+q.correct];
-          return `<div class="q ${cls}"><h4>${i + 1}. ${esc(q.body)} <small>(${esc(num(res.pts ?? 0))} / ${esc(num(q.points))})</small></h4>
+          return `<div class="q ${cls}"><h4>${i + 1}. ${esc(q.body)} <small>(${esc(num(res.pts ?? 0))} / ${esc(num(q.points))})</small></h4>${imgHTML(q.image)}
             <div>إجابتك: <b>${esc(mine)}</b> ${cls === 'ok' ? '✅' : cls === 'man' ? '⏳' : '❌'}</div>${corr && cls !== 'ok' ? `<div class="hint">الإجابة الصحيحة: ${esc(corr)}</div>` : ''}</div>`; }).join('')}</div>`;
     }
     $('#rBack').onclick = drawStudent;

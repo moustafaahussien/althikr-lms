@@ -215,3 +215,6 @@ footer.credit { text-align: center; color: var(--muted); font-size: .82rem; padd
 .demo-roles button span{font-size:1.6rem}
 .demo-roles button small{color:var(--muted,#667);font-size:12px}
 .demo-link{display:inline-block;margin-top:16px;color:#3a2f8f;font-weight:600;cursor:pointer;background:none;border:0;font:inherit;text-decoration:underline}
+
+.today-periods .tp.clk { cursor: pointer; transition: box-shadow .15s, border-color .15s; } .today-periods .tp.clk:hover, .today-periods .tp.clk:focus-visible { border-color: var(--brand); box-shadow: 0 3px 10px rgba(15,110,106,.15); }
+button.att-box { font: inherit; text-align: inherit; cursor: pointer; border: 1px solid var(--line); background: #fff; } button.att-box:hover { border-color: var(--brand); }

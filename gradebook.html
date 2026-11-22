@@ -11,7 +11,7 @@
   <link rel="icon" type="image/png" href="favicon.png">
   <meta name="theme-color" content="#0f6e6a">
   <link rel="manifest" href="supervision/manifest.json?v=2">
-    <link rel="stylesheet" href="assets/css/app.css?v=202611221955">
+    <link rel="stylesheet" href="assets/css/app.css?v=202611230100">
   <link rel="stylesheet" href="assets/css/topbar.css?v=202611221955">
   <style>
     .crs { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
@@ -23,8 +23,8 @@
     .chead { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 14px; margin-bottom: 12px; }
     .chead h2 { margin: 0; font-size: 1.2rem; } .chead .grow { flex: 1; }
     .gb { overflow: auto; max-height: 72vh; } .gb table { border-collapse: separate; border-spacing: 0; }
-    .gb th, .gb td { white-space: nowrap; text-align: center; } .gb td:first-child, .gb th:first-child { text-align: right; position: sticky; right: 0; background: #fff; z-index: 2; }
-    .gb thead th { position: sticky; top: 0; background: #f6f9f9; z-index: 3; vertical-align: bottom; } .gb thead th:first-child { z-index: 4; }
+    .gb th, .gb td { white-space: nowrap; text-align: center; } .gb tbody td:first-child, .gb thead tr.pr th:first-child { text-align: right; position: sticky; right: 0; background: #fff; z-index: 2; }
+    .gb thead th { position: sticky; top: 0; background: #f6f9f9; z-index: 3; vertical-align: bottom; } .gb thead tr.pr th:first-child { z-index: 4; } .gb thead tr:not(.pr) th { top: 30px; }
     .gb th.col { cursor: pointer; min-width: 74px; max-width: 140px; white-space: normal; font-size: .8rem; line-height: 1.35; }
     .gb th.col small { display: block; color: var(--muted); font-weight: 500; } .gb th.col.off, .gb td.off { opacity: .4; }
     .gb th.k-hw { border-top: 3px solid #6c8ebf; } .gb th.k-ex { border-top: 3px solid #9b6cbf; } .gb th.k-manual { border-top: 3px solid #2a9d8f; }
@@ -32,6 +32,8 @@
     .gb td.fin { font-weight: 700; } .pct { display: inline-block; min-width: 48px; border-radius: 99px; padding: 1px 8px; font-weight: 700; }
     .pct.a { background: #dff3ef; color: #0f6e6a; } .pct.b { background: #e6eefc; color: #2a4f9a; } .pct.c { background: #fff3d6; color: #8a5a00; } .pct.d { background: #fde4ea; color: #a3244a; }
     .legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: .8rem; color: var(--muted); margin: 6px 0; } .legend i { display: inline-block; width: 12px; height: 4px; border-radius: 2px; vertical-align: middle; margin-inline-end: 4px; }
+    .gb th.per { background: #e4f1ef; color: var(--brand); font-size: .85rem; } .gb td.sub, .gb th.sub { background: #f6faf9; font-weight: 600; }
+    .perh { margin: 12px 0 4px; font-size: .95rem; color: var(--brand); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--line); padding-bottom: 3px; }
     .sub { padding: 12px 14px; margin-bottom: 10px; } .sub h3 { margin: 0; display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 1.05rem; }
     .sub table { margin-top: 8px; }
   </style>
@@ -48,9 +50,9 @@
   <footer class="credit">إعداد وتصميم: مصطفى حسين</footer>
 
   <script src="assets/vendor/supabase-js-2.119.2.js"></script>
-  <script src="assets/js/config.js?v=202611230020"></script>
+  <script src="assets/js/config.js?v=202611230100"></script>
   <script src="assets/js/academic-calendar.js?v=202611221130"></script>
-  <script src="assets/js/core.js?v=202611222135"></script>
-  <script src="assets/js/gradebook.js?v=1"></script>
+  <script src="assets/js/core.js?v=202611230100"></script>
+  <script src="assets/js/gradebook.js?v=2"></script>
 </body>
 </html>

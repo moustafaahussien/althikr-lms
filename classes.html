@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <!-- سياسة أمان: المواقع المسموح للصفحة تحميل الأكواد منها والاتصال بها -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.sheetjs.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://zpbhzhpvpvehowxvlsgp.supabase.co https://drive.google.com https://*.googleusercontent.com; connect-src 'self' https://zpbhzhpvpvehowxvlsgp.supabase.co wss://zpbhzhpvpvehowxvlsgp.supabase.co; frame-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>الفصول والطلاب — منصة دار الذكر التعليمية</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <meta name="theme-color" content="#0f6e6a">
+  <link rel="manifest" href="supervision/manifest.json?v=2">
+    <link rel="stylesheet" href="assets/css/app.css?v=202611230100">
+  <link rel="stylesheet" href="assets/css/topbar.css?v=202611221955">
+  <style>
+    .sec-h { margin: 16px 0 8px; font-size: 1rem; color: var(--muted); }
+    .cls { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+    .cl { text-align: right; font: inherit; background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; cursor: pointer; }
+    .cl:hover, .cl:focus-visible { border-color: var(--brand); box-shadow: 0 4px 14px rgba(15,110,106,.1); }
+    .cl b { display: block; font-size: 1.05rem; } .cl small { display: block; color: var(--muted); margin-top: 2px; }
+    .cl .ab { display: inline-block; margin-top: 6px; font-size: .78rem; border-radius: 99px; padding: 1px 8px; background: #eef6f5; color: var(--brand); }
+    .cl .ab.hot { background: #fde4ea; color: #a3244a; } .cl .ab.no { background: #fff3d6; color: #8a5a00; }
+    .kpis { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; } .kpis span { background: #fff; border: 1px solid var(--line); border-radius: 99px; padding: 3px 12px; font-size: .86rem; }
+  </style>
+</head>
+<body>
+  <header id="topbar"></header>
+  <main class="page" id="main">
+    <section class="hero glass">
+      <h1>🏫 الفصول والطلاب</h1>
+      <p>فصول نطاقك مجمّعة حسب المرحلة والصف، مع عدد الطلاب ورائد الفصل وحالة الحضور اليوم. افتح أي فصل لعرض طلابه وغيابهم وملفات إنجازهم.</p>
+    </section>
+    <div class="toolbar glass" style="padding:10px"><input id="fQ" class="grow" type="search" placeholder="ابحث بالفصل أو الصف أو رائد الفصل…"><label class="hint"><input type="checkbox" id="fAbs"> فصول فيها غياب اليوم</label></div>
+    <div id="view"><div class="empty">جارٍ التحميل…</div></div>
+  </main>
+  <footer class="credit">إعداد وتصميم: مصطفى حسين</footer>
+
+  <script src="assets/vendor/supabase-js-2.119.2.js"></script>
+  <script src="assets/js/config.js?v=202611230100"></script>
+  <script src="assets/js/academic-calendar.js?v=202611221130"></script>
+  <script src="assets/js/core.js?v=202611230100"></script>
+  <script src="assets/js/classes.js?v=1"></script>
+</body>
+</html>

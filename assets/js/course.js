@@ -57,7 +57,7 @@
         <h4>${p.pinned ? '📌' : ''}${p.kind === 'announcement' ? '📢' : '📖'} ${esc(p.title)}</h4>
         <div class="meta">${esc(p.teacher)} · ${esc(when(p.at))}${p.updated && p.updated !== p.at ? ' · عُدّل' : ''}</div>
         ${p.body ? `<p>${esc(p.body)}</p>` : ''}${linksHTML(p.links)}
-        ${p.mine ? `<div class="acts"><button class="btn sm ghost" data-ed="${p.id}">✏️ تعديل</button><button class="btn sm ghost" data-del="${p.id}">🗑️ حذف</button></div>` : ''}</article>`;
+        ${p.mine ? `<div class="acts"><button class="btn sm ghost" data-ed="${p.id}">✏️ تعديل</button><button class="btn sm ghost" data-del="${p.id}">🗑️ حذف</button><button class="btn sm ghost" data-share="${p.id}" title="مشاركة في مكتبة معلمي دار الذكر">📚 مشاركة</button></div>` : ''}</article>`;
     $('#view').innerHTML = `<div class="chead glass"><button class="btn sm ghost" id="back">→ كل المواد</button>
         <div class="grow"><h2>${esc(c.subject)} — ${esc(c.class)}</h2><div class="hint">${esc((c.teachers || []).join('، '))}</div></div>
         ${D.can_post ? '<button class="btn primary" id="newPost">➕ منشور جديد</button>' : ''}</div>
@@ -69,6 +69,8 @@
     if ($('#newPost')) $('#newPost').onclick = () => edit(null, cid, sid);
     $('#view').onclick = async (e) => {
       const ed = e.target.closest('[data-ed]'), del = e.target.closest('[data-del]');
+      const sh = e.target.closest('[data-share]');
+      if (sh) { try { await call('lib_share', { p_kind: 'post', p_id: +sh.dataset.share, p_note: null }); toast('شُورك المحتوى في «مكتبة معلمي دار الذكر» ✓'); } catch (er) { toast(errMsg(er), 'err'); } return; }
       if (ed) edit(P.find((p) => p.id === +ed.dataset.ed), cid, sid);
       if (del) { if (!await confirmBox('حذف هذا المنشور من كل الفصول المنشور لها؟', 'حذف')) return;
         try { await call('cp_delete', { p_id: +del.dataset.del }); toast('تم الحذف'); await refresh(cid, sid); } catch (er) { toast(errMsg(er), 'err'); } }

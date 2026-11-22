@@ -53,7 +53,8 @@
   /* لوحة «يومي» + مناوبتي في طلب واحد (home_today — sql/31)؛ إن تعذّر نرجع للطلبات المنفصلة القديمة */
   const DAYS = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
   const NOW = new Date(), A = window.ACAD, TODAY = LMS.ymd(NOW);
-  const HOL = A && (A.hol || []).find((h) => TODAY >= h.f && TODAY <= h.to);
+  // في الوضع التجريبي نعرض يومًا دراسيًا عاديًا حتى لو كانت المدرسة في إجازة
+  const HOL = !LMS.DEMO && A && (A.hol || []).find((h) => TODAY >= h.f && TODAY <= h.to);
   let DAY = NOW.getDay(); const DAY_LBL = DAY >= 5 ? 'حصصي يوم الأحد' : 'حصصي اليوم'; if (DAY >= 5) DAY = 0;
   const IS_TODAY = DAY === NOW.getDay();
   const HT = STAFF ? sb.rpc('home_today', { p_day: HOL ? null : DAY, p_att: !HOL && IS_TODAY }).then(({ data, error }) => error ? null : data, () => null) : Promise.resolve(null);

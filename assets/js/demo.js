@@ -639,8 +639,6 @@
   };
   function exit() { try { sessionStorage.removeItem(KEY); sessionStorage.removeItem(DBKEY); Object.keys(sessionStorage).filter((k) => k.startsWith('lms_c:')).forEach((k) => sessionStorage.removeItem(k)); } catch (_) {} }
 
-  // في التجربة نعرض يومًا دراسيًا عاديًا حتى لو كانت المدرسة في إجازة
-  if (window.ACAD && window.ACAD.hol) { const t = ymd(new Date()); window.ACAD.hol = window.ACAD.hol.filter((h) => !(t >= h.f && t <= h.to)); }
 
   window.LMS_DEMO = { role: ROLE, roles: ROLES_INFO, client, exit, me: () => clone(ME()) };
 })();

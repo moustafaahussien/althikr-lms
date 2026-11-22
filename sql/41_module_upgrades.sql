@@ -495,7 +495,7 @@ $$;
 
 create or replace function public.lib_list(p_kind text default null, p_subject int default null, p_q text default null) returns jsonb
 language plpgsql stable security definer set search_path = public as $$
-declare q text := public.norm(btrim(coalesce(p_q,'')));
+declare q text := coalesce(public.norm(nullif(btrim(coalesce(p_q,'')), '')), '');
 begin
   if not public.is_staff() then raise exception 'غير مصرح'; end if;
   return coalesce((select jsonb_agg(jsonb_build_object('id', l.id, 'kind', l.kind, 'title', l.title, 'note', l.note, 'subject_id', l.subject_id,

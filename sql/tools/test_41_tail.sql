@@ -38,8 +38,8 @@ begin
       res := res || ' img=' || ((qq->>'image') is not null)::text;
       select string_agg((l->>'k') || ':' || (select o->>'i' from jsonb_array_elements(qq->'options') o where o->>'t' = case l->>'t' when 'مصر' then 'القاهرة' when 'السعودية' then 'الرياض' else 'عمّان' end), ',') into ans
         from jsonb_array_elements(qq->'left') l;
-      x := jsonb_build_object(qq->>'id', ans);
-    else x := x || jsonb_build_object(qq->>'id', '0'); end if;
+      x := coalesce(x, '{}'::jsonb) || jsonb_build_object(qq->>'id', ans);
+    else x := coalesce(x, '{}'::jsonb) || jsonb_build_object(qq->>'id', '0'); end if;
   end loop;
   r := public.ex_submit(eid, x, true); res := res || ' score=' || (r->>'score') || '/' || (r->>'max');
   r := public.pf_get(null); res := res || ' pfExams=' || jsonb_array_length(r->'exams') || ' pfHw=' || jsonb_array_length(r->'homework');

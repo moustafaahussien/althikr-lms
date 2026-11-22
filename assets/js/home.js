@@ -93,15 +93,15 @@
       .sort((a, b) => a.period - b.period);
     const box = $('#today'); if (!box) return;
     const unread = () => (window.LMS_MSG && window.LMS_MSG.unread) || 0;
-    const nTaken = TAKEN ? periods.filter((x) => TAKEN.has(x.period + '|' + x.class_id)).length : 0;
+    const attP = periods.filter((x) => x.class_id), nTaken = TAKEN ? attP.filter((x) => TAKEN.has(x.period + '|' + x.class_id)).length : 0;
     const tiles = () => [
-      ['🗓️', TAKEN && periods.length ? 'حصص سُجّل حضورها' : 'تسجيل الحضور', 'attendance.html', TAKEN && periods.length ? `${nTaken}/${periods.length}` : ''],
+      ['🗓️', TAKEN && attP.length ? 'حصص سُجّل حضورها' : 'تسجيل الحضور', 'attendance.html', TAKEN && attP.length ? `${nTaken}/${attP.length}` : ''],
       ['📨', 'معاملات بانتظار قرارك', 'services.html#req', inbox.length],
       ['✉️', 'رسائل غير مقروءة', 'messages.html', unread()]
     ].map(([ic, l, href, n]) => `<a class="today-tile${n ? ' hot' : ''}" href="${href}"><span>${ic}</span><b>${n === '' ? '' : n}</b><small>${l}</small></a>`).join('');
     const ppl = hol ? `<div class="hint">🏖️ ${esc(hol.ar)} — لا حصص اليوم</div>`
       : periods.length ? `<div class="today-periods">${periods.map((x) => { const ok = TAKEN && TAKEN.has(x.period + '|' + x.class_id);
-        return `<div class="tp${ok ? ' ok' : ''}"><i>${x.period}</i><b>${esc(SUBJ[x.subject_id] || x.txt || '')}</b><small>${esc(x.cls || '')}${TAKEN ? (ok ? ' · <span class="att-ok">✓ الحضور مسجّل</span>' : ' · <span class="att-no">الحضور لم يُسجّل</span>') : ''}</small></div>`; }).join('')}</div>`
+        return `<div class="tp${ok ? ' ok' : ''}"><i>${x.period}</i><b>${esc(SUBJ[x.subject_id] || x.txt || '')}</b><small>${esc(LMS.clsText(x.cls))}${TAKEN && x.class_id ? (ok ? ' · <span class="att-ok">✓ الحضور مسجّل</span>' : ' · <span class="att-no">الحضور لم يُسجّل</span>') : ''}</small></div>`; }).join('')}</div>`
       : `<div class="hint">لا توجد لك حصص مسجلة في الجدول ${day === now.getDay() ? 'اليوم' : 'يوم ' + DAYS[day]}.</div>`;
     // لغير المعلم: اللوحة تظهر فقط إذا كان عنده ما يخصه
     if (role !== 'teacher' && !periods.length && !inbox.length && !unread()) return;

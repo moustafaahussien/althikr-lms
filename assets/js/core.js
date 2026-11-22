@@ -277,6 +277,15 @@
   }
 
   /* ---------- الساعة والتاريخ والتقويم الدراسي (نفس شريط مكتب الإشراف التربوي) ---------- */
+  /* نص الفصل في الجدول للعرض: حصص المجموعات (الإنجليزي حسب المستوى) خانتها فيها أكثر من فصل
+     مثل «6-د/٦/ج/٦/ب/٦/أ» ← تُعرض «الصف السادس» بدل الأسماء المتداخلة */
+  const GRADE_AR = ['', 'الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس', 'السادس', 'السابع', 'الثامن', 'التاسع', 'العاشر', 'الحادي عشر', 'الثاني عشر'];
+  function isGroupCls(cls) { const m = /^\s*(\d+)\s*-\s*(.+)$/.exec(cls || ''); return !!(m && /[/،,]/.test(m[2])); }
+  function clsText(cls) {
+    const m = /^\s*(\d+)\s*-\s*(.+)$/.exec(cls || '');
+    if (!m || !/[/،,]/.test(m[2])) return cls || '';
+    return 'الصف ' + (GRADE_AR[+m[1]] || m[1]);
+  }
   const ymd = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   const parseYmd = (s) => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
   const LOC = 'ar-SA-u-ca-gregory-nu-latn';
@@ -430,5 +439,5 @@
 
   window.LMS = { sb, C, configured, ROLE_LABELS, esc, $, $$, toast, modal, confirmBox, errMsg,
                  fetchAll, signInWithGoogle, signOut, getContext, cached, clearCache, requireAuth, downloadCSV, rememberNext, takeNext,
-                 getView, setView, canSwitch, applyView, mountTopbar, BASE, hijri, dateLine, printHTML, printTable, exportTable, tableRows, ymd };
+                 getView, setView, canSwitch, applyView, mountTopbar, BASE, hijri, dateLine, printHTML, printTable, exportTable, tableRows, ymd, clsText, isGroupCls };
 })();

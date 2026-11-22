@@ -600,11 +600,15 @@ function clsLabel(e){
   if(!e.cls) return "";
   return clsLabel0(e)+roomLabel(e);
 }
+// حصص المجموعات (الإنجليزي حسب المستوى): الخانة فيها أكثر من فصل «د/٦/ج/٦/ب/٦/أ» ← تُعرض باسم الصف فقط
+function isGroup(e){ return /[/،,]/.test(e.section||""); }
 function clsLabel0(e){
-  if(e.track==="american") return "Grade "+e.gradeNum+(e.section?" – "+e.section:"");
+  const sec = isGroup(e) ? "" : e.section;
+  if(e.track==="american") return "Grade "+e.gradeNum+(sec?" – "+sec:"");
   const st=stageOf(e), suf = st==="متوسط"?" المتوسط":st==="ثانوي"?" الثانوي":"";
-  return "الصف "+(GRADE_AR[e.gradeNum]||e.gradeNum)+suf+(e.section?" / "+e.section:"");
+  return "الصف "+(GRADE_AR[e.gradeNum]||e.gradeNum)+suf+(sec?" / "+sec:"");
 }
+function clsShort(e){ return isGroup(e) ? clsLabel0(e) : (e.cls||""); }
 // كل صف يتبع توقيت مرحلته
 function defaultProf(e){
   if(e.track==="american") return (e.gradeNum||0)<=6 ? "amp" : "amm";
@@ -998,7 +1002,7 @@ function renderWeek(){
       const its=ENTRIES.filter(e=>e.sheet===sheet && e.day===d && e.period===p && (all || e.teacher===teacher || e.kind==="event"));
       h+="<td>"+its.map(e=>{ if(e.kind==="event") return `<div class="it" style="--cb:#efe8ff;--c:#5b34a8">${esc(e.text)}</div>`;
         if(e.kind==="free") return all?"":`<div class="fr">بدون حصة</div>`;
-        const [c,cb]=colorOf(subjectOf(e)); return `<div class="it" style="--c:${c};--cb:${cb}">${all?esc(e.teacher)+" ":""}${escL(e.cls)}${e.room?`<div style="font-weight:400;font-size:11px">${esc(/^\d+$/.test(e.room)?"قاعة "+e.room:e.room)}</div>`:""}</div>`; }).join("")+"</td>";
+        const [c,cb]=colorOf(subjectOf(e)); return `<div class="it" style="--c:${c};--cb:${cb}">${all?esc(e.teacher)+" ":""}${escL(clsShort(e))}${e.room?`<div style="font-weight:400;font-size:11px">${esc(/^\d+$/.test(e.room)?"قاعة "+e.room:e.room)}</div>`:""}</div>`; }).join("")+"</td>";
     }
     h+="</tr>";
   }
@@ -1353,7 +1357,7 @@ function schRows(day){
     t.sups.add(e.sup); if(e.kind==="class"){ t.stages.add(e.stage); if(e.subject) t.subjects.add(e.subject); }
     if(e.day!==day || e.kind!=="class") return;
     if(stg && e.stage!==stg) return;
-    const k=(e.cls||"")+"|"+(e.subject||""); const c=t.cells[e.period]=t.cells[e.period]||{}; c[k]={cls:e.cls,lbl:e.track==="american"?e.cls:e.cls,subj:e.subject,room:e.room}; t.any=true; });
+    const k=(e.cls||"")+"|"+(e.subject||""); const c=t.cells[e.period]=t.cells[e.period]||{}; c[k]={cls:clsShort(e),lbl:clsShort(e),subj:e.subject,room:e.room}; t.any=true; });
   let rows=Object.values(T);
   if(stg) rows=rows.filter(t=>t.stages.has(stg));
   if(q) rows=rows.filter(t=>(t.teacher+" "+[...t.subjects].join(" ")+" "+[...t.sups].join(" ")).toLowerCase().includes(q) || Object.values(t.cells).some(c=>Object.values(c).some(x=>(x.cls+" "+x.subj).toLowerCase().includes(q))));

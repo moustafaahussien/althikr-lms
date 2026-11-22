@@ -6,7 +6,7 @@
    ===================================================================== */
 (function () {
   'use strict';
-  const KEY = 'lms_demo', DBKEY = 'lms_demo_db', VER = 3;
+  const KEY = 'lms_demo', DBKEY = 'lms_demo_db', VER = 4;
   const ROLE = (() => { try { return sessionStorage.getItem(KEY) || ''; } catch (_) { return ''; } })();
   if (!ROLE) return;
 
@@ -58,7 +58,7 @@
     DB.profiles = [];
     const staff = (id, full_name, role, job_title, extra = {}) => { DB.profiles.push(Object.assign({ id, email: id.slice(0, 8) + '@' + DOMAIN, full_name, role, job_title, active: true, source: 'demo', created_at: iso(daysAgo(300)), updated_at: iso(daysAgo(30)) }, extra)); return id; };
     staff(IDS.admin, 'سالم العتيبي', 'admin', 'مدير النظام', { email: 'admin@' + DOMAIN });
-    staff(IDS.leadership, 'د. خالد الشهري', 'leadership', 'المدير التنفيذي', { email: 'ceo@' + DOMAIN });
+    staff(IDS.leadership, 'خالد الشهري', 'leadership', 'المدير التنفيذي', { email: 'ceo@' + DOMAIN });
     staff(IDS.principal, 'عبدالله القحطاني', 'principal', 'مدير المرحلة المتوسطة', { email: 'mid.principal@' + DOMAIN });
     staff(IDS.supervisor, 'فهد الدوسري', 'supervisor', 'مشرف الرياضيات', { email: 'math.sup@' + DOMAIN });
     staff(IDS.teacher, 'أحمد الزهراني', 'teacher', 'معلم رياضيات', { email: 'a.zahrani@' + DOMAIN });

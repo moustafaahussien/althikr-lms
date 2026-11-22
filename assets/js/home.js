@@ -6,6 +6,7 @@
   const STAFF = !['student', 'parent'].includes(role);
   const LEADER = role === 'admin' || role === 'leadership';
   const main = $('#main');
+  const STL = { absent: 'غائب', late: 'متأخر', excused: 'غائب بعذر' };   // قبل أي await (تستخدمها بطاقة الطالب)
 
   // ---------- البطاقة الترحيبية ----------
   const chips = [];
@@ -224,7 +225,6 @@
 
   // ---------- الطالب ----------
   // ---------- بطاقة طالب (للطالب نفسه ولولي أمره) ----------
-  const STL = { absent: 'غائب', late: 'متأخر', excused: 'غائب بعذر' };
   async function childCard(id, mine) {
     const { data: c, error } = await sb.rpc('portal_child', { p_student: id });
     if (error) return `<div class="notice err">${esc(errMsg(error))}</div>`;

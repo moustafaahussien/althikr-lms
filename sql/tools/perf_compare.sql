@@ -1,5 +1,5 @@
 -- أداة: تقيس سرعة قراءة الجداول الأساسية وتقارن ما يراه كل دور قبل وبعد تطبيق sql/30 (كل شيء يُتراجع عنه)
--- ملاحظة: احذف أسطر create index من النص المضمَّن قبل التشغيل (لا تُنشأ فهارس وجدول قيد القراءة في نفس الجلسة)
+-- (الفهارس غير مضمَّنة هنا: لا يمكن إنشاء فهرس لجدول قيد القراءة في نفس الجلسة)
 create or replace function pg_temp.private_perf_measure() returns jsonb language plpgsql as $m$
 declare t0 timestamptz; r jsonb := '{}'; q record; h text; ms numeric;
 begin
@@ -129,26 +129,11 @@ do $$ declare p record; q text; c text; sql text; begin
   end loop;
 end $$;
 
-create index if not exists parent_links_student_idx      on public.parent_links(student_id);
-create index if not exists classes_homeroom_idx          on public.classes(homeroom_teacher_id);
-create index if not exists staff_aliases_profile_idx     on public.staff_aliases(profile_id);
-create index if not exists attendance_sessions_class_idx on public.attendance_sessions(class_id);
-create index if not exists complaints_submitter_idx      on public.complaints(submitter_id);
-create index if not exists complaints_student_idx        on public.complaints(student_id);
-create index if not exists complaints_teacher_idx        on public.complaints(teacher_id);
-create index if not exists complaint_updates_c_idx       on public.complaint_updates(complaint_id);
-create index if not exists requests_requester_idx        on public.requests(requester_id);
-create index if not exists request_steps_approver_idx    on public.request_steps(approver_id);
-create index if not exists messages_parent_idx           on public.messages(parent_id);
-create index if not exists guardian_codes_guardian_idx   on public.guardian_codes(guardian_id);
-create index if not exists guardian_sessions_guardian_idx on public.guardian_sessions(guardian_id);
-create index if not exists duty_slots_staff_idx          on public.duty_slots(staff_id);
-create index if not exists tt_slots_day_idx              on public.tt_slots(teacher_id, day);
 $mig$;
-  c record; o jsonb; n jsonb;
+  idn record; o jsonb; n jsonb;
   function_body text;
 begin
-  for c in select * from (values
+  for idn in select * from (values
      ('admin',      (select email from profiles where role='admin' and active and email is not null limit 1)),
      ('teacher',    (select p.email from profiles p where p.role='teacher' and p.active and p.email is not null and exists (select 1 from teaching_assignments ta where ta.teacher_id=p.id) limit 1)),
      ('homeroom',   (select p.email from profiles p join classes c on c.homeroom_teacher_id = p.id where p.active and p.email is not null limit 1)),
@@ -158,16 +143,16 @@ begin
      ('student',    (select p.email from profiles p join students s on s.profile_id=p.id where p.active and p.email is not null limit 1)),
      ('parent',     (select email from profiles where role='parent' and active and email is not null limit 1))
   ) x(who, em) loop
-    if c.em is null then insert into perf2 values (c.who, 'no account'); continue; end if;
+    if idn.em is null then insert into perf2 values (idn.who, 'no account'); continue; end if;
     begin
       insert into app_settings(key, value) values ('student_login_enabled','true'),('parent_login_enabled','true') on conflict (key) do update set value='true';
-      perform set_config('request.jwt.claims', json_build_object('email', c.em, 'sub', gen_random_uuid(), 'role', 'authenticated')::text, true);
+      perform set_config('request.jwt.claims', json_build_object('email', idn.em, 'sub', gen_random_uuid(), 'role', 'authenticated')::text, true);
       o := pg_temp.private_perf_measure();
       execute mig;
       n := pg_temp.private_perf_measure();
       raise exception 'R:%', jsonb_build_object('old', o, 'new', n)::text;
     exception when others then
-      insert into perf2 values (c.who, case when sqlerrm like 'R:%' then substr(sqlerrm, 3) else 'ERR ' || sqlerrm end);
+      insert into perf2 values (idn.who, case when sqlerrm like 'R:%' then substr(sqlerrm, 3) else 'ERR ' || sqlerrm end);
     end;
   end loop;
 end $t$;

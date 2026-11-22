@@ -34,7 +34,7 @@
       $('#view').innerHTML = `<div class="empty">${STUDENT ? 'لا توجد مواد مسندة لفصلك بعد (أو لم تُربط بفصلك في المنصة).' : 'لا توجد مقررات مسندة إليك أو لمعلميك.'}</div>`; return;
     }
     const mine = COURSES.filter((c) => c.mine), other = COURSES.filter((c) => !c.mine);
-    const card = (c) => `<button data-c="${c.class_id}-${c.subject_id}"><b>${esc(c.subject)}</b><small>${esc(short(c.class))} · ${esc((c.class.split(' — ')[1]) || '')}</small>
+    const card = (c) => `<button data-c="${c.class_id}-${c.subject_id}"><b>${esc(c.subject)}</b><small>${esc(c.class)}</small>
       <small>${esc((c.teachers || []).join('، '))}</small><span class="cnt">${c.posts ? `${c.posts} منشور · آخرها ${esc(when(c.last_at))}` : 'لا منشورات بعد'}</span></button>`;
     $('#view').innerHTML = `<div class="toolbar glass" style="padding:10px"><input id="cq" class="grow" type="search" placeholder="ابحث بالمادة أو الفصل أو المعلم…"></div>
       ${mine.length ? `<h3 class="sec-h">${STUDENT ? '' : 'مقرراتي'}</h3><div class="crs">${mine.map(card).join('')}</div>` : ''}
@@ -59,7 +59,7 @@
         ${p.body ? `<p>${esc(p.body)}</p>` : ''}${linksHTML(p.links)}
         ${p.mine ? `<div class="acts"><button class="btn sm ghost" data-ed="${p.id}">✏️ تعديل</button><button class="btn sm ghost" data-del="${p.id}">🗑️ حذف</button></div>` : ''}</article>`;
     $('#view').innerHTML = `<div class="chead glass"><button class="btn sm ghost" id="back">→ كل المواد</button>
-        <div class="grow"><h2>${esc(c.subject)} — ${esc(short(c.class))}</h2><div class="hint">${esc(c.class.split(' — ')[1] || '')} · ${esc((c.teachers || []).join('، '))}</div></div>
+        <div class="grow"><h2>${esc(c.subject)} — ${esc(c.class)}</h2><div class="hint">${esc((c.teachers || []).join('، '))}</div></div>
         ${D.can_post ? '<button class="btn primary" id="newPost">➕ منشور جديد</button>' : ''}</div>
       ${HW.length ? `<div class="hwbox notice"><b>📝 واجبات مطلوبة في هذه المادة:</b>${HW.map((h) => `<a href="homework.html#student">• ${esc(h.title)} — التسليم ${esc(when(h.due_at))}</a>`).join('')}</div>` : ''}
       ${pinned.map(post).join('')}

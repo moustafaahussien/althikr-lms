@@ -1,8 +1,9 @@
 {
-  "name": "مكتب الإشراف التربوي – منصة دار الذكر التعليمية",
-  "short_name": "الإشراف التربوي",
-  "start_url": "/althikr-lms/supervision/",
-  "scope": "/althikr-lms/supervision/",
+  "id": "/althikr-lms/supervision/",
+  "name": "منصة دار الذكر التعليمية",
+  "short_name": "دار الذكر",
+  "start_url": "/althikr-lms/home.html",
+  "scope": "/althikr-lms/",
   "display": "standalone",
   "dir": "rtl",
   "lang": "ar",

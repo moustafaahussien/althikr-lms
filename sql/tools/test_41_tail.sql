@@ -16,17 +16,17 @@ begin
   hid := (public.hw_save(jsonb_build_object('title', 'واجب ف1', 'subject_id', t.subject_id, 'class_ids', jsonb_build_array(t.class_id), 'due_at', (now() + interval '1 day')::text, 'period', 'p1'))->>'id')::bigint;
   begin perform public.hw_save(jsonb_build_object('title', 'x', 'subject_id', t.subject_id, 'class_ids', jsonb_build_array(t.class_id), 'due_at', now()::text, 'period', 'zz')); res := res || ' BAD:period'; exception when others then res := res || ' badPeriodBlocked'; end;
   q1 := (public.qb_save(jsonb_build_object('subject_id', t.subject_id, 'qtype', 'match', 'body', 'زاوج', 'points', 4, 'image', 'data:image/png;base64,iVBORw0KGgo=',
-          'pairs', jsonb_build_array(jsonb_build_object('l','مصر','r','القاهرة'), jsonb_build_object('l','السعودية','r','الرياض'), jsonb_build_object('l','الأردن','r','عمّان')))))->>'id')::bigint;
+          'pairs', jsonb_build_array(jsonb_build_object('l','مصر','r','القاهرة'), jsonb_build_object('l','السعودية','r','الرياض'), jsonb_build_object('l','الأردن','r','عمّان'))))->>'id')::bigint;
   begin perform public.qb_save(jsonb_build_object('subject_id', t.subject_id, 'qtype', 'mcq', 'body', 'x', 'image', 'javascript:alert(1)', 'options', jsonb_build_array(jsonb_build_object('t','a','ok',true), jsonb_build_object('t','b')))); res := res || ' BAD:img'; exception when others then res := res || ' badImgBlocked'; end;
   q2 := (public.qb_save(jsonb_build_object('subject_id', t.subject_id, 'qtype', 'tf', 'body', 'صح؟', 'tf', true))->>'id')::bigint;
   eid := (public.ex_save(jsonb_build_object('subject_id', t.subject_id, 'class_ids', jsonb_build_array(t.class_id), 'title', 'اختبار مزاوجة', 'period', 'mid',
-          'opens_at', (now() - interval '1 minute')::text, 'closes_at', (now() + interval '1 hour')::text, 'questions', jsonb_build_array(jsonb_build_object('id', q1), jsonb_build_object('id', q2)))))->>'id')::bigint;
+          'opens_at', (now() - interval '1 minute')::text, 'closes_at', (now() + interval '1 hour')::text, 'questions', jsonb_build_array(jsonb_build_object('id', q1), jsonb_build_object('id', q2))))->>'id')::bigint;
   perform public.hw_grade(hid, st.id, 'grade', 8, 'جيد');
   r := public.gb_sheet(t.class_id, t.subject_id);
   res := res || ' gbPeriods=' || (select string_agg(c->>'period', ',' order by c->>'key') from jsonb_array_elements(r->'columns') c where c->>'key' in ('hw' || hid, 'ex' || eid));
   perform public.lib_share('exam', eid, 'للتجربة');
   begin perform public.lib_share('hw', (select id from hw_assignments where teacher_id <> t.id limit 1), null); res := res || ' BAD:shareOthers'; exception when others then res := res || ' shareOthersBlocked'; end;
-  lpid := (public.lp_save(jsonb_build_object('title', 'درس', 'date', current_date::text, 'subject_id', t.subject_id, 'class_ids', jsonb_build_array(t.class_id))))->>'id')::bigint;
+  lpid := (public.lp_save(jsonb_build_object('title', 'درس', 'date', current_date::text, 'subject_id', t.subject_id, 'class_ids', jsonb_build_array(t.class_id)))->>'id')::bigint;
   perform public.lp_submit(lpid);
   reset role;
 

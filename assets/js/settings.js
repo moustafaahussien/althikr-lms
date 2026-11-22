@@ -119,7 +119,7 @@
   });
 
   function loadXLSX() {
-    return new Promise((res, rej) => { if (window.XLSX) return res(); const s = document.createElement('script'); s.src = 'supervision/xlsx.full.min.js';
+    return new Promise((res, rej) => { if (window.XLSX) return res(); const s = document.createElement('script'); s.src = 'https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js'; s.integrity = 'sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT'; s.crossOrigin = 'anonymous';
       s.onload = res; s.onerror = () => rej(new Error('تعذّر تحميل قارئ Excel')); document.head.appendChild(s); });
   }
   async function upload(ev) {

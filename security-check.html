@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>فحص الصلاحيات — منصة دار الذكر التعليمية</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="stylesheet" href="assets/css/app.css?v=202611221200">
+  <link rel="stylesheet" href="assets/css/topbar.css?v=202611221200">
+  <style>
+    .chk td:first-child { width: 34px; text-align: center; font-size: 1.2rem; }
+    .chk td { white-space: normal; vertical-align: top; }
+    .chk code { direction: ltr; unicode-bidi: embed; font-size: .82rem; background: #f4f6f8; padding: 1px 5px; border-radius: 6px; }
+    .sum { font-size: 1.1rem; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <header id="topbar"></header>
+  <main class="page" id="main">
+    <section class="hero glass">
+      <h1>🛡️ فحص الصلاحيات من حسابك</h1>
+      <p>يجرّب هذا الفحص — بجلسة حسابك الحالية وعبر نفس طريق المتصفح — العمليات التي أُغلقت في الإصلاح الأمني، ويتأكد أنها مرفوضة.
+        افتحه بحساب <b>غير مدير</b> (معلم، مشرف، موظف…). لا يغيّر أي بيانات.</p>
+    </section>
+    <div id="out"><div class="loader"><div class="spin"></div>جارٍ الفحص…</div></div>
+  </main>
+  <footer class="credit">إعداد وتصميم: مصطفى حسين</footer>
+
+  <script src="assets/vendor/supabase-js-2.119.2.js"></script>
+  <script src="assets/js/config.js?v=202611221200"></script>
+  <script src="assets/js/academic-calendar.js?v=202611221200"></script>
+  <script src="assets/js/core.js?v=202611221200"></script>
+  <script>
+  (async function () {
+    const { sb, esc, $, requireAuth, ROLE_LABELS } = LMS;
+    const ctx = await requireAuth();
+    const me = ctx.profile, role = ctx.realRole || me.role;
+    const denied = (e) => !!e && /permission denied|not_sys|غير مصرح|42501|PGRST202|Could not find the function/i.test((e.message || '') + ' ' + (e.code || ''));
+    const T = [];
+    const add = (name, ok, detail, info) => T.push({ name, ok, detail, info });
+
+    // 1) استيراد مكتب الإشراف (حمولة فارغة: لا يستورد شيئًا حتى لو كان مفتوحًا)
+    { const { data, error } = await sb.rpc('sv_import', { p: {} });
+      const ok = error ? denied(error) : !(data && data.ok === true);
+      add('استيراد بيانات مكتب الإشراف <code>sv_import</code>', role === 'admin' ? null : ok,
+        error ? error.message : JSON.stringify(data), role === 'admin' ? 'مسموح لمدير النظام — افتح الصفحة بحساب آخر' : ''); }
+
+    // 2) الدوال الداخلية (بمدخلات لا تغيّر شيئًا: معرّف فارغ / بدون إنشاء)
+    { const { error } = await sb.rpc('_student_email_fill', { pid: null, nid: 'security-check' });
+      add('تغيير بريد حساب <code>_student_email_fill</code>', denied(error), error ? error.message : 'نُفّذت الدالة!'); }
+    { const { error } = await sb.rpc('_get_class', { p_stage: 'x', p_grade: 'x', p_class: 'x', p_create: false });
+      add('إنشاء فصول <code>_get_class</code>', denied(error), error ? error.message : 'نُفّذت الدالة!'); }
+    { const { error } = await sb.rpc('_find_grade', { p_stage: 'x', p_grade: 'x' });
+      add('دالة داخلية <code>_find_grade</code>', denied(error), error ? error.message : 'نُفّذت الدالة!'); }
+
+    // 3) الإعدادات السرية
+    { const { data, error } = await sb.from('app_settings').select('key');
+      const keys = (data || []).map((r) => r.key);
+      add('قراءة الإعداد السري لرموز أولياء الأمور <code>gd_salt</code>', role === 'admin' ? null : !keys.includes('gd_salt'),
+        error ? error.message : 'المفاتيح المقروءة: ' + (keys.join('، ') || '—'), role === 'admin' ? 'مدير النظام يقرأ كل الإعدادات' : ''); }
+
+    // 4) ملفات الطلاب الشخصية (الطالب يرى نفسه فقط)
+    { const { data, error } = await sb.from('profiles').select('id').eq('role', 'student');
+      const n = (data || []).length;
+      if (role === 'student') add('رؤية ملفات الطلاب الآخرين', n <= 1, error ? error.message : `يرى ${n} ملف طالب (المسموح: ملفه فقط)`);
+      else add('ملفات الطلاب الظاهرة لحسابك', null, error ? error.message : `${n} طالب`, 'للمعلم/المشرف: الطلاب ضمن فصوله أو نطاقه فقط'); }
+
+    const fails = T.filter((t) => t.ok === false).length, pass = T.filter((t) => t.ok === true).length;
+    $('#out').innerHTML = `
+      <div class="notice ${fails ? 'err' : 'info'} sum">${fails ? `❌ ${fails} فحص لم ينجح — أرسل لقطة شاشة لهذه الصفحة` : `✅ كل الفحوص ناجحة (${pass})`}</div>
+      <p class="hint">الحساب: <b>${esc(me.full_name)}</b> — ${esc(ROLE_LABELS[role] || role)} · ${esc(new Date().toLocaleString('ar-SA-u-ca-gregory-nu-latn'))}</p>
+      <div class="table-wrap glass" style="max-height:none"><table class="chk"><thead><tr><th></th><th>الفحص</th><th>النتيجة من الخادم</th></tr></thead><tbody>
+      ${T.map((t) => `<tr><td>${t.ok === true ? '✅' : t.ok === false ? '❌' : 'ℹ️'}</td><td>${t.name}${t.info ? `<div class="hint">${esc(t.info)}</div>` : ''}</td><td><code>${esc(t.detail)}</code></td></tr>`).join('')}
+      </tbody></table></div>`;
+  })();
+  </script>
+</body>
+</html>

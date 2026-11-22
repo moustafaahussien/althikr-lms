@@ -61,6 +61,12 @@ async function loadMeet(dates) {
 }
 function resetRequest_() { DATA_ = null; DATA_VER_ = ""; ACCT_ = null; }
 
+// ⚠️ حالة مشتركة (BOOK/PROPS/REQ) بين الطلبات المتزامنة داخل نفس الخادم:
+// كل ما يقرأ أو يغيّر هذه الحالة يمرّ بالدور (طلب واحد في كل مرة) حتى لا يأخذ طالب بيانات طالب آخر
+// أو تضيع كتابة طلب بسبب تحديث طلب آخر. التحقق من الهوية يبقى خارج الدور (متوازيًا).
+let LOCK_ = Promise.resolve();
+function withLock(fn) { const run = LOCK_.then(fn, fn); LOCK_ = run.catch(() => {}); return run; }
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   try {
@@ -68,11 +74,11 @@ Deno.serve(async (req) => {
     let body = {};
     if (req.method === "POST") { try { body = await req.json(); } catch (e) { body = {}; } }
     const act = String(body.action || "");
-    await loadProps();
 
     // ---- عمليات النظام (بالمفتاح السري): استيراد الأوراق، سجل Meet، التقرير اليومي ----
     const secret = req.headers.get("x-ol-secret") || body.secret || "";
-    if (act === "import" || act === "meetIngest" || act === "dailyReport") {
+    if (act === "import" || act === "meetIngest" || act === "dailyReport") return await withLock(async () => {
+      await loadProps();
       let okSecret = !!PROPS.ADMIN_SECRET && secret === PROPS.ADMIN_SECRET;
       if (!okSecret && act === "import") { const m = await whoAmI(req); okSecret = !!(m && !m.bad && m.role === "admin"); }   // مدير النظام يستورد بجلسته
       if (!okSecret) return json({ ok: false, error: "forbidden" }, 403);
@@ -90,17 +96,19 @@ Deno.serve(async (req) => {
       await loadMeet([todayStr_(0)]);
       dailyReport(); await flushBook();
       return json({ ok: true });
-    }
+    });
 
     // ---- حالة الإيقاف (بدون دخول) ----
-    if (req.method === "GET" && url.searchParams.get("status")) return json({ ok: true, paused: isPaused_() });
+    if (req.method === "GET" && url.searchParams.get("status")) return await withLock(async () => { await loadProps(); return json({ ok: true, paused: isPaused_() }); });
 
     // ---- المستخدم من جلسة المنصة ----
     const me = await whoAmI(req);
     if (!me) return json({ ok: false, error: "session" });
     if (me.bad) return json({ ok: false, error: "domain", email: me.email });
-    REQ = { email: me.email, name: me.name, role: me.role };
-
+    const myReq = { email: me.email, name: me.name, role: me.role };
+    return await withLock(async () => {
+    await loadProps();
+    REQ = myReq;
     const needLogs = act === "report" ? ["سجل الدخول", "التقارير اليومية"] : [];
     await syncBook(needLogs); resetRequest_();
     if (act === "report") { const d = normDate_(body.date) || todayStr_(0); await loadMeet([d]); }
@@ -121,8 +129,9 @@ Deno.serve(async (req) => {
       else out = { ok: false, error: "action" };
     }
     await flushBook();
-    if (out && out.ok && (req.method === "GET" || act === "gate")) out.me = { email: REQ.email, name: REQ.name || out.label || "", sno: (out.me && out.me.sno) || "" };
+    if (out && out.ok && (req.method === "GET" || act === "gate")) out.me = { email: myReq.email, name: myReq.name || out.label || "", sno: (out.me && out.me.sno) || "" };
     return json(out);
+    });
   } catch (e) {
     console.error(e);
     return json({ ok: false, error: "server", msg: String(e && e.message || e).slice(0, 200) });

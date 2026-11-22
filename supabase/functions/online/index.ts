@@ -1323,6 +1323,25 @@ function resetRequest_() { DATA_ = null; DATA_VER_ = ""; ACCT_ = null; }
 // أو تضيع كتابة طلب بسبب تحديث طلب آخر. التحقق من الهوية يبقى خارج الدور (متوازيًا).
 let LOCK_ = Promise.resolve();
 function withLock(fn) { const run = LOCK_.then(fn, fn); LOCK_ = run.catch(() => {}); return run; }
+// البيانات المشتركة تُحدَّث من قاعدة البيانات مرة كل بضع ثوانٍ (داخل الدور) بدل كل طلب،
+// فطلبات القراءة لا تنتظر الدور إلا عند التحديث، وحسابها نفسه متزامن (لا يتداخل مع طلب آخر).
+let FRESH_AT_ = 0;
+const FRESH_MS_ = 5000;
+async function refreshShared_(needLogs, force) {
+  const stale = () => force || needLogs.length || Date.now() - FRESH_AT_ > FRESH_MS_;
+  if (!stale()) return;
+  await withLock(async () => { if (!stale()) return; await loadProps(); await syncBook(needLogs); resetRequest_(); FRESH_AT_ = Date.now(); });
+}
+// هوية صاحب الجلسة: تُحفظ دقيقة واحدة لكل رمز دخول (بدل سؤال خادم الدخول وجدول الحسابات في كل طلب)
+const WHO_ = new Map();
+async function whoAmICached_(req) {
+  const tok = (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
+  const hit = tok && WHO_.get(tok);
+  if (hit && hit.exp > Date.now()) return hit.me;
+  const me = await whoAmI(req);
+  if (tok && me) { if (WHO_.size > 4000) WHO_.clear(); WHO_.set(tok, { me, exp: Date.now() + 60000 }); }
+  return me;
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
@@ -1349,30 +1368,40 @@ Deno.serve(async (req) => {
         const { error } = await SB.from("ol_meet").upsert({ day, recs: body.recs || [], at: new Date().toISOString() }); if (error) throw error;
         return json({ ok: true, n: (body.recs || []).length });
       }
-      await syncBook(["سجل الدخول", "التقارير اليومية"]); resetRequest_();
+      await syncBook(["سجل الدخول", "التقارير اليومية"]); FRESH_AT_ = Date.now();
       await loadMeet([todayStr_(0)]);
-      dailyReport(); await flushBook();
+      REQ = { email: "", name: "", role: "" }; resetRequest_();
+      dailyReport(); await flushBook(); resetRequest_();
       return json({ ok: true });
     });
 
     // ---- حالة الإيقاف (بدون دخول) ----
-    if (req.method === "GET" && url.searchParams.get("status")) return await withLock(async () => { await loadProps(); return json({ ok: true, paused: isPaused_() }); });
+    if (req.method === "GET" && url.searchParams.get("status")) { await refreshShared_([], false); return json({ ok: true, paused: isPaused_() }); }
 
     // ---- المستخدم من جلسة المنصة ----
-    const me = await whoAmI(req);
+    const me = await whoAmICached_(req);
     if (!me) return json({ ok: false, error: "session" });
     if (me.bad) return json({ ok: false, error: "domain", email: me.email });
     const myReq = { email: me.email, name: me.name, role: me.role };
-    return await withLock(async () => {
-    await loadProps();
-    REQ = myReq;
-    const needLogs = act === "report" ? ["سجل الدخول", "التقارير اليومية"] : [];
-    await syncBook(needLogs); resetRequest_();
-    if (act === "report") { const d = normDate_(body.date) || todayStr_(0); await loadMeet([d]); }
 
-    let out;
-    if (req.method === "GET" || act === "gate") out = gate_(SSO);
-    else {
+    // ---- قراءة (فتح الصفحة): تحديث مشترك عند الحاجة، ثم حساب متزامن بالكامل ----
+    if (req.method === "GET" || act === "gate") {
+      await refreshShared_([], false);
+      REQ = myReq;                                  // من هنا حتى الرد: لا انتظار ← لا يتداخل طلب آخر
+      // (البيانات المقروءة DATA_/ACCT_ تُشتق من الأوراق فقط، فتبقى محفوظة حتى يتغيّر شيء)
+      const out = gate_(SSO);
+      if (out && out.ok) out.me = { email: myReq.email, name: myReq.name || out.label || "", sno: (out.me && out.me.sno) || "" };
+      return json(out);
+    }
+
+    // ---- كتابة/تقارير: داخل الدور (طلب واحد في كل مرة) ----
+    return await withLock(async () => {
+      await loadProps();
+      const needLogs = act === "report" ? ["سجل الدخول", "التقارير اليومية"] : [];
+      await syncBook(needLogs); FRESH_AT_ = Date.now();
+      if (act === "report") { const d = normDate_(body.date) || todayStr_(0); await loadMeet([d]); }
+      REQ = myReq; resetRequest_();                 // بعد آخر انتظار وقبل الحساب المتزامن
+      let out;
       body.code = SSO; body.session = SSO;
       if (act === "setPause") out = setPause_(body);
       else if (isPaused_() && !isSysAdmin_(REQ.email)) out = act === "join" ? { ok: true } : { ok: false, error: "paused" };
@@ -1384,10 +1413,8 @@ Deno.serve(async (req) => {
       else if (act === "bind") out = bind_(body);
       else if (act === "classes") out = classList_(body);
       else out = { ok: false, error: "action" };
-    }
-    await flushBook();
-    if (out && out.ok && (req.method === "GET" || act === "gate")) out.me = { email: myReq.email, name: myReq.name || out.label || "", sno: (out.me && out.me.sno) || "" };
-    return json(out);
+      await flushBook(); resetRequest_();          // تغيّرت الأوراق ← تُعاد قراءتها في الطلب التالي
+      return json(out);
     });
   } catch (e) {
     console.error(e);

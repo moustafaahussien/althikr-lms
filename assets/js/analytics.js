@@ -3,7 +3,7 @@
    الدوال: an_overview / an_questions (sql/39)
    ===================================================================== */
 (async function () {
-  const { sb, esc, $, $$, toast, errMsg, requireAuth, printTable } = LMS;
+  const { sb, esc, $, $$, toast, errMsg, requireAuth } = LMS;
   const ctx = await requireAuth();
   const view = $('#view');
   if (ctx.profile.role === 'student' || ctx.profile.role === 'parent') { view.innerHTML = '<div class="notice">هذه الصفحة للمعلمين والإدارة.</div>'; $('#flt').hidden = true; return; }
@@ -80,12 +80,11 @@
         ${subj ? '<section class="glass" style="padding:10px 14px"><h3 class="sec-h" style="margin-top:0">أصعب الأسئلة في المادة</h3><div id="hq"><div class="empty">جارٍ التحميل…</div></div></section>'
           : '<section class="glass" style="padding:10px 14px"><h3 class="sec-h" style="margin-top:0">أصعب الأسئلة</h3><div class="empty">اختر مادة من الفلاتر لعرض الأسئلة الأقل إجابة صحيحة.</div></section>'}
       </div>
-      <div class="toolbar" style="margin-top:14px"><h3 class="sec-h grow" style="margin:0">التفاصيل</h3><button class="btn ghost sm" id="pr">🖨️ طباعة</button></div>
+      <h3 class="sec-h">التفاصيل</h3>
       <div class="table-wrap"><table id="fullT"><thead><tr><th>الفصل</th><th>المادة</th><th>المعلم</th><th>الطلاب</th><th>الواجبات</th><th>تسليم الواجبات</th><th>متوسط الواجبات</th><th>الاختبارات</th><th>أداء الاختبارات</th><th>متوسط الاختبارات</th></tr></thead><tbody>
         ${R.map((r) => `<tr><td>${esc(r.class)}</td><td>${esc(r.subject)}</td><td>${esc((r.teachers || []).join('، '))}</td><td>${r.size}</td><td>${r.hw_n}</td><td>${pv(r.hw_rate)}</td><td>${pv(r.hw_avg)}</td>
           <td>${r.ex_n}</td><td>${pv(r.ex_rate)}</td><td>${pv(r.ex_avg)}</td></tr>`).join('')}</tbody></table></div>`;
     $('#met').onclick = (e) => { const b = e.target.closest('[data-m]'); if (b) { METRIC = b.dataset.m; paint(); } };
-    $('#pr').onclick = () => printTable($('#fullT'), 'التحليل والمقارنة');
     if (subj) call('an_questions', { p_subject: subj, p_from: $('#fFrom').value || null, p_to: $('#fTo').value || null }).then((Q) => {
       $('#hq').innerHTML = Q.length ? Q.slice(0, 15).map((q) => `<div class="hq"><p>${esc(q.body)}</p><small class="hint">${esc(q.exam)} · ${esc(q.teacher || '')} · أجاب ${q.n} طالب</small>
         <div class="bar" style="grid-template-columns:1fr 54px"><span class="trk"><i class="${cls(+q.rate)}" style="width:${Math.max(2, +q.rate)}%"></i></span><span class="v">${q.rate}%</span></div></div>`).join('')

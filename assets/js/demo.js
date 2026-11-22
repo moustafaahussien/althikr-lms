@@ -6,7 +6,7 @@
    ===================================================================== */
 (function () {
   'use strict';
-  const KEY = 'lms_demo', DBKEY = 'lms_demo_db', VER = 4;
+  const KEY = 'lms_demo', DBKEY = 'lms_demo_db', VER = 5;
   const ROLE = (() => { try { return sessionStorage.getItem(KEY) || ''; } catch (_) { return ''; } })();
   if (!ROLE) return;
 
@@ -140,7 +140,7 @@
       const cells = []; for (let d = 0; d < 5; d++) for (let p = 1; p <= 7; p++) cells.push([d, p]);
       cells.sort(() => rnd() - 0.5);
       Object.entries(WEEK[st]).forEach(([s, n]) => {
-        const ts = teacherFor[st + '|' + s]; const t = ts[(c.id) % ts.length];
+        const ts = teacherFor[st + '|' + s]; const t = ts[(c.id + 1) % ts.length];   // معلم الديمو يدرّس فصل طالب الديمو
         DB.teaching_assignments.push({ id: ++taid, teacher_id: t, class_id: c.id, subject_id: SID[s], weekly_periods: n, source: 'timetable' });
         for (let k = 0; k < n; k++) {
           const i = cells.findIndex(([d, p]) => !busy.has(t + '|' + d + '|' + p)); if (i < 0) break;

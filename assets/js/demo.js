@@ -608,7 +608,25 @@
     pp_logout() { return true; },
     // ----- لوحة الإدارة -----
     parents_sync() { return { ok: true, emails: 0, created: 0, links: 0, parents: 0, note: NA }; },
-    sch_tt_get() { return { ok: true, profiles: [], times: {}, grades: [] }; }
+    sch_tt_get() {
+      const T = (start, n) => { const out = []; let m = start; for (let i = 1; i <= n; i++) { const s = m, e = m + 45; out.push({ p: i, s: `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`, e: `${String(Math.floor(e / 60)).padStart(2, '0')}:${String(e % 60).padStart(2, '0')}` }); m = e + (i === 3 ? 25 : 5); } return out; };
+      const owner = { 1: DB.profiles.find((p) => p.job_title === 'مشرف اللغة العربية').id, 2: IDS.supervisor, 3: DB.profiles.find((p) => p.job_title === 'مشرف العلوم').id };
+      const can = isManager();
+      return { ok: true,
+        profiles: [{ key: 'pri', name: 'الابتدائي', can, times: T(7 * 60 + 15, 7) }, { key: 'mid', name: 'المتوسط', can, times: T(7 * 60 + 15, 7) }, { key: 'sec', name: 'الثانوي', can, times: T(7 * 60 + 15, 7) }],
+        supervisors: DB.profiles.filter((p) => p.role === 'supervisor').map((p) => ({ id: p.id, name: p.full_name, dept: p.job_title.replace('مشرف ', ''), email: p.email })),
+        sheets: [1, 2, 3].map((st) => ({ id: st, owner: owner[st], idx: 0, name: 'جدول ' + stage(st).name_ar + '.xlsx', label: stage(st).name_ar, updated: iso(daysAgo(10)), slots: DB.tt_slots.filter((x) => x.sheet_id === st).length })),
+        teachers: [1, 2, 3].flatMap((st) => [...new Set(DB.tt_slots.filter((x) => x.sheet_id === st).map((x) => x.teacher_id))].map((t) => ({ sheet: st, id: t, name: name(t),
+          n: DB.tt_slots.filter((x) => x.sheet_id === st && x.teacher_id === t).length, fixed: [...new Set(DB.tt_slots.filter((x) => x.sheet_id === st && x.teacher_id === t).map((x) => subj(x.subject_id).name_ar))].join('، '), subject: null }))),
+        grades: DB.grades.map((g) => ({ sheet: g.stage_id, track: 'arabic', grade: g.number, classes: DB.classes.filter((c) => c.grade_id === g.id).map((c) => `${g.number}-${c.name}`).join('، '),
+          stage: { 1: 'ابتدائي', 2: 'متوسط', 3: 'ثانوي' }[g.stage_id], stage_set: true, prof: { 1: 'pri', 2: 'mid', 3: 'sec' }[g.stage_id] })) };
+    },
+    gd_list({ p_q, p_grade }) {
+      const q = norm(p_q || '');
+      return DB.students.filter((s) => (!p_grade || s.grade_id === p_grade) && (!q || norm(name(s.profile_id) + s.guardian_phone + s.student_number).includes(q))).slice(0, 300).map((s, i) => ({
+        student: s.profile_id, name: name(s.profile_id), grade: grade(s.grade_id).name_ar + ' — ' + stage(grade(s.grade_id).stage_id).name_ar + ' / ' + klass(s.class_id).name,
+        guardians: s.guardian_phone ? [{ id: 'g-' + s.profile_id, name: s.guardian_name, phone: '966' + s.guardian_phone.slice(1), has_pin: i % 3 !== 0, locked: i % 17 === 5 }] : [] }));
+    }
   };
 
   // ======================================================================

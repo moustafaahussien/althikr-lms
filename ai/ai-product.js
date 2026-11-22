@@ -127,7 +127,11 @@ function bindViewer(p) {
     if (!owner && !A.DEMO && A.CONFIGURED) { window.open('app.html?id=' + encodeURIComponent(id), '_blank', 'noopener'); return; }
     if (!appHtml) return;
     const w = window.open('', '_blank');
-    if (w) { w.opener = null; const u = URL.createObjectURL(new Blob([appHtml], { type:'text/html' })); w.location.href = u; }
+    // حتى تطبيق صاحب المنتج يُفتح داخل إطار معزول (لا يصل لجلسة المنصة في هذا النطاق)
+    const wrap = '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + esc(p.title || '') + '</title>' +
+      '<style>html,body{margin:0;height:100%}iframe{border:0;width:100%;height:100%;display:block}</style></head><body>' +
+      '<iframe sandbox="' + A.SANDBOX_ATTR + '" allow="fullscreen; autoplay; clipboard-write" srcdoc="' + esc(A.sandboxDoc(appHtml)) + '"></iframe></body></html>';
+    if (w) { w.opener = null; const u = URL.createObjectURL(new Blob([wrap], { type:'text/html' })); w.location.href = u; }
   };
   const dl = $('#vDl'); if (dl) dl.onclick = () => {
     if (!appHtml) return;

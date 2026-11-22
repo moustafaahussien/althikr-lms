@@ -708,6 +708,8 @@ let LANG = "ar";
 const t = (k, vars={}) => String(I18N[LANG][k] ?? k).replace(/\{(\w+)\}/g, (_,v)=> vars[v] ?? "");
 const L = obj => obj ? (obj[LANG] || obj.ar) : "";
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+// روابط الحصص: http/https فقط (يمنع روابط javascript: وغيرها حتى لو كتبها أحد في جدول الروابط)
+const safeUrl = u => /^https?:\/\//i.test(String(u ?? "").trim()) ? String(u).trim() : "#";
 const gradeName  = g => LANG === "ar" ? `الصف ${ORD_AR[g.n]}` : `Grade ${g.n}`;
 const gradeShort = g => g.track.key === "american" ? `Grade ${g.n}` : (LANG === "ar" ? ORD_AR[g.n] : ORD_EN[g.n]);
 
@@ -1504,7 +1506,7 @@ function renderGate(){
         ${live.map(x=>{ const g = GRADES[x.g.grade]; return `<div class="now-item" style="--c:${g.color}">
           <button type="button" class="now-main" data-g="${g.id}"><b>${esc(gradeFull(g))}</b>${x.g.label ? ` · ${groupTitlePlain(x.g.label)}` : ""}
             <span>${x.row ? `${esc(t("period",{n:x.row.p}))} — <bdi>${esc(x.row.subject || "")}</bdi>${x.row.teacher ? ` · <bdi>${esc(x.row.teacher)}</bdi>` : ""}` : esc(t("openNow"))}</span></button>
-          ${(x.row?.link || x.g.link) ? `<a class="now-join" href="${esc(x.row?.link || x.g.link)}" target="_blank" rel="noopener">${svg("video")}<span>${esc(t("joinShort"))}</span></a>` : ""}
+          ${(x.row?.link || x.g.link) ? `<a class="now-join" href="${esc(safeUrl(x.row?.link || x.g.link))}" target="_blank" rel="noopener">${svg("video")}<span>${esc(t("joinShort"))}</span></a>` : ""}
         </div>`; }).join("")}</div>` : ""}
       </div>`;
     box.querySelector("#edOpen")?.addEventListener("click", openEditor);
@@ -1609,7 +1611,7 @@ function renderGroups(dayArg){
       const tm = r.start != null ? `${fmtTime(r.start)}${r.end != null ? `<br>${fmtTime(r.end)}` : ""}` : "";
       return r.kind === "b"
         ? `<li class="brk${cls}"><span class="pn">${svg("cup")}</span><span class="sub"><b>${esc(brkName(r))}</b></span><span class="tm" data-now="${esc(t("now"))}">${tm}</span></li>`
-        : `<li class="${cls.trim()}"><span class="pn">${r.p}</span><span class="sub"><b>${esc(r.subject || "—")}</b>${r.teacher ? `<span>${esc(r.teacher)}</span>` : ""}${r.link && r.link !== gr.link ? `<a class="row-link" data-room="${esc(gr.key)}" href="${esc(r.link)}" target="_blank" rel="noopener">${svg("video")}${esc(t("joinShort"))}</a>` : ""}</span><span class="tm" data-now="${esc(t("now"))}">${tm}</span></li>`;
+        : `<li class="${cls.trim()}"><span class="pn">${r.p}</span><span class="sub"><b>${esc(r.subject || "—")}</b>${r.teacher ? `<span>${esc(r.teacher)}</span>` : ""}${r.link && r.link !== gr.link ? `<a class="row-link" data-room="${esc(gr.key)}" href="${esc(safeUrl(r.link))}" target="_blank" rel="noopener">${svg("video")}${esc(t("joinShort"))}</a>` : ""}</span><span class="tm" data-now="${esc(t("now"))}">${tm}</span></li>`;
     }).join("")}</ol>`
       : (win && dateOf(day).getDay() <= 4) ? `<p class="tt-empty tt-win">${svg("cal")}<span>${esc(t("winLine",{d:`${I18N[LANG].days[0]} – ${I18N[LANG].days[4]}`, a:fmtTime(win.start), b:fmtTime(win.end)}))}</span></p>`
       : `<p class="tt-empty">${esc(t("noTT"))}</p>`;
@@ -1621,9 +1623,9 @@ function renderGroups(dayArg){
         ${gr.owner ? `<div class="meta"><span>${svg("user")}${esc(t("owner"))}: <bdi>${esc(gr.owner)}</bdi></span></div>` : ""}
         ${gr.note ? `<p class="note">${esc(gr.note)}</p>` : ""}
         ${liveSplit.length > 1
-          ? `<div class="joins" style="--n:${Math.min(liveSplit.length,4)}">${liveSplit.map(r => `<a class="join" data-room="${esc(gr.key)}" href="${esc(r.link || gr.link)}" target="_blank" rel="noopener" title="${esc(r.teacher || "")}">${svg("video")}<bdi>${esc(r.subject || t("join"))}</bdi></a>`).join("")}</div>`
+          ? `<div class="joins" style="--n:${Math.min(liveSplit.length,4)}">${liveSplit.map(r => `<a class="join" data-room="${esc(gr.key)}" href="${esc(safeUrl(r.link || gr.link))}" target="_blank" rel="noopener" title="${esc(r.teacher || "")}">${svg("video")}<bdi>${esc(r.subject || t("join"))}</bdi></a>`).join("")}</div>`
           : joinLink
-          ? `<a class="join" data-room="${esc(gr.key)}" href="${esc(joinLink)}" target="_blank" rel="noopener">${svg("video")}${esc(t("join"))}</a>`
+          ? `<a class="join" data-room="${esc(gr.key)}" href="${esc(safeUrl(joinLink))}" target="_blank" rel="noopener">${svg("video")}${esc(t("join"))}</a>`
           : `<span class="join off">${esc(t("noLink"))}</span>`}
       </div>
       ${tt}
@@ -1731,7 +1733,7 @@ function renderLinks(box){
     <div class="ed-rows">${rooms.filter(g => !ED.filter || g.key === ED.filter).map(g => { const x = ED.links[g.key]; const dirty = (x.link.trim() + "|" + x.owner.trim()) !== x.orig; return `
       <div class="ed-row lk-row${dirty ? " dirty" : ""}" data-room="${esc(g.key)}">
         <div class="ed-row-h"><b class="lk-name">${esc(roomName(g))}</b>${dirty ? `<span class="lk-badge">${esc(t("lkChanged"))}</span>` : ""}
-          ${g.link ? `<a class="row-link" href="${esc(g.link)}" target="_blank" rel="noopener">${svg("video")}${esc(t("lkTest"))}</a>` : ""}</div>
+          ${g.link ? `<a class="row-link" href="${esc(safeUrl(g.link))}" target="_blank" rel="noopener">${svg("video")}${esc(t("lkTest"))}</a>` : ""}</div>
         <label class="lk-link">${esc(t("lkLink"))}<input type="url" dir="ltr" data-f="link" value="${esc(x.link)}" placeholder="https://meet.google.com/..."></label>
         <label class="lk-owner">${esc(t("lkOwner"))}<input type="text" data-f="owner" value="${esc(x.owner)}" placeholder="${esc(t("lkOwnerPh"))}"></label>
       </div>`; }).join("")}</div>

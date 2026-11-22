@@ -35,6 +35,7 @@ window.LMS_CONFIG = {
     { key: 'complaints',  title: 'الشكاوى الأكاديمية',    icon: '📣', url: 'services.html#cmp', roles: [], desc: 'تسجيل الشكوى ومتابعتها حتى الحل' },
     { key: 'training',    title: 'تدريب المعلمين',        icon: '🎓', url: 'services.html#trn', roles: ['admin','leadership','principal','supervisor','teacher','staff'], desc: 'الساعات والشهادات وتقييم أثر التدريب' },
     { key: 'load',        title: 'نصاب الحصص',          icon: '📊', url: 'teaching-load.html', roles: ['admin','leadership','principal','supervisor'], desc: 'الحصص الأسبوعية لكل معلم وجدوله' },
+    { key: 'guardians',   title: 'أولياء الأمور',        icon: '👪', url: 'guardians.html', roles: ['admin','leadership','principal'], desc: 'جوالات أولياء الأمور ورموز التفعيل على واتساب' },
     { key: 'directory',   title: 'دليل الموظفين',        icon: '📇', url: 'staff-directory.html', roles: ['admin','leadership','principal','supervisor','teacher','staff'], desc: 'أسماء المنسوبين ومسمياتهم وطرق التواصل' },
     { key: 'supervision', title: 'مكتب الإشراف التربوي', icon: '🧭', url: 'supervision/', roles: ['admin','leadership','principal','supervisor'], desc: 'جداول الحصص والزيارات وتقييم المعلمين' },
     { key: '21csu',       title: 'مهارات القرن 21',      icon: '🚀', url: 'https://moustafaahussien.github.io/21csu/', roles: [], desc: 'البرامج الستة للوحدة' },

@@ -8,7 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="icon" type="image/png" href="favicon.png">
   <meta name="theme-color" content="#0f6e6a">
-  <link rel="stylesheet" href="assets/css/app.css?v=202611220230">
+  <link rel="stylesheet" href="assets/css/app.css?v=202611220930">
 </head>
 <body>
   <div class="login-wrap">
@@ -22,8 +22,8 @@
   <footer class="credit" style="position:fixed;bottom:0;inset-inline:0">إعداد وتصميم: مصطفى حسين · <a href="privacy.html">سياسة الخصوصية</a></footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="assets/js/config.js?v=202611220230"></script>
-  <script src="assets/js/core.js?v=202611220230"></script>
+  <script src="assets/js/config.js?v=202611220930"></script>
+  <script src="assets/js/core.js?v=202611220930"></script>
   <script>
   (async function () {
     const { sb, C, configured, esc, $, signInWithGoogle, signOut, getContext, errMsg, rememberNext, takeNext } = LMS;
@@ -38,11 +38,11 @@
       area.innerHTML = `
         <p>سجّل الدخول بحسابك المدرسي <b dir="ltr">@${esc(C.SCHOOL_DOMAIN)}</b></p>
         <button class="btn primary gbtn" id="gbtn">${gIcon}<span>الدخول بحساب Google المدرسي</span></button>
-        <div class="hint" style="margin:14px 0 6px">أولياء الأمور:</div>
-        <button class="btn gbtn" id="pbtn">${gIcon}<span>دخول ولي الأمر (بريده المسجّل في المدرسة)</span></button>
+        <div class="hint" style="margin:14px 0 6px">أولياء الأمور: ادخل بحساب ابنك المدرسي، ثم برمزك السري الخاص</div>
+        <button class="btn gbtn" id="pbtn">${gIcon}<span>👪 دخول ولي الأمر</span></button>
         ${notice}`;
       $('#gbtn').onclick = () => signInWithGoogle();
-      $('#pbtn').onclick = () => signInWithGoogle(true);
+      $('#pbtn').onclick = () => { try { sessionStorage.setItem('lms_next', 'parent.html'); } catch (_) {} signInWithGoogle(); };
     };
 
     if (!configured) {
@@ -66,6 +66,8 @@
       if (ctx && ctx.registered) { LMS.applyView(ctx); location.replace(nxt || (ctx.profile && ctx.profile.role === 'supervisor' ? 'supervision/' : 'home.html')); return; }
       // صفحة «التعليم عن بعد» تقبل أي حساب مدرسي (الطلاب يدخلونها حتى لو كانت بقية المنصة مقفولة عليهم)
       if (ctx && ctx.domain_ok !== false && /^online\//.test(nxt)) { location.replace(nxt); return; }
+      // ولي الأمر يدخل من حساب ابنه حتى لو كان دخول الطلاب مقفولًا
+      if (ctx && ctx.students_closed && /^parent\.html/.test(nxt)) { location.replace('parent.html'); return; }
 
       const email = (ctx && ctx.email) || session.user.email || '';
       const msg = ctx && ctx.students_closed
@@ -76,6 +78,7 @@
         ? `الحساب <b dir="ltr">${esc(email)}</b> ليس حسابًا مدرسيًا. استخدم بريدك على <b dir="ltr">@${esc(C.SCHOOL_DOMAIN)}</b>.`
         : `الحساب <b dir="ltr">${esc(email)}</b> غير مسجّل في المنصة أو موقوف. ولي الأمر: ادخل بنفس البريد المسجّل لدى المدرسة لابنك. وإلا تواصل مع إدارة المدرسة.`;
       area.innerHTML = `<div class="notice err">${msg}</div>
+        ${ctx && ctx.students_closed ? '<a class="btn primary gbtn" href="parent.html" style="margin-bottom:8px">👪 دخول ولي الأمر (برمزه السري)</a>' : ''}
         <button class="btn gbtn" id="other">الدخول بحساب آخر</button>`;
       $('#other').onclick = async () => { await sb.auth.signOut(); showLogin(); };
     } catch (e) {

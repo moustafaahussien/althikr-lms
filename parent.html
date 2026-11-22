@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>دخول ولي الأمر — منصة دار الذكر التعليمية</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <meta name="theme-color" content="#0f6e6a">
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="assets/css/app.css?v=202611220930">
+  <style>
+    .pp-wrap { max-width: 760px; margin: 0 auto; }
+    .pp-box { padding: 22px; margin-bottom: 16px; }
+    .pp-box h2 { margin: 0 0 6px; font-size: 1.15rem; }
+    .pin { font-size: 1.6rem; letter-spacing: .5em; text-align: center; direction: ltr; font-family: monospace; width: 100%; max-width: 260px; padding: 10px; }
+    .code { font-size: 1.3rem; letter-spacing: .25em; text-align: center; direction: ltr; text-transform: uppercase; font-family: monospace; width: 100%; max-width: 300px; padding: 10px; }
+    .gd-pick { display: grid; gap: 8px; margin: 12px 0; }
+    .gd-pick label { display: flex; gap: 10px; align-items: center; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; cursor: pointer; background: #fff; }
+    .gd-pick label:has(input:checked) { border-color: var(--brand); box-shadow: 0 0 0 2px var(--brand2); }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 12px; }
+    .kpi4 { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+    .kpi4 .card-box { padding: 10px; }
+    .kpi4 b { font-size: 1.4rem; }
+    .who-bar { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; padding: 12px 16px; margin-bottom: 14px; }
+    .timer { font-size: .82rem; color: var(--muted); }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/js/config.js?v=202611220930"></script>
+  <script src="assets/js/core.js?v=202611220930"></script>
+</head>
+<body>
+  <main class="page pp-wrap">
+    <section class="hero glass">
+      <h1>👪 دخول ولي الأمر</h1>
+      <p>تدخل بحساب ابنك المدرسي، ثم برمزك السري الخاص. لا يُحفظ رمزك على هذا الجهاز، وتُغلق صفحتك تلقائيًا بعد 30 دقيقة من عدم الاستخدام.</p>
+    </section>
+    <div id="area"><div class="hint" style="text-align:center;padding:30px">⏳ جارٍ التحقق…</div></div>
+    <p class="hint" style="text-align:center;margin-top:20px"><a href="index.html">← صفحة الدخول</a></p>
+  </main>
+<script>
+(async function () {
+  'use strict';
+  const { sb, esc, $, toast, errMsg } = LMS;
+  const area = $('#area');
+  let TOKEN = '';                 // في الذاكرة فقط — لا localStorage ولا sessionStorage
+  let idleT = null, ST = null;
+  const IDLE_MIN = 10;            // قفل الصفحة على الجهاز بعد 10 دقائق بلا نشاط (والخادم ينهي الجلسة بعد 30)
+
+  const call = async (fn, args) => { const { data, error } = await sb.rpc(fn, args || {}); if (error) throw error; return data; };
+
+  // 1) لازم حساب الطالب المدرسي
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { location.href = 'index.html?next=parent.html'; return; }
+
+  async function start(msg) {
+    TOKEN = ''; clearTimeout(idleT);
+    try { ST = await call('pp_status'); }
+    catch (e) {
+      area.innerHTML = `<div class="notice err">${esc(errMsg(e))}</div>
+        <div class="notice info">هذه الصفحة تُفتح من <b>حساب الطالب المدرسي</b> (رقم الهوية@${esc(LMS.C.SCHOOL_DOMAIN)}).</div>
+        <button class="btn" id="out">الدخول بحساب آخر</button>`;
+      $('#out').onclick = async () => { await sb.auth.signOut(); location.href = 'index.html?next=parent.html'; };
+      return;
+    }
+    const gs = ST.guardians || [];
+    if (!gs.length) {
+      area.innerHTML = `<div class="glass pp-box"><h2>الطالب: ${esc(ST.student)}</h2>
+        <div class="notice warn">لا يوجد رقم جوال ولي أمر مسجّل لهذا الطالب في المدرسة. تواصل مع إدارة المدرسة لتسجيل رقمك وإرسال رمز التفعيل لك على واتساب.</div></div>`;
+      return;
+    }
+    area.innerHTML = `<div class="glass pp-box">
+      <h2>الطالب: ${esc(ST.student)}</h2>
+      ${msg ? `<div class="notice info">${esc(msg)}</div>` : ''}
+      <div class="hint">اختر ولي الأمر:</div>
+      <div class="gd-pick">${gs.map((g, i) => `<label><input type="radio" name="gd" value="${esc(g.id)}" ${i === 0 ? 'checked' : ''}>
+        <span><b>${esc(g.name || 'ولي الأمر')}</b> <span class="hint" dir="ltr">${esc(g.phone)}</span>
+        ${g.locked ? '<span class="chip pink">مقفل</span>' : g.has_pin ? '' : '<span class="chip gray">لم يُفعَّل</span>'}</span></label>`).join('')}</div>
+      <div id="step"></div></div>`;
+    const pick = () => gs.find((g) => g.id === (area.querySelector('input[name=gd]:checked') || {}).value) || gs[0];
+    area.querySelectorAll('input[name=gd]').forEach((r) => r.onchange = () => step(pick()));
+    step(pick());
+  }
+
+  // 2) الرمز السري، أو رمز التفعيل لأول مرة/بعد القفل
+  function step(g, forceActivate) {
+    const box = $('#step');
+    if (!g.has_pin || g.locked || forceActivate) {
+      box.innerHTML = `<h3 style="margin:14px 0 6px;font-size:1rem">تفعيل الدخول</h3>
+        <p class="hint" style="margin:0 0 10px">اكتب <b>رمز التفعيل</b> الذي وصلك من المدرسة على واتساب، ثم اختر رمزًا سريًا من 6 أرقام تستخدمه في كل مرة. لا تُطلع ابنك عليه.</p>
+        <label class="f">رمز التفعيل<input id="ac" class="code" maxlength="8" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false"></label>
+        <label class="f">الرمز السري الجديد (6 أرقام)<input id="p1" class="pin" type="password" inputmode="numeric" maxlength="6" autocomplete="new-password"></label>
+        <label class="f">أعد كتابة الرمز السري<input id="p2" class="pin" type="password" inputmode="numeric" maxlength="6" autocomplete="new-password"></label>
+        <div class="row"><button class="btn primary" id="go">تفعيل والدخول</button>
+          ${g.has_pin && !g.locked ? '<button class="btn" id="back">لدي رمز سري</button>' : ''}</div>
+        <div class="hint" style="margin-top:10px">لم يصلك رمز تفعيل أو انتهت صلاحيته (14 يومًا)؟ تواصل مع إدارة المدرسة.</div>`;
+      const b = $('#back'); if (b) b.onclick = () => step(g);
+      $('#go').onclick = async () => {
+        const code = $('#ac').value.trim().toUpperCase(), p1 = $('#p1').value.trim(), p2 = $('#p2').value.trim();
+        if (code.length < 8) return toast('اكتب رمز التفعيل كاملًا (8 خانات)', 'err');
+        if (!/^\d{6}$/.test(p1)) return toast('الرمز السري 6 أرقام', 'err');
+        if (p1 !== p2) return toast('الرمزان غير متطابقين', 'err');
+        $('#go').disabled = true;
+        try { const r = await call('pp_activate', { p_code: code, p_pin: p1 }); TOKEN = r.token; await showKids(); toast('تم التفعيل ✓ — احفظ رمزك السري'); }
+        catch (e) { toast(errMsg(e), 'err'); $('#go').disabled = false; }
+      };
+      return;
+    }
+    box.innerHTML = `<label class="f" style="margin-top:12px">الرمز السري (6 أرقام)<input id="pin" class="pin" type="password" inputmode="numeric" maxlength="6" autocomplete="off"></label>
+      <div class="row"><button class="btn primary" id="go">دخول</button><button class="btn" id="forgot">نسيت الرمز / لدي رمز تفعيل جديد</button></div>`;
+    $('#forgot').onclick = () => step(g, true);
+    const go = async () => {
+      const pin = $('#pin').value.trim();
+      if (!/^\d{6}$/.test(pin)) return toast('الرمز السري 6 أرقام', 'err');
+      $('#go').disabled = true;
+      try {
+        const r = await call('pp_login', { p_guardian: g.id, p_pin: pin });
+        if (!r.ok) { $('#pin').value = ''; $('#go').disabled = false; toast(r.error, 'err'); if (/قفل/.test(r.error)) start(r.error); return; }
+        TOKEN = r.token; await showKids();
+      } catch (e) { toast(errMsg(e), 'err'); $('#go').disabled = false; }
+    };
+    $('#go').onclick = go;
+    $('#pin').addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
+    setTimeout(() => $('#pin') && $('#pin').focus(), 50);
+  }
+
+  // 3) صفحة ولي الأمر
+  const STL = { absent: 'غائب', late: 'متأخر', excused: 'غائب بعذر' };
+  async function showKids() {
+    let d;
+    try { d = await call('pp_children', { p_token: TOKEN }); }
+    catch (e) { return start(errMsg(e)); }
+    armIdle();
+    const kids = d.children || [];
+    area.innerHTML = `<div class="glass who-bar"><span>👤 <b>${esc(d.guardian.name || 'ولي الأمر')}</b> <span class="hint" dir="ltr">${esc(d.guardian.phone)}</span></span>
+        <span class="row" style="margin:0"><span class="timer" id="tmr"></span><button class="btn sm" id="chg">تغيير الرمز السري</button><button class="btn sm danger" id="lo">خروج ولي الأمر</button></span></div>
+      ${kids.length ? kids.map(card).join('') : '<div class="notice info">لا يوجد أبناء مرتبطون برقمك بعد.</div>'}`;
+    $('#lo').onclick = logout;
+    $('#chg').onclick = changePin;
+  }
+  function card(c) {
+    if (!c) return '';
+    const a = c.attendance || {};
+    const pct = a.days_taken ? Math.round((1 - (a.absent + a.excused) / a.days_taken) * 100) : null;
+    return `<div class="card glass" style="margin-bottom:14px">
+      <div class="section-title" style="margin-top:0"><h2>🎓 ${esc(c.name)}</h2><span class="hint">${esc(c.grade || '')}${c.class ? ' / فصل ' + esc(c.class) : ''}</span></div>
+      <div class="kpi4">
+        <div class="card-box"><b style="color:var(--accent)">${pct == null ? '—' : pct + '%'}</b><div class="hint">نسبة الحضور (60 يومًا)</div></div>
+        <div class="card-box"><b style="color:#c0392b">${a.absent || 0}</b><div class="hint">غياب</div></div>
+        <div class="card-box"><b style="color:#b9691b">${a.late || 0}</b><div class="hint">تأخر</div></div>
+        <div class="card-box"><b style="color:#2c7be5">${a.excused || 0}</b><div class="hint">غياب بعذر</div></div></div>
+      ${(a.recent || []).length ? `<details style="margin-top:10px"><summary class="hint" style="cursor:pointer">سجل الغياب والتأخر</summary><div class="table-wrap no-tools" style="margin-top:6px"><table>
+        <thead><tr><th>التاريخ</th><th>هجري</th><th>الحصة</th><th>الحالة</th><th>ملاحظة</th></tr></thead><tbody>${a.recent.map((r) => `<tr><td>${esc(r.d)}</td><td>${esc(LMS.hijri(r.d))}</td>
+        <td>${r.p ? r.p : 'يومي'}</td><td>${STL[r.s] || r.s}</td><td>${esc(r.n || '')}</td></tr>`).join('')}</tbody></table></div></details>` : ''}
+      <h3 style="margin:14px 0 8px;font-size:1rem">المعلمون</h3>
+      ${(c.teachers || []).length ? `<div class="grid modules">${c.teachers.sort((x, y) => (x.subject || '').localeCompare(y.subject || '', 'ar')).map((t) => `
+        <div class="module glass"><span class="ic">📚</span><b>${esc(t.subject)}</b><small>${esc(t.name)}</small></div>`).join('')}</div>`
+        : '<div class="hint">لم تُسند مواد لهذا الصف بعد.</div>'}
+    </div>`;
+  }
+  function changePin() {
+    LMS.modal({ title: 'تغيير الرمز السري', body: `
+      <label class="f">الرمز الحالي<input id="o" class="pin" type="password" inputmode="numeric" maxlength="6"></label>
+      <label class="f">الرمز الجديد<input id="n1" class="pin" type="password" inputmode="numeric" maxlength="6"></label>
+      <label class="f">أعد كتابة الجديد<input id="n2" class="pin" type="password" inputmode="numeric" maxlength="6"></label>`,
+      actions: [{ label: 'إلغاء', value: null, cls: 'ghost' }, { label: 'حفظ', cls: 'primary', onClick: async (w) => {
+        const o = w.querySelector('#o').value, n1 = w.querySelector('#n1').value, n2 = w.querySelector('#n2').value;
+        if (!/^\d{6}$/.test(n1) || n1 !== n2) { toast('الرمز الجديد 6 أرقام ويجب تطابقه', 'err'); return false; }
+        await call('pp_change_pin', { p_token: TOKEN, p_old: o, p_new: n1 }); toast('تم تغيير الرمز السري ✓'); return true; } }] });
+  }
+  async function logout(reason) {
+    const t = TOKEN; TOKEN = '';
+    if (t) { try { await call('pp_logout', { p_token: t }); } catch (_) {} }
+    start(typeof reason === 'string' ? reason : 'تم خروج ولي الأمر.');
+  }
+  // قفل تلقائي عند عدم النشاط، وعند إخفاء الصفحة طويلًا
+  let last = Date.now();
+  function armIdle() {
+    last = Date.now(); clearTimeout(idleT);
+    const tick = () => {
+      if (!TOKEN) return;
+      const left = IDLE_MIN * 60 - Math.floor((Date.now() - last) / 1000);
+      const el = $('#tmr'); if (el) el.textContent = 'تُغلق بعد ' + Math.max(0, Math.ceil(left / 60)) + ' د';
+      if (left <= 0) return logout('أُغلقت صفحة ولي الأمر لعدم النشاط.');
+      idleT = setTimeout(tick, 15000);
+    };
+    tick();
+  }
+  ['click', 'keydown', 'touchstart', 'scroll'].forEach((ev) => document.addEventListener(ev, () => { last = Date.now(); }, { passive: true }));
+  window.addEventListener('pagehide', () => { if (TOKEN) { try { sb.rpc('pp_logout', { p_token: TOKEN }); } catch (_) {} } });
+
+  start();
+})();
+</script>
+</body>
+</html>

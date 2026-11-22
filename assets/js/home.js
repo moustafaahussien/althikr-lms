@@ -197,7 +197,8 @@
   async function studentPanel() {
     const s = ctx.student;
     if (!s) { panel.innerHTML = `<div class="notice warn">لم يُستكمل ملفك الدراسي بعد. تواصل مع إدارة المدرسة.</div>`; return; }
-    panel.innerHTML = await childCard(s.id, true);
+    panel.innerHTML = await childCard(s.id, true) + `<div class="card glass" style="margin-bottom:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <span>👪 ولي الأمر: يدخل من هنا برمزه السري لمتابعة أبنائه</span><a class="btn primary" href="parent.html">دخول ولي الأمر</a></div>`;
   }
 
   // ---------- ولي الأمر (وأي موظف له أبناء في المدرسة) ----------

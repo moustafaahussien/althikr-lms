@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>أولياء الأمور ورموز التفعيل — منصة دار الذكر التعليمية</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <meta name="theme-color" content="#0f6e6a">
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="assets/css/app.css?v=202611220930">
+  <style>
+    .gd-row td { vertical-align: top; }
+    .gd { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 6px; }
+    .gd .ph { direction: ltr; unicode-bidi: embed; font-family: monospace; }
+    .steps li { margin-bottom: 6px; }
+  </style>
+</head>
+<body>
+  <header id="topbar"></header>
+  <main class="page">
+    <section class="hero glass">
+      <h1>👪 أولياء الأمور ورموز التفعيل</h1>
+      <p>ولي الأمر يدخل المنصة من <b>حساب ابنه المدرسي</b> ثم برمزه السري. أول مرة يحتاج <b>رمز تفعيل</b> ترسله له من هنا على واتساب بضغطة واحدة.</p>
+    </section>
+    <details class="glass card" style="margin-bottom:14px">
+      <summary style="cursor:pointer;font-weight:700">📘 طريقة العمل خطوة بخطوة</summary>
+      <ol class="steps" style="margin-top:10px">
+        <li><b>سجّل جوالات أولياء الأمور:</b> ارفع ملف Excel فيه عمودان على الأقل: رقم هوية الطالب (أو رقم الطالب / رقم الاتفاقية) وجوال ولي الأمر، ويُفضَّل عمود اسم ولي الأمر. أو أضف الجوال يدويًا من زر «✏️ جوال» بجوار الطالب.</li>
+        <li><b>أرسل رمز التفعيل:</b> اضغط «📲 إرسال رمز التفعيل» بجوار ولي الأمر ← يفتح واتساب برسالة جاهزة فيها الرمز والخطوات ← اضغط إرسال. الرمز صالح 14 يومًا ولمرة واحدة، وأي رمز جديد يُلغي السابق.</li>
+        <li><b>ولي الأمر:</b> يفتح المنصة ← «👪 دخول ولي الأمر» ← يدخل بحساب ابنه ← يكتب رمز التفعيل ← يختار رمزه السري (6 أرقام) ويستخدمه في كل مرة بعد ذلك.</li>
+        <li><b>نسي الرمز أو قُفل</b> (بعد 5 محاولات خاطئة): أرسل له رمز تفعيل جديد بنفس الطريقة، فيختار رمزًا سريًا جديدًا.</li>
+        <li>الإخوة يشتركون في ولي أمر واحد تلقائيًا إذا كان رقم الجوال نفسه، فيرى كل أبنائه من حساب أي منهم.</li>
+      </ol>
+    </details>
+    <div class="toolbar glass" style="padding:10px">
+      <input id="q" class="grow" type="search" placeholder="ابحث باسم الطالب أو رقمه…">
+      <select id="grade"><option value="">كل الصفوف</option></select>
+      <select id="flt"><option value="">الكل</option><option value="none">بدون جوال</option><option value="nopin">لم يُفعَّل</option><option value="pin">مفعّل</option><option value="locked">مقفل</option></select>
+      <button class="btn sm" id="imp">⬆️ رفع جوالات أولياء الأمور (Excel)</button>
+      <input type="file" id="impFile" accept=".xlsx,.xls,.csv" hidden>
+      <span class="hint" id="count"></span>
+    </div>
+    <div id="list"><div class="empty">اختر صفًا أو ابحث باسم الطالب…</div></div>
+  </main>
+  <footer class="credit">إعداد وتصميم: مصطفى حسين</footer>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/js/config.js?v=202611220930"></script>
+  <script src="assets/js/academic-calendar.js?v=202611220930"></script>
+  <script src="assets/js/core.js?v=202611220930"></script>
+  <script src="assets/js/guardians.js?v=202611220930"></script>
+</body>
+</html>

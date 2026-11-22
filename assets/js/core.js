@@ -173,7 +173,8 @@
       ['services.html', '🗂️ الخدمات', true],
       ['attendance.html', '🗓️ الحضور والغياب', !['student', 'parent'].includes(p.role)],
       ['teaching-load.html', '📊 نصاب الحصص', ['admin', 'leadership', 'principal', 'supervisor'].includes(p.role)],
-      ['staff-directory.html', '📇 دليل الموظفين', !['student', 'parent'].includes(p.role)]];
+      ['staff-directory.html', '📇 دليل الموظفين', !['student', 'parent'].includes(p.role)],
+      ['guardians.html', '👪 أولياء الأمور', ['admin', 'leadership', 'principal'].includes(p.role)]];
     bar.innerHTML = `
       <div class="hrow">
         <a class="brand" href="home.html"><span class="logo-tile"><img src="assets/img/logo-mark.png" alt="مدارس دار الذكر"></span><span>${esc(C.PLATFORM_NAME)}<small>${esc(C.SCHOOL_NAME)}</small></span></a>

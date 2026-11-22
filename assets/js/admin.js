@@ -973,8 +973,8 @@
       </div>
       <div class="card glass" style="margin:16px 0;padding:14px">
         <label style="display:flex;gap:10px;align-items:center;font-weight:800;font-size:1.02rem">
-          <input type="checkbox" id="paLogin" ${get('parent_login_enabled') === true ? 'checked' : ''}> فتح بوابة أولياء الأمور</label>
-        <p class="hint" style="margin:6px 0 8px">ولي الأمر يدخل بحساب Google على نفس البريد المسجّل لابنه في نظام التسجيل (أي نطاق). يرى أبناءه وحضورهم ومعلميهم، ويراسل المعلمين والإدارة، ويقدّم الشكاوى.</p>
+          <input type="checkbox" id="paLogin" ${get('parent_login_enabled') === true ? 'checked' : ''}> (الطريقة القديمة) دخول ولي الأمر ببريده الشخصي</label>
+        <p class="hint" style="margin:6px 0 8px">✅ <b>الطريقة المعتمدة الآن:</b> ولي الأمر يدخل من <b>حساب ابنه المدرسي</b> برمزه السري — لا تحتاج هذا الخيار. جوالات أولياء الأمور ورموز التفعيل من صفحة <a href="guardians.html">👪 أولياء الأمور</a>. اترك هذا الخيار مقفولًا (يحتاج تحويل إعداد Google إلى خارجي).</p>
         <button class="btn sm" id="paSync">👪 إنشاء حسابات أولياء الأمور وربطهم بأبنائهم</button> <span class="hint" id="paInfo"></span>
       </div>
       <p class="hint">⚠️ أي حساب خارج هذه النطاقات لن يرى أي بيانات حتى لو كان مسجّلًا. لا تحذف نطاق المدرسة وإلا ستفقد الدخول أنت أيضًا.</p>

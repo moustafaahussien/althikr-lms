@@ -106,3 +106,12 @@ revoke all on function public.gm_save_token(text, text), public.gm_unlink(), pub
 grant execute on function public.gm_save_token(text, text), public.gm_unlink(), public.gm_status(), public.olm_links(date, date), public.gm_admin() to authenticated;
 revoke all on function public.olm_resolve(text[]) from public, anon, authenticated;
 grant execute on function public.olm_resolve(text[]) to service_role;
+
+-- الجدولة: إنشاء روابط اليوم والغد وبعد الغد مرتين يوميًا (8 مساءً و6 صباحًا بتوقيت الرياض)
+select cron.unschedule('ol-meet-gen') where exists (select 1 from cron.job where jobname = 'ol-meet-gen');
+select cron.schedule('ol-meet-gen', '0 3,17 * * *', $$
+  select net.http_post(
+    url := 'https://zpbhzhpvpvehowxvlsgp.supabase.co/functions/v1/online',
+    headers := jsonb_build_object('Content-Type', 'application/json', 'x-ol-secret', (select value from public.ol_props where key = 'ADMIN_SECRET')),
+    body := '{"action":"meetGen"}'::jsonb, timeout_milliseconds := 120000)
+$$);

@@ -13,7 +13,8 @@
 
   // ---------- تسجيل الحضور ----------
   let GROUPS = [], ROSTER = null, MARKS = {}, DIRTY = false;
-  $('#day').value = today; $('#day').max = today;
+  // الافتراضي: اليوم إن كان دراسيًا، وإلا آخر يوم دراسي قبله
+  $('#day').value = (() => { let d = new Date(today + 'T12:00:00'); for (let i = 0; i < 120; i++) { const k = LMS.ymd(d); if (LMS.cal.isSchoolDay(k)) return k; d.setDate(d.getDate() - 1); } return today; })(); $('#day').max = today;
   for (let i = 1; i <= 8; i++) $('#per').insertAdjacentHTML('beforeend', `<option value="${i}">الحصة ${i}</option>`);
   try {
     const { data, error } = await sb.rpc('att_my_groups'); if (error) throw error;
@@ -53,6 +54,7 @@
       <div class="stat glass a"><b>${c.absent}</b><small>غائب</small></div>
       <div class="stat glass l"><b>${c.late}</b><small>متأخر</small></div>
       <div class="stat glass e"><b>${c.excused}</b><small>غائب بعذر</small></div></div>
+      ${!LMS.cal.isSchoolDay($('#day').value) ? `<div class="notice warn" style="margin:0 0 8px">🏖️ هذا اليوم ليس يومًا دراسيًا حسب التقويم (${esc(LMS.cal.why($('#day').value))}) — لا يلزم تسجيل الحضور.</div>` : ''}
       ${sess ? `<div class="notice" style="margin:0 0 8px">✓ مسجَّل بواسطة <b>${esc(sess.by || '')}</b> — ${esc(new Date(sess.taken_at).toLocaleString('ar-SA-u-ca-gregory-nu-latn'))}. أي حفظ جديد يستبدل التسجيل السابق.</div>`
         : `<div class="notice warn" style="margin:0 0 8px">لم يُسجَّل حضور ${per ? 'الحصة ' + per : 'اليوم'} لهذا ${$('#cls').value ? 'الفصل' : 'الصف'} بعد (${esc(hijri($('#day').value))}). الجميع «حاضر» افتراضيًا — حدّد الغائب والمتأخر فقط ثم احفظ.</div>`}`;
     const rows = L.filter((s) => !q || s.name.includes(q) || String(s.no || '').includes(q));
@@ -79,6 +81,7 @@
   $('#roster').addEventListener('input', (e) => { const i = e.target.closest('.note-in'); if (!i) return;
     const id = i.closest('tr').dataset.id; if (MARKS[id]) { MARKS[id].n = i.value; DIRTY = true; } });
   async function save() {
+    if (!LMS.cal.isSchoolDay($('#day').value) && !await LMS.confirmBox(`هذا اليوم ليس يومًا دراسيًا (${LMS.cal.why($('#day').value)}). حفظ الحضور على أي حال؟`, 'حفظ')) return;
     const b = $('#save'); b.disabled = true;
     const marks = Object.entries(MARKS).map(([s, m]) => ({ s, st: m.st, n: m.n }));
     const { data, error } = await sb.rpc('att_save', { p_day: $('#day').value, p_grade: Number($('#grp').value), p_class: Number($('#cls').value) || null, p_period: Number($('#per').value), p_marks: marks });

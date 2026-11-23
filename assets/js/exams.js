@@ -197,6 +197,7 @@
       if (!p.class_ids.length) { toast('اختر فصلًا واحدًا على الأقل', 'warn'); return false; }
       if (!p.questions.length) { toast('اختر سؤالًا واحدًا على الأقل', 'warn'); return false; }
       try { localStorage.setItem('lms_per', p.period || ''); } catch (_) {}
+      { const od = LMS.ymd(new Date(p.opens_at)); if (!LMS.cal.isSchoolDay(od) && !await confirmBox(`موعد فتح الاختبار يقع في يوم غير دراسي (${LMS.cal.why(od)}). المتابعة؟`, 'متابعة')) return false; }
       await call('ex_save', { p }); toast(x.id ? 'حُفظ الاختبار' : 'نُشر الاختبار لطلاب الفصول المختارة'); show('mine'); } }] });
     const w = $$('.modal-wrap').pop();
     let init = new Set(x.class_ids || []);

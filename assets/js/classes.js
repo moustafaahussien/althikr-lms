@@ -20,12 +20,13 @@
     const q = $('#fQ').value.trim(), abs = $('#fAbs').checked;
     const R = L.filter((c) => (!q || [c.label, c.homeroom].join(' ').includes(q)) && (!abs || c.absent_today));
     const tot = L.reduce((a, c) => a + c.students, 0), ab = L.reduce((a, c) => a + c.absent_today, 0);
+    const SD = LMS.cal.isSchoolDay(LMS.ymd(new Date())), WHY = LMS.cal.why(LMS.ymd(new Date()));
     const groups = []; R.forEach((c) => { const k = c.stage + '|' + c.grade; let g = groups.find((x) => x.k === k); if (!g) groups.push(g = { k, stage: c.stage, grade: c.grade, cs: [] }); g.cs.push(c); });
-    view.innerHTML = `<div class="kpis"><span><b>${L.length}</b> فصل</span><span><b>${tot}</b> طالب</span><span>غياب اليوم: <b style="color:#a3244a">${ab}</b></span>
-        <span>لم يُسجَّل حضورها اليوم: <b>${L.filter((c) => !c.att_taken).length}</b> فصل</span></div>
+    view.innerHTML = `<div class="kpis"><span><b>${L.length}</b> فصل</span><span><b>${tot}</b> طالب</span>${SD ? `<span>غياب اليوم: <b style="color:#a3244a">${ab}</b></span>
+        <span>لم يُسجَّل حضورها اليوم: <b>${L.filter((c) => !c.att_taken).length}</b> فصل</span>` : `<span>🏖️ اليوم ليس يومًا دراسيًا: <b>${esc(WHY)}</b></span>`}</div>
       ${groups.length ? groups.map((g) => `<h3 class="sec-h">${esc(g.grade)} — ${esc(g.stage)} <span class="hint">(${g.cs.reduce((a, c) => a + c.students, 0)} طالب)</span></h3>
         <div class="cls">${g.cs.map((c) => `<button class="cl" data-c="${c.id}"><b>${esc(g.grade)} / ${esc(c.name)}</b><small>${c.students} طالب · ${c.teachers} معلم</small>
-          <small>رائد الفصل: ${esc(c.homeroom || '—')}</small>${!c.att_taken ? '<span class="ab no">الحضور لم يُسجَّل اليوم</span>' : c.absent_today ? `<span class="ab hot">${c.absent_today} غائب اليوم</span>` : '<span class="ab">✓ لا غياب اليوم</span>'}</button>`).join('')}</div>`).join('')
+          <small>رائد الفصل: ${esc(c.homeroom || '—')}</small>${!SD ? '' : !c.att_taken ? '<span class="ab no">الحضور لم يُسجَّل اليوم</span>' : c.absent_today ? `<span class="ab hot">${c.absent_today} غائب اليوم</span>` : '<span class="ab">✓ لا غياب اليوم</span>'}</button>`).join('')}</div>`).join('')
         : '<div class="empty">لا توجد فصول ضمن نطاقك.</div>'}`;
     view.onclick = (e) => { const b = e.target.closest('[data-c]'); if (b) location.hash = 'c=' + b.dataset.c; };
   }

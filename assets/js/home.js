@@ -55,10 +55,12 @@
   /* لوحة «يومي» + مناوبتي في طلب واحد (home_today — sql/31)؛ إن تعذّر نرجع للطلبات المنفصلة القديمة */
   const DAYS = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
   const NOW = new Date(), A = window.ACAD, TODAY = LMS.ymd(NOW);
-  // في الوضع التجريبي نعرض يومًا دراسيًا عاديًا حتى لو كانت المدرسة في إجازة
-  const HOL = !LMS.DEMO && A && (A.hol || []).find((h) => TODAY >= h.f && TODAY <= h.to);
-  let DAY = NOW.getDay(); const DAY_LBL = DAY >= 5 ? 'حصصي يوم الأحد' : 'حصصي اليوم'; if (DAY >= 5) DAY = 0;
-  const IS_TODAY = DAY === NOW.getDay();
+  // الحصص مربوطة بالتقويم الدراسي: في الإجازة لا حصص، وفي العطلة نعرض أقرب يوم دراسي
+  const HOL = LMS.cal.hol(TODAY);
+  const NEXT = LMS.cal.next(TODAY) || TODAY, IS_TODAY = NEXT === TODAY;
+  let DAY = new Date(NEXT + 'T12:00:00').getDay();
+  const DAY_LBL = IS_TODAY ? 'حصصي اليوم' : `حصصي يوم ${DAYS[DAY]} ${new Date(NEXT + 'T12:00:00').toLocaleDateString('ar-SA-u-ca-gregory-nu-latn', { day: 'numeric', month: 'numeric' })}`;
+  void A;
   const HT = STAFF ? sb.rpc('home_today', { p_day: HOL ? null : DAY, p_att: !HOL && IS_TODAY }).then(({ data, error }) => error ? null : data, () => null) : Promise.resolve(null);
   if (STAFF) HT.then((ht) => ht ? { data: ht.duty } : sb.rpc('duty_today')).then(({ data }) => { if (!data || !data.length) return;
     $('#dutyToday').innerHTML = (`<div class="notice" style="margin-bottom:14px">🛡️ <b>مناوبتك اليوم:</b> ${data.map((d) => `${esc(d.slot)} — ${esc(d.place)}${d.note ? ' (' + esc(d.note) + ')' : ''}`).join(' · ')} <a href="services.html#duty">الجدول</a></div>`); }).catch(() => {});
@@ -102,7 +104,7 @@
       ['📨', 'معاملات بانتظار قرارك', 'services.html#req', inbox.length],
       ['✉️', 'رسائل غير مقروءة', 'messages.html', unread()]
     ].map(([ic, l, href, n]) => `<a class="today-tile${n ? ' hot' : ''}" href="${href}"><span>${ic}</span><b>${n === '' ? '' : n}</b><small>${l}</small></a>`).join('');
-    const ppl = hol ? `<div class="hint">🏖️ ${esc(hol.ar)} — لا حصص اليوم</div>`
+    const ppl = hol ? `<div class="hint">🏖️ ${esc(hol.ar)} — لا حصص حتى العودة ${esc(new Date(hol.back + 'T12:00:00').toLocaleDateString('ar-SA-u-ca-gregory-nu-latn', { weekday: 'long', day: 'numeric', month: 'long' }))}</div>`
       : periods.length ? `<div class="today-periods">${periods.map((x) => { const ok = TAKEN && TAKEN.has(x.period + '|' + x.class_id);
         return `<div class="tp${ok ? ' ok' : ''}${x.class_id ? ' clk' : ''}" ${x.class_id ? `role="button" tabindex="0" data-per="${x.period}" data-cls="${x.class_id}" data-sub="${x.subject_id || ''}" title="تفاصيل الحصة: الحضور والتحضير"` : ''}><i>${x.period}</i><b>${esc(SUBJ[x.subject_id] || x.txt || '')}</b><small>${esc(LMS.clsText(x.cls))}${TAKEN && x.class_id ? (ok ? ' · <span class="att-ok">✓ الحضور مسجّل</span>' : ' · <span class="att-no">الحضور لم يُسجّل</span>') : ''}</small></div>`; }).join('')}</div>`
       : `<div class="hint">لا توجد لك حصص مسجلة في الجدول ${day === now.getDay() ? 'اليوم' : 'يوم ' + DAYS[day]}.</div>`;
@@ -115,7 +117,7 @@
       <div class="today-grid"${showP ? '' : ' style="grid-template-columns:1fr"'}>${showP ? `<div><h3>${dayLbl}${periods.length ? ` <span class="hint">(${periods.length})</span>` : ''}</h3>${ppl}</div>` : ''}
       <div class="today-tiles">${tiles()}</div></div></section>`; };
     paint();
-    const dayDate = (() => { const d = new Date(now); d.setDate(d.getDate() + ((day - d.getDay() + 7) % 7)); return LMS.ymd(d); })();
+    const dayDate = NEXT;
     box.addEventListener('click', (e) => { const t = e.target.closest('[data-per]'); if (t) periodInfo(+t.dataset.per, +t.dataset.cls, +t.dataset.sub || null, dayDate, t.querySelector('b')?.textContent || '', isToday); });
     box.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.matches('[data-per]')) e.target.click(); });
     document.addEventListener('lms:msg', paint);

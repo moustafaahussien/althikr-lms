@@ -9,7 +9,7 @@
   /* الوضع التجريبي (ديمو): مدرسة افتراضية داخل المتصفح بدل قاعدة البيانات الحقيقية — assets/js/demo.js
      يُحمَّل مباشرة بعد هذا الملف (قبل سكربت الصفحة)، ولا يُنشأ اتصال حقيقي إطلاقًا أثناء التجربة */
   const DEMO = (() => { try { return sessionStorage.getItem('lms_demo') || ''; } catch (_) { return ''; } })();
-  if (DEMO && !window.LMS_DEMO) document.write('<script src="' + BASE + 'assets/js/demo.js?v=202611230130"><\/script>');
+  if (DEMO && !window.LMS_DEMO) document.write('<script src="' + BASE + 'assets/js/demo.js?v=202611230915"><\/script>');
   const sb = DEMO
     ? new Proxy({}, { get: (_, k) => (window.LMS_DEMO ? window.LMS_DEMO.client[k] : undefined) })
     : configured
@@ -308,6 +308,25 @@
   }
   const ymd = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   const parseYmd = (s) => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+  // التقويم الدراسي (academic-calendar.js) كمرجع واحد للأيام الدراسية في المنصة كلها
+  const cal = {
+    // الإجازة الرسمية التي يقع فيها اليوم (أو null)
+    hol: (d) => ((window.ACAD && window.ACAD.hol) || []).find((h) => d >= h.f && d <= h.to) || null,
+    // يوم دراسي = الأحد–الخميس، خارج الإجازات، وبعد بداية الدراسة وقبل نهاية العام
+    isSchoolDay(d) {
+      if (typeof d !== 'string') d = ymd(d);
+      if (parseYmd(d).getDay() >= 5 || cal.hol(d)) return false;
+      const W = (window.ACAD && window.ACAD.weeks) || [];
+      if (W.length && (d < W[0].s || d > ymd(new Date(parseYmd(W[W.length - 1].s).getTime() + 4 * 864e5)))) return false;
+      return true;
+    },
+    // أقرب يوم دراسي من اليوم المعطى (شاملًا له)
+    next(d) { let x = parseYmd(typeof d === 'string' ? d : ymd(d)); for (let i = 0; i < 120; i++) { const k = ymd(x); if (cal.isSchoolDay(k)) return k; x.setDate(x.getDate() + 1); } return null; },
+    // عدد الأيام الدراسية في مدى
+    count(f, t) { let n = 0, x = parseYmd(f); const e = parseYmd(t); for (let i = 0; x <= e && i < 400; i++) { if (cal.isSchoolDay(ymd(x))) n++; x.setDate(x.getDate() + 1); } return n; },
+    // وصف يوم غير دراسي
+    why(d) { if (typeof d !== 'string') d = ymd(d); const h = cal.hol(d); if (h) return h.ar; if (parseYmd(d).getDay() >= 5) return 'عطلة نهاية الأسبوع'; return cal.isSchoolDay(d) ? '' : 'خارج أيام الدراسة'; }
+  };
   const LOC = 'ar-SA-u-ca-gregory-nu-latn';
   const calDay = (s) => { try { return parseYmd(s).toLocaleDateString(LOC, { weekday: 'long', day: 'numeric', month: 'long' }).replace('،', ''); } catch (e) { return s; } };
   const daysWord = (n) => n === 1 ? 'يوم' : n === 2 ? 'يومين' : n <= 10 ? n + ' أيام' : n + ' يومًا';
@@ -459,5 +478,5 @@
 
   window.LMS = { sb, C, configured, ROLE_LABELS, esc, $, $$, toast, modal, confirmBox, errMsg,
                  fetchAll, signInWithGoogle, signOut, getContext, cached, clearCache, requireAuth, downloadCSV, rememberNext, takeNext,
-                 getView, setView, canSwitch, applyView, mountTopbar, BASE, hijri, dateLine, printHTML, printTable, exportTable, tableRows, ymd, clsText, isGroupCls, DEMO };
+                 getView, setView, canSwitch, applyView, mountTopbar, BASE, hijri, dateLine, printHTML, printTable, exportTable, tableRows, ymd, cal, clsText, isGroupCls, DEMO };
 })();

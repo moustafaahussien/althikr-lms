@@ -6,7 +6,7 @@
    ===================================================================== */
 (function () {
   'use strict';
-  const KEY = 'lms_demo', DBKEY = 'lms_demo_db', VER = 5;
+  const KEY = 'lms_demo', DBKEY = 'lms_demo_db', VER = 6;
   const ROLE = (() => { try { return sessionStorage.getItem(KEY) || ''; } catch (_) { return ''; } })();
   if (!ROLE) return;
 
@@ -18,6 +18,11 @@
   const ymd = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   const iso = (d) => new Date(d).toISOString();
   const daysAgo = (n, h = 9, m = 0) => { const d = new Date(); d.setDate(d.getDate() - n); d.setHours(h, m, 0, 0); return d; };
+  // أيام دراسية حسب التقويم (academic-calendar.js): الأحد–الخميس خارج الإجازات
+  const isSD = (d) => d.getDay() <= 4 && !((window.ACAD && window.ACAD.hol) || []).some((h) => ymd(d) >= h.f && ymd(d) <= h.to);
+  // اليوم الدراسي رقم n قبل اليوم (n>0)، أو بعده (n<=0: 0 = أقرب يوم دراسي من اليوم)
+  const sd = (n, h = 9) => { const d = new Date(); d.setHours(h, 0, 0, 0); if (n > 0) { let k = 0; while (k < n) { d.setDate(d.getDate() - 1); if (isSD(d)) k++; } }
+    else { while (!isSD(d)) d.setDate(d.getDate() + 1); let k = 0; while (k < -n) { d.setDate(d.getDate() + 1); if (isSD(d)) k++; } } return d; };
   const clone = (o) => JSON.parse(JSON.stringify(o));
   const norm = (s) => String(s || '').replace(/[أإآ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').toLowerCase();
   const GRADE_AR = ['', 'الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس', 'السادس'];
@@ -168,7 +173,7 @@
 
     // ----- الحضور: آخر 20 يومًا دراسيًا -----
     DB.att_sessions = []; DB.att_marks = []; let asid = 0;
-    const schoolDays = []; for (let i = 1; schoolDays.length < 20 && i < 60; i++) { const d = daysAgo(i); if (d.getDay() <= 4) schoolDays.push(ymd(d)); }
+    const schoolDays = []; for (let i = 1; schoolDays.length < 20 && i < 90; i++) { const d = daysAgo(i); if (isSD(d)) schoolDays.push(ymd(d)); }
     schoolDays.forEach((day) => DB.grades.forEach((g) => {
       const taker = pick(DB.profiles.filter((p) => p.role === 'teacher'));
       const s = { id: ++asid, day, grade_id: g.id, class_id: null, period: 0, taken_by: taker.id, taken_at: iso(new Date(day + 'T07:20:00')) };
@@ -664,7 +669,7 @@
     };
 
     // ---------- البيانات التجريبية (تُبنى مرة واحدة لكل جلسة تجربة) ----------
-    function M() { if (!DB.M || DB.M.v !== 2) { DB.M = seed(); DB.M.v = 2; save(); } return DB.M; }
+    function M() { if (!DB.M || DB.M.v !== 3) { DB.M = seed(); DB.M.v = 3; save(); } return DB.M; }
     function seed() {
       const S = { seq: {}, lp: [], hw: [], hs: [], cp: [], qb: [], ex: [], ea: [], gi: [], gs: [], pf: [] };
       const MATH = DB.subjects.find((s) => s.name_ar === 'رياضيات').id;
@@ -673,12 +678,12 @@
       const cls = myCls.includes(stuCls) ? [stuCls, ...myCls.filter((c) => c !== stuCls)] : myCls;
       const c1 = cls[0], c2 = cls[1] || cls[0];
       const peer = DB.teaching_assignments.find((t) => t.subject_id === MATH && t.teacher_id !== IDS.teacher && DB.supervision.some((x) => x.supervisor_id === IDS.supervisor && x.teacher_id === t.teacher_id));
-      const at = (n, h = 9) => iso(daysAgo(n, h));
+      const at = (n, h = 9) => iso(sd(n, h));
       const id = (t) => (S.seq[t] = (S.seq[t] || 0) + 1);
       // تحضير الدروس
       const C = (o, w, s, p, a, h) => ({ objectives: o, warmup: w, strategies: s, procedures: p, assessment: a, homework: h, thinking_list: ['قبعات التفكير الست'], strategies_list: ['التعلم التعاوني', 'فكّر - زاوج - شارك'],
         real_life: 'حساب مجموع مشتريات من البقالة بالريال والهللة.', cross_subject: 'العلوم: قراءة القياسات العشرية في التجارب.' });
-      const lp = (tid, sid, cl, d, title, status, content, extra = {}) => S.lp.push(Object.assign({ id: id('lp'), teacher_id: tid, subject_id: sid, class_ids: cl, lesson_date: ymd(daysAgo(d)), title, content, status,
+      const lp = (tid, sid, cl, d, title, status, content, extra = {}) => S.lp.push(Object.assign({ id: id('lp'), teacher_id: tid, subject_id: sid, class_ids: cl, lesson_date: ymd(sd(d)), title, content, status,
         submitted_at: status !== 'draft' ? at(d + 2) : null, reviewed_by: null, reviewed_at: null, review_note: null, created_at: at(d + 3), updated_at: at(d + 2) }, extra));
       lp(IDS.teacher, MATH, [c1, c2], 7, 'جمع الكسور العشرية', 'approved', C('أن يجمع الطالب كسرين عشريين بدقة.', 'سؤال: كم يكلّف شراء قلمين بـ 2.5 و 3.75 ريال؟', 'فكّر-زاوج-شارك', 'مراجعة القيمة المنزلية، ثم أمثلة موجّهة، ثم تدريب في مجموعات.', 'بطاقة خروج من 3 مسائل.', 'تمارين ص 54'), { reviewed_by: IDS.supervisor, reviewed_at: at(6), review_note: 'تحضير متميز' });
       lp(IDS.teacher, MATH, [c1, c2], 5, 'طرح الكسور العشرية', 'returned', C('أن يطرح الطالب كسرين عشريين.', 'لعبة الأسعار', 'التعلم التعاوني', 'أمثلة ثم تدريب.', 'أسئلة شفهية', ''), { reviewed_by: IDS.supervisor, reviewed_at: at(4), review_note: 'أضف نشاطًا لمراعاة الفروق الفردية' });
@@ -688,7 +693,7 @@
         lp(peer.teacher_id, MATH, [peer.class_id], 9, 'خصائص العمليات', 'approved', C('تمييز الخاصية التبديلية والتجميعية.', '', 'الحوار والمناقشة', '', '', ''), { reviewed_by: IDS.supervisor, reviewed_at: at(8) }); }
       // الواجبات
       const hw = (d, title, ins, mx, closed) => { const h = { id: id('hw'), teacher_id: IDS.teacher, subject_id: MATH, class_ids: [c1, c2].filter((v, i, a) => a.indexOf(v) === i), title, instructions: ins, links: [],
-        due_at: iso(daysAgo(d, 23)), max_score: mx, allow_late: true, closed: !!closed, period: d > 3 ? 'p1' : 'p2', created_at: at(d + 4), updated_at: at(d + 4) }; S.hw.push(h); return h; };
+        due_at: iso(sd(d, 23)), max_score: mx, allow_late: true, closed: !!closed, period: d > 3 ? 'p1' : 'p2', created_at: at(d + 4), updated_at: at(d + 4) }; S.hw.push(h); return h; };
       const h1 = hw(6, 'تمارين جمع الكسور العشرية', 'حل التمارين من 1 إلى 10 صفحة 54.', 10);
       const h2 = hw(-2, 'مسائل حياتية على الطرح', 'اكتب 3 مسائل من واقع حياتك على طرح الكسور العشرية وحلّها.', 10);
       const h3 = hw(-6, 'مشروع: ميزانية الأسبوع', 'سجّل مصروفك لأسبوع بالكسور العشرية وأرسل رابط الجدول.', 20);
@@ -697,7 +702,7 @@
       stuIn(h2.class_ids).forEach((s, i) => { if (i % 3 || s.profile_id === IDS.student) return; S.hs.push({ id: id('hs'), hw_id: h2.id, student_id: s.profile_id, body: 'المسألة الأولى: …', links: [], submitted_at: at(0, 17), late: false, status: 'submitted', score: null, feedback: null }); });
       void h3;
       // صفحات المواد
-      const sun = (n) => { const d = daysAgo(n); d.setDate(d.getDate() - d.getDay()); return ymd(d); };
+      const sun = (n) => { const d = sd(n); d.setDate(d.getDate() - d.getDay()); return ymd(d); };
       const cp = (kind, title, body, wk, pinned, n) => S.cp.push({ id: id('cp'), teacher_id: IDS.teacher, subject_id: MATH, class_ids: [c1, c2].filter((v, i, a) => a.indexOf(v) === i), kind, title, body, links: [], week_start: wk, pinned: !!pinned, created_at: at(n), updated_at: at(n) });
       cp('announcement', 'اختبار الفترة الأولى يوم الأربعاء', 'يشمل الاختبار دروس الكسور العشرية (الجمع والطرح والضرب). راجعوا التمارين المحلولة.', null, true, 1);
       cp('content', 'ملخص درس جمع الكسور العشرية', 'نرتّب الأعداد بحيث تتحاذى الفواصل العشرية، ثم نجمع كما نجمع الأعداد الكلية.', sun(7), false, 7);
@@ -714,21 +719,21 @@
         options: [{ l: '0.5', r: '1/2' }, { l: '0.25', r: '1/4' }, { l: '0.75', r: '3/4' }], image: null, created_at: at(18) }; S.qb.push(mq); qs.push(mq);
       // الاختبارات
       const exam = (title, open, close, cl, qq, dur) => { const e = { id: id('ex'), teacher_id: IDS.teacher, subject_id: MATH, class_ids: cl, title, instructions: 'اقرأ كل سؤال جيدًا قبل الإجابة.',
-        questions: qq.map((q) => ({ id: String(q.id), qtype: q.qtype, body: q.body, options: clone(q.options), answer: q.answer, points: q.points })), opens_at: iso(open), closes_at: iso(close), duration_min: dur, shuffle: true, show_results: true, period: open < daysAgo(3) ? 'p1' : 'mid', created_at: iso(open) }; S.ex.push(e); return e; };
-      const e1 = exam('اختبار قصير: جمع وطرح الكسور العشرية', daysAgo(8, 8), daysAgo(8, 14), [c1, c2].filter((v, i, a) => a.indexOf(v) === i), qs.slice(0, 6), 20);
-      exam('اختبار الفترة الأولى', daysAgo(0, 0), daysAgo(-3, 23), [c1], [qs[0], qs[2], qs[3], qs[4], qs[6], qs[7], mq], 30);
-      exam('اختبار الوحدة الثالثة', daysAgo(-7, 8), daysAgo(-7, 12), [c1, c2].filter((v, i, a) => a.indexOf(v) === i), qs.slice(2), 25);
+        questions: qq.map((q) => ({ id: String(q.id), qtype: q.qtype, body: q.body, options: clone(q.options), answer: q.answer, points: q.points })), opens_at: iso(open), closes_at: iso(close), duration_min: dur, shuffle: true, show_results: true, period: open < sd(3) ? 'p1' : 'mid', created_at: iso(open) }; S.ex.push(e); return e; };
+      const e1 = exam('اختبار قصير: جمع وطرح الكسور العشرية', sd(8, 8), sd(8, 14), [c1, c2].filter((v, i, a) => a.indexOf(v) === i), qs.slice(0, 6), 20);
+      exam('اختبار الفترة الأولى', sd(isSD(new Date()) ? 0 : 1, 0), sd(-3, 23), [c1], [qs[0], qs[2], qs[3], qs[4], qs[6], qs[7], mq], 30);
+      exam('اختبار الوحدة الثالثة', sd(-7, 8), sd(-7, 12), [c1, c2].filter((v, i, a) => a.indexOf(v) === i), qs.slice(2), 25);
       stuIn(e1.class_ids).forEach((s, i) => { if (i % 8 === 7) return; const ans = {}, res = {}; let sc = 0, rev = false;
         e1.questions.forEach((q) => { const okI = q.options.findIndex((o) => o.ok); const good = s.profile_id === IDS.student ? q.qtype !== 'short' : rnd() < (q.qtype === 'tf' ? 0.85 : 0.65);
           if (q.qtype === 'short') { ans[q.id] = good ? '3/4' : '75/100'; if (good) { res[q.id] = { pts: q.points, ok: true }; sc += q.points; } else if (i % 2) { res[q.id] = { pts: 2, ok: false, manual: true, graded: true }; sc += 2; } else { res[q.id] = { pts: 0, ok: null, manual: true }; rev = true; } }
           else { const a = good ? okI : (okI + 1) % q.options.length; ans[q.id] = String(a); res[q.id] = { pts: good ? q.points : 0, ok: good }; if (good) sc += q.points; } });
-        S.ea.push({ id: id('ea'), exam_id: e1.id, student_id: s.profile_id, started_at: iso(daysAgo(8, 9)), deadline: iso(daysAgo(8, 9)), submitted_at: iso(daysAgo(8, 9)), q_order: [], answers: ans, results: res,
+        S.ea.push({ id: id('ea'), exam_id: e1.id, student_id: s.profile_id, started_at: iso(sd(8, 9)), deadline: iso(sd(8, 9)), submitted_at: iso(sd(8, 9)), q_order: [], answers: ans, results: res,
           score: sc, max_score: e1.questions.reduce((a, q) => a + q.points, 0), needs_review: rev }); });
       // سجل الدرجات: عمود يدوي
-      const gi = { id: id('gi'), teacher_id: IDS.teacher, class_id: c1, subject_id: MATH, src_kind: 'manual', src_id: null, title: 'المشاركة الصفية', category: 'participation', max_score: 10, weight: 1, hidden: false, item_date: ymd(daysAgo(3)), period: 'p1' };
+      const gi = { id: id('gi'), teacher_id: IDS.teacher, class_id: c1, subject_id: MATH, src_kind: 'manual', src_id: null, title: 'المشاركة الصفية', category: 'participation', max_score: 10, weight: 1, hidden: false, item_date: ymd(sd(3)), period: 'p1' };
       S.gi.push(gi); stuIn([c1]).forEach((s) => S.gs.push({ item_id: gi.id, student_id: s.profile_id, score: s.profile_id === IDS.student ? 9 : 6 + Math.floor(rnd() * 5), note: null }));
       // ملف الإنجاز
-      const pf = (sid, kind, title, level, result, status, d, by, desc) => S.pf.push({ id: id('pf'), student_id: sid, kind, title, description: desc || null, item_date: ymd(daysAgo(d)), level, result, links: [],
+      const pf = (sid, kind, title, level, result, status, d, by, desc) => S.pf.push({ id: id('pf'), student_id: sid, kind, title, description: desc || null, item_date: ymd(sd(d)), level, result, links: [],
         status, added_by: by, reviewed_by: status === 'approved' && by === sid ? IDS.teacher : status === 'approved' ? by : null, reviewed_at: status === 'approved' ? at(d - 1) : null, review_note: null, created_at: at(d) });
       pf(IDS.student, 'competition', 'أولمبياد الرياضيات المدرسي', 'school', 'المركز الثاني', 'approved', 40, IDS.teacher, 'شارك في التصفيات المدرسية لأولمبياد الرياضيات.');
       pf(IDS.student, 'project', 'روبوت فرز النفايات', 'district', 'مشاركة', 'approved', 25, IDS.student, 'مشروع جماعي في نادي الروبوت لفرز العلب البلاستيكية.');

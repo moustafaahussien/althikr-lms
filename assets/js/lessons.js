@@ -72,15 +72,16 @@
     $('#wPrev').onclick = () => { WEEK = addDays(WEEK, -7); drawMine(); };
     $('#wNext').onclick = () => { WEEK = addDays(WEEK, 7); drawMine(); };
     $('#wNow').onclick = () => { WEEK = sunday(new Date()); drawMine(); };
-    if ($('#newLp')) $('#newLp').onclick = () => edit(null, ymd(new Date()));
+    if ($('#newLp')) $('#newLp').onclick = () => edit(null, LMS.cal.next(ymd(new Date())) || ymd(new Date()));
     if (!OPT.is_teacher) { $('#wk').innerHTML = '<div class="empty">لا توجد مواد مسندة إليك، فلا يمكنك إنشاء تحضير.</div>'; return; }
     let L;
     try { L = await call('lp_list', { p_box: 'mine', p_from: from, p_to: to }); } catch (e) { $('#wk').innerHTML = `<div class="notice err">${esc(errMsg(e))}</div>`; return; }
     const today = ymd(new Date());
     $('#wk').innerHTML = `<div class="days">${[0, 1, 2, 3, 4].map((i) => { const d = ymd(addDays(WEEK, i)); const items = L.filter((x) => x.date === d);
-      return `<div class="day glass${d === today ? ' today' : ''}"><h4>${esc(DAYS[i])} <small>${esc(fmtD(d).split(' ')[1])}</small>
-          <button class="btn sm ghost" data-new="${d}" title="تحضير جديد لهذا اليوم" aria-label="تحضير جديد ليوم ${esc(DAYS[i])}">＋</button></h4>
-        ${items.map(card).join('') || '<div class="hint">لا يوجد تحضير</div>'}</div>`; }).join('')}</div>`;
+      const off = !LMS.cal.isSchoolDay(d);   // مربوط بالتقويم الدراسي
+      return `<div class="day glass${d === today ? ' today' : ''}${off ? ' off' : ''}"><h4>${esc(DAYS[i])} <small>${esc(fmtD(d).split(' ')[1])}</small>
+          ${off ? '' : `<button class="btn sm ghost" data-new="${d}" title="تحضير جديد لهذا اليوم" aria-label="تحضير جديد ليوم ${esc(DAYS[i])}">＋</button>`}</h4>
+        ${off ? `<div class="hint">🏖️ ${esc(LMS.cal.why(d))}</div>` : ''}${items.map(card).join('') || (off ? '' : '<div class="hint">لا يوجد تحضير</div>')}</div>`; }).join('')}</div>`;
     $('#wk').onclick = (e) => { const n = e.target.closest('[data-new]'); if (n) return edit(null, n.dataset.new);
       const c = e.target.closest('[data-lp]'); if (c) view(+c.dataset.lp); };
   }
@@ -129,11 +130,14 @@
 
   // المعلمون بدون تحضير أو بدون واجبات في الفترة (لمن يتابعهم)
   async function compliance(box, from, to) {
+    // لا متابعة التزام لفترة كلها إجازة حسب التقويم الدراسي
+    if (from && to && !LMS.cal.count(from, to)) { box.innerHTML = '<div class="notice" style="margin-bottom:12px">🏖️ الفترة المختارة كلها خارج أيام الدراسة حسب التقويم — لا يُتوقع فيها تحضير أو واجبات.</div>'; return; }
     let C; try { C = await call('an_compliance', { p_from: from || null, p_to: to || null }); } catch (_) { return; }
     if (!C.length) return;
+    const nDays = from && to ? LMS.cal.count(from, to) : null;
     const noLp = C.filter((t) => !t.lp_sent), noHw = C.filter((t) => !t.hw);
     box.innerHTML = `<details class="glass" style="padding:10px 14px;margin-bottom:12px" ${noLp.length ? 'open' : ''}><summary><b>متابعة الالتزام</b>
-        <span class="hint"> — ${C.length} معلم · بدون تحضير مُرسل: <b style="color:#a3244a">${noLp.length}</b> · بدون واجبات: <b style="color:#8a5a00">${noHw.length}</b></span></summary>
+        <span class="hint"> — ${C.length} معلم${nDays != null ? ` · ${nDays} يوم دراسي في الفترة` : ''} · بدون تحضير مُرسل: <b style="color:#a3244a">${noLp.length}</b> · بدون واجبات: <b style="color:#8a5a00">${noHw.length}</b></span></summary>
       <div class="table-wrap" style="margin-top:8px"><table><thead><tr><th>المعلم</th><th>المواد</th><th>تحاضير مُرسلة</th><th>معتمدة</th><th>مُعادة</th><th>واجبات</th><th>اختبارات</th></tr></thead><tbody>
       ${C.sort((a, b) => a.lp_sent - b.lp_sent || a.hw - b.hw).map((t) => `<tr><td>${esc(t.name)}</td><td>${esc(t.subjects || '')}</td>
         <td>${t.lp_sent ? t.lp_sent : '<span class="st returned">لا يوجد</span>'}</td><td>${t.lp_ok}</td><td>${t.lp_ret}</td>
@@ -206,6 +210,7 @@
         $('#eHw', w).value ? { hw_id: +$('#eHw', w).value, hw_title: $('#eHw', w).selectedOptions[0].dataset.t } : {}) });
     const save = async (w, submit) => { const p = collect(w);
       if (!p.title) { toast('اكتب عنوان الدرس', 'warn'); return false; } if (!p.date) { toast('اختر تاريخ الدرس', 'warn'); return false; }
+      if (p.date && !LMS.cal.isSchoolDay(p.date) && !await confirmBox(`تاريخ الدرس ليس يومًا دراسيًا (${LMS.cal.why(p.date)}). حفظ على أي حال؟`, 'حفظ')) return false;
       const r = await call('lp_save', { p }); if (submit) await call('lp_submit', { p_id: r.id });
       toast(submit ? 'حُفظ وأُرسل للاعتماد' : 'حُفظ كمسودة'); WEEK = sunday(parseD(p.date)); show('mine'); };
     const p = modal({ title: x.id ? 'تعديل التحضير' : 'تحضير جديد', wide: true, body,

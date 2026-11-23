@@ -131,6 +131,7 @@
       if (!p.title) { toast('اكتب عنوان الواجب', 'warn'); return false; } if (!p.due_at) { toast('حدّد موعد التسليم', 'warn'); return false; }
       if (!p.class_ids.length) { toast('اختر فصلًا واحدًا على الأقل', 'warn'); return false; }
       if (p.links.some((l) => !/^https?:\/\//i.test(l.url))) { toast('الروابط يجب أن تبدأ بـ https://', 'warn'); return false; }
+      { const dd = LMS.ymd(new Date(p.due_at)); if (!LMS.cal.isSchoolDay(dd) && !await confirmBox(`موعد التسليم يقع في يوم غير دراسي (${LMS.cal.why(dd)}). المتابعة؟`, 'متابعة')) return false; }
       await call('hw_save', { p }); toast(x.id ? 'حُفظ الواجب' : 'نُشر الواجب لطلاب الفصول المختارة'); show('mine'); } }] });
     const w = $$('.modal-wrap').pop(); paint(w); $('#hS', w).onchange = () => paint(w);
   }
@@ -193,9 +194,10 @@
   async function noHwBox() {
     const d = new Date(), f = new Date(d); f.setDate(d.getDate() - 13);
     const y = (x) => `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`;
+    if (!LMS.cal.count(y(f), y(d))) return;   // الفترة كلها إجازة حسب التقويم
     let C; try { C = await call('an_compliance', { p_from: y(f), p_to: y(d) }); } catch (_) { return; }
     const N = C.filter((t) => !t.hw); if (!N.length || !$('#noHw')) return;
-    $('#noHw').innerHTML = `<details class="glass" style="padding:10px 14px;margin:10px 0"><summary><b>معلمون بدون واجبات في آخر أسبوعين</b> <span class="hint">(${N.length})</span></summary>
+    $('#noHw').innerHTML = `<details class="glass" style="padding:10px 14px;margin:10px 0"><summary><b>معلمون بدون واجبات في آخر أسبوعين</b> <span class="hint">(${N.length} · ${LMS.cal.count(y(f), y(d))} يوم دراسي)</span></summary>
       <div class="chips" style="margin-top:8px">${N.map((t) => `<span class="chip gray">${esc(t.name)} — ${esc(t.subjects || '')}</span>`).join('')}</div></details>`;
   }
 

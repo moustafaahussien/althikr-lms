@@ -10,7 +10,7 @@ const NAME_FIX = {"ابراهم":"ابراهيم","إبراهيم":"ابراهي
 const SUBJECT_BY_NAME = {};
 const STAGES = ["ابتدائي","متوسط","ثانوي","المسار الأمريكي","غير محدد"];
 const GRADE_AR = ["","الأول","الثاني","الثالث","الرابع","الخامس","السادس","السابع","الثامن","التاسع","العاشر","الحادي عشر","الثاني عشر"];
-const PALETTE = [["#0f6e6a","#e3f3f1"],["#8a3ffc","#f1e9ff"],["#c75000","#fff0e3"],["#1f5fbf","#e6efff"],["#b0225a","#fde8f0"],["#4a7a00","#eef6df"],["#6b5600","#fbf4d6"],["#00718f","#e0f5fb"]];
+const PALETTE = [["#007B51","#E8F4EF"],["#007B51","#E8F4EF"],["#c75000","#fff0e3"],["#1f5fbf","#e6efff"],["#b0225a","#fde8f0"],["#4a7a00","#eef6df"],["#6b5600","#fbf4d6"],["#00718f","#e0f5fb"]];
 
 function defaultTimes(n){ // توقيت مؤقت حتى يُضبط
   const arr=[]; let m=7*60;
@@ -444,8 +444,8 @@ function loadOneSignal(){ if(window.LMS&&LMS.DEMO) return Promise.reject(new Err
     window.OneSignalDeferred=window.OneSignalDeferred||[];
     // مكتبة OneSignal من onesignal.com مباشرة (بعض المتصفحات يرجع لها cdn.onesignal.com بخطأ 503)، ثم نسخة محلية، ثم الـ CDN
     const add=(src,next)=>{ const s=document.createElement("script"); s.src=src; s.defer=true; s.onerror=()=>{ s.remove(); next(); }; document.head.appendChild(s); };
-    add("https://onesignal.com/sdks/web/v16/OneSignalSDK.page.es6.js?v=160900",
-      ()=>add("os/OneSignalSDK.page.es6.js?v=160900",
+    add("https://onesignal.com/sdks/web/v16/OneSignalSDK.page.es6.js?v=202611231330",
+      ()=>add("os/OneSignalSDK.page.es6.js?v=202611231330",
         ()=>add("https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js", ()=>{ osReady=null; rej(new Error("sdk")); })));
     OneSignalDeferred.push(async OS=>{ try{ await OS.init({appId:PUSH_APP, serviceWorkerPath:"althikr-lms/supervision/OneSignalSDKWorker.js", serviceWorkerParam:{scope:"/althikr-lms/supervision/"}, allowLocalhostAsSecureOrigin:true}); res(OS); }catch(e){ osReady=null; rej(e); } });
   });
@@ -590,7 +590,7 @@ function renderWeek(){
     h+=`<tr><th>${DAYS[d]}</th>`;
     for(let p=1;p<=NPER;p++){
       const its=ENTRIES.filter(e=>e.sheet===sheet && e.day===d && e.period===p && (all || e.teacher===teacher || e.kind==="event"));
-      h+="<td>"+its.map(e=>{ if(e.kind==="event") return `<div class="it" style="--cb:#efe8ff;--c:#5b34a8">${esc(e.text)}</div>`;
+      h+="<td>"+its.map(e=>{ if(e.kind==="event") return `<div class="it" style="--cb:#E8F4EF;--c:#00603F">${esc(e.text)}</div>`;
         if(e.kind==="free") return all?"":`<div class="fr">بدون حصة</div>`;
         const [c,cb]=colorOf(subjectOf(e)); return `<div class="it" style="--c:${c};--cb:${cb}">${all?esc(e.teacher)+" ":""}${escL(clsShort(e))}${e.room?`<div style="font-weight:400;font-size:11px">${esc(/^\d+$/.test(e.room)?"قاعة "+e.room:e.room)}</div>`:""}</div>`; }).join("")+"</td>";
     }
@@ -962,7 +962,7 @@ function renderSchool(){
   document.getElementById("schStats").textContent=`${DAYS[SCH_DAY]} · ${rows.length} معلم · ${n} حصة`;
   const g=document.getElementById("schGrid");
   if(!rows.length){ g.innerHTML='<div class="empty">لا توجد نتائج بهذه الفلاتر.</div>'; return; }
-  g.innerHTML=`<div class="table-wrap" style="max-height:70vh;overflow:auto"><table class="set" style="font-size:12.5px;min-width:${180+P*110}px"><thead style="position:sticky;top:0;z-index:2"><tr><th style="position:sticky;right:0;background:var(--card,#fff);z-index:3">المعلم</th>${Array.from({length:P},(_,i)=>`<th>الحصة ${i+1}</th>`).join("")}</tr></thead><tbody>${rows.map(t=>`<tr><td style="text-align:right;position:sticky;right:0;background:var(--card,#fff);min-width:170px"><b>${esc(t.teacher)}</b><div class="sync" style="font-size:11px">${esc([...t.subjects].join("، "))}${t.subjects.size?" · ":""}${esc([...t.sups].join("، "))}</div></td>${Array.from({length:P},(_,i)=>{ const c=t.cells[i+1]; return `<td style="vertical-align:top">${c?Object.values(c).map(x=>`<div style="background:var(--brand2,#eef7f6);border-radius:6px;padding:2px 5px;margin:1px 0;white-space:nowrap"><b>${esc(x.cls)}</b>${x.subj?` <span class="sync">${esc(x.subj)}</span>`:""}</div>`).join(""):'<span class="sync">—</span>'}</td>`; }).join("")}</tr>`).join("")}</tbody></table></div>`;
+  g.innerHTML=`<div class="table-wrap" style="max-height:70vh;overflow:auto"><table class="set" style="font-size:12.5px;min-width:${180+P*110}px"><thead style="position:sticky;top:0;z-index:2"><tr><th style="position:sticky;right:0;background:var(--card,#fff);z-index:3">المعلم</th>${Array.from({length:P},(_,i)=>`<th>الحصة ${i+1}</th>`).join("")}</tr></thead><tbody>${rows.map(t=>`<tr><td style="text-align:right;position:sticky;right:0;background:var(--card,#fff);min-width:170px"><b>${esc(t.teacher)}</b><div class="sync" style="font-size:11px">${esc([...t.subjects].join("، "))}${t.subjects.size?" · ":""}${esc([...t.sups].join("، "))}</div></td>${Array.from({length:P},(_,i)=>{ const c=t.cells[i+1]; return `<td style="vertical-align:top">${c?Object.values(c).map(x=>`<div style="background:var(--brand2,#EEF7F2);border-radius:6px;padding:2px 5px;margin:1px 0;white-space:nowrap"><b>${esc(x.cls)}</b>${x.subj?` <span class="sync">${esc(x.subj)}</span>`:""}</div>`).join(""):'<span class="sync">—</span>'}</td>`; }).join("")}</tr>`).join("")}</tbody></table></div>`;
 }
 document.getElementById("schDays").addEventListener("click",ev=>{ const b=ev.target.closest("[data-d]"); if(!b) return; SCH_DAY=+b.dataset.d; document.querySelectorAll("#schDays button").forEach(x=>x.classList.toggle("on",x===b)); renderSchool(); });
 ["schSup","schStage"].forEach(id=>document.getElementById(id).addEventListener("change",renderSchool));
@@ -1377,7 +1377,7 @@ function evMax(ev){ return isDasc(ev)?4:5; }
 function evAvg(ev){ return evTotal(ev)/evItemsOf(ev).length; }
 const EV_SCALE=["","لا يوجد دليل","دليل ضعيف","يوجد دليل إلى حد ما","يوجد دليل","يوجد دليل قوي"];
 // الفئة الوصفية حسب الدرجة من 100 (عدّل الحدود هنا إن لزم)
-const EV_BANDS=[[90,"استثنائي","#2fa36b"],[80,"متميز","#3d7de0"],[70,"متقدم","#e9b51c"],[60,"قابل للتطوير","#ef8a3a"],[0,"غير مرضٍ","#d64545"]];
+const EV_BANDS=[[90,"استثنائي","#2fa36b"],[80,"متميز","#509BB9"],[70,"متقدم","#e9b51c"],[60,"قابل للتطوير","#ef8a3a"],[0,"غير مرضٍ","#d64545"]];
 const TPL_DEFAULT={
   good:["افتتاحية جاذبة ربطت الدرس بواقع الطلاب: [...]","توظيف استراتيجية [...] أدى إلى مشاركة فاعلة من أغلب الطلاب.","تنويع الأنشطة لتلبية الفروق الفردية بين المتعلمين.","تقديم تغذية راجعة فورية وبنّاءة للطلاب أثناء العمل.","إدارة صفية متميزة وانتقال سلس بين الأنشطة.","توظيف أدوات رقمية ([...]) بشكل هادف يخدم أهداف الدرس."],
   rec:["صياغة أهداف سلوكية ذكية (SMART) وعرضها ومناقشتها مع الطلاب في بداية الحصة.","تفعيل التعلم التعاوني بتوزيع أدوار واضحة داخل المجموعات.","توظيف مفاتيح المفكرين / عادات العقل في نشاط [...].","إتاحة فرص أكبر للطلاب لتقييم أعمالهم ذاتيًا ومن الأقران وفق معايير واضحة.","مراعاة الفروق الفردية بتقديم مهام متدرجة الصعوبة.","إدارة وقت الحصة بتخصيص وقت كافٍ للغلق والتقويم الختامي."]
@@ -1577,11 +1577,11 @@ function printEval(ev){
   const rows=EV_DOMAINS.map(([d,its])=>{ const ds=its.reduce((a,_,j)=>a+(ev.scores[i+1+j]||0),0); return its.map((t,j)=>{ i++; const v=ev.scores[i]; return `<tr>${j===0?`<td rowspan="${its.length}" class="dm">${esc(d)}<br><small>الدرجة ${ds} من ${its.length*5}</small></td>`:""}<td class="it">${i+1}- ${esc(t)}</td>${[1,2,3,4,5].map(n=>`<td class="c">${v===n?"✔":""}</td>`).join("")}</tr>`; }).join(""); }).join("");
   const nl=s=>esc(s||"").replace(/\n/g,"<br>");
   const legend=EV_BANDS.slice().reverse().map(b=>`<span class="lg"><i style="background:${b[2]}"></i>${b[1]}</span>`).join(" ");
-  const html=`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>استمارة ملاحظة – ${esc(ev.teacher)} – ${esc(ev.date)}</title>
-<style>@page{size:A4;margin:12mm}body{font-family:"IBM Plex Sans Arabic",Tahoma,sans-serif;font-size:12px;color:#000;margin:0}
+  const html=`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><link rel="stylesheet" href="${new URL('../assets/css/brand.css', location.href).href}"><title>استمارة ملاحظة – ${esc(ev.teacher)} – ${esc(ev.date)}</title>
+<style>@page{size:A4;margin:12mm}body{font-family:"Poppins","GE Dinar One",Tahoma,sans-serif;font-size:12px;color:#000;margin:0}
 .top{display:flex;justify-content:space-between;align-items:center}.top div{font-weight:700;line-height:1.6}.top img{height:70px}
 h2{text-align:center;margin:6px 0 8px;font-size:17px}table{width:100%;border-collapse:collapse;margin-bottom:8px}td,th{border:1px solid #8aaed6;padding:4px 5px;vertical-align:middle}
-th{background:#eef4fb}.c{text-align:center;width:22px;font-size:14px}.dm{font-weight:700;text-align:center;width:110px;background:#fafcff}.it{line-height:1.5}
+th{background:#eef4fb}.c{text-align:center;width:22px;font-size:14px}.dm{font-weight:700;text-align:center;width:110px;background:#F9FBFA}.it{line-height:1.5}
 .lg{display:inline-flex;align-items:center;gap:3px;margin:0 4px;font-size:11px}.lg i{width:9px;height:9px;border-radius:50%;display:inline-block}
 .sel{font-weight:700;font-size:13px}.box{min-height:90px;vertical-align:top}.scale{font-size:11px;text-align:center;margin:4px 0}.ref{text-align:center;font-size:11px}
 .foot{text-align:center;font-weight:700;margin-top:10px}.brk{page-break-inside:avoid}</style></head><body>
@@ -1663,11 +1663,11 @@ function printDasc(ev){
     return its.map((t,j)=>{ i++; const v=ev.scores[i]; return `<tr>${j===0?`<td rowspan="${its.length}" class="dm">${esc(d)}<br><small>Avg ${da}</small></td>`:""}<td class="it">${i+1}. ${esc(t)}</td>${[4,3,2,1].map(k=>`<td class="c">${v===k?"✔":""}</td>`).join("")}</tr>`; }).join(""); }).join("");
   const nl=s=>esc(s||"").replace(/\n/g,"<br>");
   const sup=(ev.support||[]).concat(ev.supportOther?["Other: "+ev.supportOther]:[]);
-  const html=`<!doctype html><html lang="en" dir="ltr"><head><meta charset="utf-8"><title>DASC Observation – ${esc(ev.teacher)} – ${esc(ev.date)}</title>
-<style>@page{size:A4;margin:12mm}body{font-family:Arial,"IBM Plex Sans Arabic",sans-serif;font-size:11.5px;color:#000;margin:0}
+  const html=`<!doctype html><html lang="en" dir="ltr"><head><meta charset="utf-8"><link rel="stylesheet" href="${new URL('../assets/css/brand.css', location.href).href}"><title>DASC Observation – ${esc(ev.teacher)} – ${esc(ev.date)}</title>
+<style>@page{size:A4;margin:12mm}body{font-family:"Poppins","GE Dinar One",Arial,sans-serif;font-size:11.5px;color:#000;margin:0}
 .top{display:flex;justify-content:space-between;align-items:center}.top div{font-weight:700;line-height:1.6}.top img{height:64px}
 h2{text-align:center;margin:6px 0 8px;font-size:16px}h3{font-size:13px;margin:10px 0 4px}table{width:100%;border-collapse:collapse;margin-bottom:8px}td,th{border:1px solid #8aaed6;padding:4px 5px;vertical-align:middle}
-th{background:#eef4fb}.c{text-align:center;width:40px;font-size:13px}.dm{font-weight:700;text-align:center;width:120px;background:#fafcff}.it{line-height:1.45}
+th{background:#eef4fb}.c{text-align:center;width:40px;font-size:13px}.dm{font-weight:700;text-align:center;width:120px;background:#F9FBFA}.it{line-height:1.45}
 .sel{font-weight:700;font-size:13px}.box{min-height:60px;vertical-align:top}.brk{page-break-inside:avoid}.foot{text-align:center;font-weight:700;margin-top:10px}</style></head><body>
 <div class="top"><div>Dar Al-Thikr Schools<br>DASC</div><img src="${PAGE_URL}school-logo.png" alt=""><div style="text-align:right">مدارس دار الذكر الأهلية<br>مكتب الإشراف والتطوير التربوي</div></div>
 <h2>DASC – Classroom Learning Environment Observation | 2026–2027</h2>
@@ -1717,7 +1717,7 @@ function itemAverages(list){ const d=isDasc(list[0]), items=d?DASC_ITEMS:EV_ITEM
   return items.map((it,i)=>{ const v=list.map(x=>(x.scores||[])[i]).filter(n=>n>=1&&n<=mx); return {d:it.d, t:it.t, i, avg:v.length?v.reduce((a,n)=>a+n,0)/v.length:null}; }); }
 function itemAvgHtml(list){
   const d=isDasc(list[0]), mx=d?4:5, doms=d?DASC_DOMAINS:EV_DOMAINS, av=itemAverages(list);
-  const col=r=>r>=0.85?"#2fa36b":r>=0.7?"#3d7de0":r>=0.55?"#e9b51c":"#d64545";
+  const col=r=>r>=0.85?"#2fa36b":r>=0.7?"#509BB9":r>=0.55?"#e9b51c":"#d64545";
   const bar=a=>a==null?"—":`<span style="display:inline-flex;align-items:center;gap:6px;min-width:150px"><span style="flex:1;height:8px;background:#eef1f4;border-radius:5px;overflow:hidden;display:inline-block;min-width:90px"><span style="display:block;height:100%;width:${(a/mx*100).toFixed(0)}%;background:${col(a/mx)}"></span></span><b>${a.toFixed(2)}</b>/${mx}</span>`;
   let k=0;
   return `<div ${d?'dir="ltr"':""}><div class="sync" style="margin-bottom:6px">${d?`Average of each item across ${list.length} completed visit(s)`:`متوسط كل بند في ${list.length} زيارة مكتملة`}</div><table class="set" style="width:100%"><tbody>${doms.map(([dn,its])=>{ const part=av.slice(k,k+its.length); k+=its.length; const dv=part.filter(x=>x.avg!=null), da=dv.length?dv.reduce((a,x)=>a+x.avg,0)/dv.length:null;

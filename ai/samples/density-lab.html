@@ -4,23 +4,24 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>مختبر الكثافة — يطفو أم يغوص؟</title>
+<link rel="stylesheet" href="../../assets/css/brand.css?v=202611231330">
 <!-- منتج نموذجي من فريق منصة المعلم الذكي — وحدة مهارات القرن 21، مدارس دار الذكر -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',Tahoma,'Noto Kufi Arabic',sans-serif;background:linear-gradient(135deg,#eef2ff,#ecfeff);color:#14173a;min-height:100vh;padding:18px;line-height:1.7}
-.app{max-width:900px;margin:auto;background:#fff;border-radius:24px;padding:22px;box-shadow:0 24px 60px -30px #4f46e588}
-h1{font-size:clamp(22px,4vw,30px);color:#4f46e5;text-align:center}
-.sub{text-align:center;color:#565d8c;margin-bottom:14px}
+body{font-family:'Poppins','GE Dinar One',Tahoma,'GE Dinar One',sans-serif;background:linear-gradient(135deg,#E8F4EF,#E1F5FD);color:#2F3133;min-height:100vh;padding:18px;line-height:1.7}
+.app{max-width:900px;margin:auto;background:#fff;border-radius:24px;padding:22px;box-shadow:0 24px 60px -30px #00A65788}
+h1{font-size:clamp(22px,4vw,30px);color:#00A657;text-align:center}
+.sub{text-align:center;color:#5E6662;margin-bottom:14px}
 button{font:inherit;cursor:pointer;border:0;border-radius:14px;padding:11px 18px;font-weight:700}
-.btn{background:linear-gradient(135deg,#6d4bff,#0ea5d6);color:#fff}
-.btn2{background:#eef0ff;color:#4f46e5}
-.bar{height:10px;background:#eef0f8;border-radius:10px;overflow:hidden;margin:8px 0}
-.bar i{display:block;height:100%;background:linear-gradient(90deg,#6d4bff,#14b8a6);transition:width .4s}
+.btn{background:linear-gradient(135deg,#007B51,#509BB9);color:#fff}
+.btn2{background:#E8F4EF;color:#00A657}
+.bar{height:10px;background:#EEF3F0;border-radius:10px;overflow:hidden;margin:8px 0}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,#007B51,#6ACFF6);transition:width .4s}
 .fb{min-height:52px;padding:10px 14px;border-radius:14px;margin-top:12px;font-weight:600}
 .ok{background:#d1fae5;color:#065f46}.no{background:#fee2e2;color:#991b1b}
 .center{text-align:center}
 .hide{display:none}
-.row{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:center;margin:8px 0}select{font:inherit;padding:6px;border-radius:10px}.log{width:100%;border-collapse:collapse;margin-top:12px;font-size:14px}.log th,.log td{border:1px solid #e0e7ff;padding:5px;text-align:center}.log th{background:#eef0ff}</style>
+.row{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:center;margin:8px 0}select{font:inherit;padding:6px;border-radius:10px}.log{width:100%;border-collapse:collapse;margin-top:12px;font-size:14px}.log th,.log td{border:1px solid #D6EDE2;padding:5px;text-align:center}.log th{background:#E8F4EF}</style>
 </head>
 <body>
 <div class="app">
@@ -29,7 +30,7 @@ button{font:inherit;cursor:pointer;border:0;border-radius:14px;padding:11px 18px
 <p class="sub">اختر جسماً وسائلاً، <b>توقّع</b> أولاً، ثم أسقط الجسم وتحقق. الجسم يطفو إذا كانت كثافته أقل من كثافة السائل.</p>
 <div class="row"><label>الجسم: <select id="obj"></select></label><label>السائل: <select id="liq"></select></label></div>
 <div class="row"><b>توقعك:</b> <button class="btn2 pr" data-p="f">يطفو</button><button class="btn2 pr" data-p="s">يغوص</button> <button class="btn" id="drop">⬇ أسقط الجسم</button></div>
-<canvas id="c" width="420" height="300" style="display:block;margin:12px auto;max-width:100%;border-radius:16px;background:#f8faff"></canvas>
+<canvas id="c" width="420" height="300" style="display:block;margin:12px auto;max-width:100%;border-radius:16px;background:#F7FAF8"></canvas>
 <div id="fb" class="fb"></div>
 <table class="log"><thead><tr><th>الجسم</th><th>كثافته</th><th>السائل</th><th>كثافته</th><th>توقعك</th><th>النتيجة</th></tr></thead><tbody id="log"></tbody></table>
 
@@ -40,9 +41,9 @@ const O=[['🪵 خشب الصنوبر',0.5],['🍾 فلّينة',0.24],['🥚 ب
 const Lq=[['💧 ماء عذب',1.0,'#93c5fd'],['🌊 ماء مالح جداً',1.2,'#67e8f9'],['🫒 زيت',0.92,'#fde68a']];
 const $=s=>document.querySelector(s);let pred=null,anim;
 $('#obj').innerHTML=O.map((o,i)=>'<option value="'+i+'">'+o[0]+'</option>').join('');$('#liq').innerHTML=Lq.map((o,i)=>'<option value="'+i+'">'+o[0]+'</option>').join('');
-document.querySelectorAll('.pr').forEach(b=>b.onclick=()=>{pred=b.dataset.p;document.querySelectorAll('.pr').forEach(x=>x.style.outline=x===b?'3px solid #6d4bff':'')});
+document.querySelectorAll('.pr').forEach(b=>b.onclick=()=>{pred=b.dataset.p;document.querySelectorAll('.pr').forEach(x=>x.style.outline=x===b?'3px solid #007B51':'')});
 const c=$('#c'),g=c.getContext('2d');
-function scene(y,o,l){g.clearRect(0,0,420,300);g.fillStyle=l[2];g.globalAlpha=.7;g.fillRect(60,110,300,170);g.globalAlpha=1;g.strokeStyle='#14173a';g.lineWidth=3;g.strokeRect(60,60,300,220);
+function scene(y,o,l){g.clearRect(0,0,420,300);g.fillStyle=l[2];g.globalAlpha=.7;g.fillRect(60,110,300,170);g.globalAlpha=1;g.strokeStyle='#2F3133';g.lineWidth=3;g.strokeRect(60,60,300,220);
  g.font='38px serif';g.textAlign='center';g.fillText(o[0].split(' ')[0],210,y)}
 function draw0(){scene(50,O[$('#obj').value],Lq[$('#liq').value])}$('#obj').onchange=draw0;$('#liq').onchange=draw0;
 $('#drop').onclick=()=>{if(!pred){$('#fb').className='fb no';$('#fb').textContent='سجّل توقعك أولاً: يطفو أم يغوص؟';return}

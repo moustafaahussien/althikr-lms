@@ -1,15 +1,15 @@
 /* =====================================================================
    منصة دار الذكر التعليمية — الهوية البصرية الموحّدة
-   (نفس تصميم وألوان قسم الإشراف التربوي: أخضر دار الذكر، بطاقات بيضاء، خط IBM Plex Sans Arabic)
+   (دليل هوية مدارس دار الذكر: الأخضر والأصفر والبرتقالي والأزرق، خط GE Dinar One وPoppins — المتغيرات في brand.css)
    ===================================================================== */
 :root {
-  --bg: #f4f6f8; --card: #fff; --ink: #1b2430; --muted: #66727f; --line: #e2e7ec;
-  --brand: #0f6e6a; --brand-dark: #0b5653; --brand2: #e7f4f3; --brand-line: #bfe1de;
-  --primary: var(--brand); --accent: #0f8a4f; --gold: #e4a842; --pink: #b0225a;
-  --ok: #0f8a4f; --warn: #b36b00; --err: #c0392b;
+  --bg: #f5f8f6; --card: #fff; --ink: #2f3133; --muted: #6b7470; --line: #e1e9e5;
+  --brand: var(--dt-green); --brand-dark: var(--dt-green-dark); --brand2: var(--dt-mint); --brand-line: var(--dt-green-40);
+  --primary: var(--brand); --accent: var(--dt-leaf); --gold: var(--dt-yellow); --orange: var(--dt-orange); --sky: var(--dt-blue); --pink: var(--dt-orange-dark);
+  --ok: var(--dt-leaf-dark); --warn: var(--dt-orange-dark); --err: #c0392b;
   --radius: 14px;
-  --shadow: 0 1px 2px rgba(16, 24, 40, .04), 0 2px 8px rgba(16, 24, 40, .04);
-  --font: 'IBM Plex Sans Arabic', system-ui, sans-serif;
+  --shadow: 0 1px 2px rgba(0, 60, 40, .04), 0 2px 8px rgba(0, 60, 40, .05);
+  --font: var(--dt-font);
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; min-height: 100%; }
@@ -30,8 +30,8 @@ button, input, select, textarea { font: inherit; }
 .hero p { color: var(--muted); margin: 0; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .chip { padding: 3px 11px; border-radius: 999px; background: var(--brand2); color: var(--brand); font-weight: 600; font-size: .84rem; border: 1px solid var(--brand-line); }
-.chip.teal { background: #e6f6ee; color: var(--accent); border-color: #b7e4cb; }
-.chip.pink { background: #fff4e0; color: var(--warn); border-color: #f3d39a; }
+.chip.teal { background: #E5F6EC; color: var(--accent); border-color: #99D9B8; }
+.chip.pink { background: #FEF1E1; color: var(--warn); border-color: #FCD4A5; }
 .chip.gray { background: #f1f3f5; color: var(--muted); border-color: var(--line); }
 .chip.view-sw { cursor: pointer; font-family: inherit; opacity: .55; transition: .15s; }
 .chip.view-sw:hover { opacity: .85; }
@@ -54,7 +54,7 @@ a.module:hover { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand2)
 .module small { color: var(--muted); }
 .module.soon { opacity: .7; }
 .module .badge { position: absolute; top: 12px; inset-inline-start: 12px; font-size: .72rem; padding: 2px 9px; border-radius: 999px;
-  background: #fff4e0; color: var(--warn); border: 1px solid #f3d39a; font-weight: 700; }
+  background: #FEF1E1; color: var(--warn); border: 1px solid #FCD4A5; font-weight: 700; }
 
 .stat { padding: 12px 14px; }
 .stat .n { font-size: 1.7rem; font-weight: 700; color: var(--brand); }
@@ -96,11 +96,11 @@ input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--brand); }
 table { width: 100%; border-collapse: collapse; font-size: .92rem; }
 th, td { padding: 8px 12px; text-align: right; unicode-bidi: plaintext; border-bottom: 1px solid var(--line); white-space: nowrap; }
 th { position: sticky; top: 0; background: #fafbfc; font-weight: 700; color: var(--ink); z-index: 1; }
-tr:hover td { background: #f7fbfb; }
+tr:hover td { background: #F6FAF8; }
 td.actions { display: flex; gap: 4px; }
 .empty { text-align: center; color: var(--muted); padding: 26px; }
 .pill { padding: 1px 9px; border-radius: 999px; font-size: .78rem; font-weight: 700; }
-.pill.on { background: #e6f6ee; color: var(--accent); } .pill.off { background: #fdecea; color: var(--err); }
+.pill.on { background: #E5F6EC; color: var(--accent); } .pill.off { background: #fdecea; color: var(--err); }
 
 /* ---------- تبويبات ---------- */
 .tabs { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px; margin-bottom: 16px; }
@@ -110,7 +110,7 @@ td.actions { display: flex; gap: 4px; }
 .tab-pane { display: none; } .tab-pane.on { display: block; }
 
 /* ---------- نافذة منبثقة ---------- */
-.modal-wrap { position: fixed; inset: 0; background: rgba(27, 36, 48, .4); z-index: 100; display: grid; place-items: center; padding: 16px; animation: fade .15s; }
+.modal-wrap { position: fixed; inset: 0; background: rgba(47,49,51, .4); z-index: 100; display: grid; place-items: center; padding: 16px; animation: fade .15s; }
 .modal { width: min(560px, 100%); max-height: 90vh; display: flex; flex-direction: column; background: #fff; }
 .modal.wide { width: min(980px, 100%); }
 .modal-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--line); background: #fafbfc; border-radius: var(--radius) var(--radius) 0 0; }
@@ -138,7 +138,7 @@ td.actions { display: flex; gap: 4px; }
 .gbtn svg { width: 22px; height: 22px; background: #fff; border-radius: 50%; padding: 2px; }
 .notice { margin-top: 14px; padding: 10px 12px; border-radius: 12px; font-weight: 600; text-align: right; background: #fff8e6; border: 1px solid #f1d58a; color: #6b4e00; }
 .notice.err { background: #fdecea; border-color: #f0c4be; color: #8f2a1f; } .notice.warn { background: #fff8e6; border-color: #f1d58a; color: #6b4e00; }
-.notice.info { background: var(--brand2); border-color: var(--brand-line); color: #0b4f4c; }
+.notice.info { background: var(--brand2); border-color: var(--brand-line); color: #00553A; }
 
 .loader { display: grid; place-items: center; padding: 60px; color: var(--muted); font-weight: 600; }
 .spin { width: 36px; height: 36px; border-radius: 50%; border: 4px solid var(--brand2); border-top-color: var(--brand); animation: sp 1s linear infinite; margin-bottom: 10px; }
@@ -198,23 +198,32 @@ footer.credit { text-align: center; color: var(--muted); font-size: .82rem; padd
 }
 .today-periods .tp .att-ok { color: var(--ok); font-weight: 600; }
 .today-periods .tp .att-no { color: var(--muted); }
-.today-periods .tp.ok { background: #e6f6ee; border-color: #b7e4cb; }
+.today-periods .tp.ok { background: #E5F6EC; border-color: #99D9B8; }
 .today-periods .tp.ok i { background: var(--ok); }
 :focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 
 /* ---------- الوضع التجريبي (ديمو) ---------- */
 .demo-band{position:sticky;top:0;z-index:60;display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;justify-content:center;
-  background:#3a2f8f;color:#fff;font-size:13px;padding:6px 12px;line-height:1.5;text-align:center}
+  background:#00603F;color:#fff;font-size:13px;padding:6px 12px;line-height:1.5;text-align:center}
 .demo-band a{color:#ffe08a;font-weight:600;text-decoration:none}
 .demo-band a:hover{text-decoration:underline}
 .demo-band .db-r{opacity:.95}
 .demo-roles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin:12px 0 6px}
 .demo-roles button{display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 10px;border:1px solid var(--line,#dfe5ec);border-radius:14px;
   background:#fff;cursor:pointer;font:inherit;transition:transform .15s,box-shadow .15s,border-color .15s}
-.demo-roles button:hover,.demo-roles button:focus-visible{transform:translateY(-2px);border-color:#3a2f8f;box-shadow:0 6px 18px rgba(58,47,143,.15)}
+.demo-roles button:hover,.demo-roles button:focus-visible{transform:translateY(-2px);border-color:#00603F;box-shadow:0 6px 18px rgba(0,96,63,.15)}
 .demo-roles button span{font-size:1.6rem}
 .demo-roles button small{color:var(--muted,#667);font-size:12px}
-.demo-link{display:inline-block;margin-top:16px;color:#3a2f8f;font-weight:600;cursor:pointer;background:none;border:0;font:inherit;text-decoration:underline}
+.demo-link{display:inline-block;margin-top:16px;color:#00603F;font-weight:600;cursor:pointer;background:none;border:0;font:inherit;text-decoration:underline}
 
-.today-periods .tp.clk { cursor: pointer; transition: box-shadow .15s, border-color .15s; } .today-periods .tp.clk:hover, .today-periods .tp.clk:focus-visible { border-color: var(--brand); box-shadow: 0 3px 10px rgba(15,110,106,.15); }
+.today-periods .tp.clk { cursor: pointer; transition: box-shadow .15s, border-color .15s; } .today-periods .tp.clk:hover, .today-periods .tp.clk:focus-visible { border-color: var(--brand); box-shadow: 0 3px 10px rgba(0,123,81,.15); }
 button.att-box { font: inherit; text-align: inherit; cursor: pointer; border: 1px solid var(--line); background: #fff; } button.att-box:hover { border-color: var(--brand); }
+
+/* ---------- لمسات الهوية (عناصر دوائر دار الذكر) ---------- */
+.hero { border-inline-start-color: var(--dt-green); }
+.hero::after { content: ''; position: absolute; inset-inline-end: -14px; top: -14px; width: 92px; height: 92px; pointer-events: none;
+  background: url('../img/brand/deco-top.svg') no-repeat center / contain; opacity: .9; }
+[dir="rtl"] .hero::after { transform: scaleX(-1); }
+.hero h1, .hero p { position: relative; z-index: 1; }
+.hero h1 { color: var(--dt-green); }
+::selection { background: var(--dt-yellow-40); }

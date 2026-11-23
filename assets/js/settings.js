@@ -84,13 +84,13 @@
             <div><h4 style="margin:6px 0">مادة كل معلم</h4>
               <div class="table-wrap" style="max-height:340px"><table><thead><tr><th>المعلم</th><th>الحصص</th><th>المادة</th></tr></thead><tbody>
               ${ts.map((t) => `<tr><td>${esc(t.name)}</td><td>${t.n}</td><td>${t.fixed ? `${esc(t.fixed)} <span class="hint">(من الجدول)</span>`
-                : `<input list="subjList" data-subj="${t.id}" value="${esc(t.subject || '')}" placeholder="غير محددة" style="${t.subject ? '' : 'border-color:#e4a842;background:#fffaf0'}">`}</td></tr>`).join('') || '<tr><td colspan="3" class="empty">لا معلمين</td></tr>'}
+                : `<input list="subjList" data-subj="${t.id}" value="${esc(t.subject || '')}" placeholder="غير محددة" style="${t.subject ? '' : 'border-color:#FFD54C;background:#fffaf0'}">`}</td></tr>`).join('') || '<tr><td colspan="3" class="empty">لا معلمين</td></tr>'}
               </tbody></table></div></div>
             <div><h4 style="margin:6px 0">مرحلة كل صف وتوقيته</h4>
               <div class="table-wrap" style="max-height:340px"><table><thead><tr><th>الصف</th><th>الشعب</th><th>المرحلة</th><th>التوقيت</th></tr></thead><tbody>
               ${gs.map((g) => `<tr data-track="${esc(g.track)}" data-grade="${g.grade}"><td>${g.track === 'american' ? 'Grade ' + g.grade : 'الصف ' + (GRADE_AR[g.grade] || g.grade)}</td>
                 <td style="white-space:normal;font-size:.82rem">${esc(g.classes || '')}</td>
-                <td><select data-stage style="${g.stage === 'غير محدد' ? 'border-color:#e4a842;background:#fffaf0' : ''}">${STAGES.map((s) => `<option ${s === g.stage ? 'selected' : ''}>${s}</option>`).join('')}</select></td>
+                <td><select data-stage style="${g.stage === 'غير محدد' ? 'border-color:#FFD54C;background:#fffaf0' : ''}">${STAGES.map((s) => `<option ${s === g.stage ? 'selected' : ''}>${s}</option>`).join('')}</select></td>
                 <td><select data-prof>${profOpts(g.prof)}</select></td></tr>`).join('') || '<tr><td colspan="4" class="empty">لا صفوف</td></tr>'}
               </tbody></table></div></div>
           </div></div>`; }).join('')}
@@ -108,7 +108,7 @@
     else if (el.matches('[data-stage]')) p = { action: 'stage', sheet, track: tr.dataset.track, grade: +tr.dataset.grade, value: el.value };
     else if (el.matches('[data-prof]')) p = { action: 'prof', sheet, track: tr.dataset.track, grade: +tr.dataset.grade, value: el.value };
     if (!p) return;
-    try { await meta(p); toast('تم الحفظ ✓'); await load(); if (el.matches('[data-stage]')) drawTT(); else if (el.matches('[data-subj]')) el.style.cssText = el.value ? '' : 'border-color:#e4a842;background:#fffaf0'; }
+    try { await meta(p); toast('تم الحفظ ✓'); await load(); if (el.matches('[data-stage]')) drawTT(); else if (el.matches('[data-subj]')) el.style.cssText = el.value ? '' : 'border-color:#FFD54C;background:#fffaf0'; }
     catch (er) { toast(errMsg(er), 'err'); }
   });
   $('#tab-tt').addEventListener('click', async (e) => {

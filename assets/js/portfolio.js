@@ -100,15 +100,15 @@
   function printProfile(P) {
     const ap = P.items.filter((i) => i.status === 'approved');
     const w = window.open('', '_blank'); if (!w) { toast('اسمح بالنوافذ المنبثقة للطباعة', 'warn'); return; }
-    w.document.write(`<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>ملف إنجاز ${esc(P.student.name)}</title>
-      <style>body{font-family:'IBM Plex Sans Arabic',Tahoma,sans-serif;padding:24px;color:#1d2b36}h1{margin:0;color:#0f6e6a}h2{margin:2px 0 16px;font-weight:500;color:#555;font-size:1rem}
-      table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccd;padding:6px 8px;text-align:right;font-size:13px;vertical-align:top}th{background:#eef6f5}footer{margin-top:20px;color:#888;font-size:12px}</style></head><body>
+    w.document.write(`<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><link rel="stylesheet" href="${new URL('assets/css/brand.css', location.href).href}"><title>ملف إنجاز ${esc(P.student.name)}</title>
+      <style>body{font-family:'Poppins','GE Dinar One',Tahoma,sans-serif;padding:24px;color:#1d2b36}h1{margin:0;color:#007B51}h2{margin:2px 0 16px;font-weight:500;color:#555;font-size:1rem}
+      table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccd;padding:6px 8px;text-align:right;font-size:13px;vertical-align:top}th{background:#EEF7F2}footer{margin-top:20px;color:#888;font-size:12px}</style></head><body>
       <h1>ملف إنجاز الطالب</h1><h2>${esc(P.student.name)} — ${esc(P.student.class || P.student.grade || '')}</h2>
       <table><thead><tr><th>#</th><th>الإنجاز</th><th>النوع</th><th>المستوى</th><th>النتيجة</th><th>التاريخ</th></tr></thead><tbody>
       ${ap.map((i, n) => `<tr><td>${n + 1}</td><td><b>${esc(i.title)}</b>${i.description ? `<br><small>${esc(i.description)}</small>` : ''}</td><td>${esc((KIND[i.kind] || '').replace(/^\S+\s/, ''))}</td><td>${esc(LEVEL[i.level] || '')}</td><td>${esc(i.result || '')}</td><td>${esc(fmtD(i.date))}</td></tr>`).join('') || '<tr><td colspan="6">لا توجد إنجازات معتمدة</td></tr>'}
       </tbody></table>
-      ${(P.exams || []).length ? `<h3 style="color:#0f6e6a">نتائج الاختبارات الإلكترونية</h3><table><thead><tr><th>الاختبار</th><th>المادة</th><th>التاريخ</th><th>الدرجة</th></tr></thead><tbody>${P.exams.map((x) => `<tr><td>${esc(x.title)}</td><td>${esc(x.subject || '')}</td><td>${esc(fmtD(x.date))}</td><td>${+x.score} / ${+x.max}</td></tr>`).join('')}</tbody></table>` : ''}
-      ${(P.homework || []).length ? `<h3 style="color:#0f6e6a">الواجبات المصحّحة</h3><table><thead><tr><th>الواجب</th><th>المادة</th><th>التاريخ</th><th>الدرجة</th></tr></thead><tbody>${P.homework.map((x) => `<tr><td>${esc(x.title)}</td><td>${esc(x.subject || '')}</td><td>${esc(fmtD(x.date))}</td><td>${+x.score} / ${+x.max}</td></tr>`).join('')}</tbody></table>` : ''}
+      ${(P.exams || []).length ? `<h3 style="color:#007B51">نتائج الاختبارات الإلكترونية</h3><table><thead><tr><th>الاختبار</th><th>المادة</th><th>التاريخ</th><th>الدرجة</th></tr></thead><tbody>${P.exams.map((x) => `<tr><td>${esc(x.title)}</td><td>${esc(x.subject || '')}</td><td>${esc(fmtD(x.date))}</td><td>${+x.score} / ${+x.max}</td></tr>`).join('')}</tbody></table>` : ''}
+      ${(P.homework || []).length ? `<h3 style="color:#007B51">الواجبات المصحّحة</h3><table><thead><tr><th>الواجب</th><th>المادة</th><th>التاريخ</th><th>الدرجة</th></tr></thead><tbody>${P.homework.map((x) => `<tr><td>${esc(x.title)}</td><td>${esc(x.subject || '')}</td><td>${esc(fmtD(x.date))}</td><td>${+x.score} / ${+x.max}</td></tr>`).join('')}</tbody></table>` : ''}
       <footer>منصة دار الذكر التعليمية — ${esc(new Date().toLocaleDateString('ar-SA-u-ca-gregory-nu-latn'))}</footer></body></html>`);
     w.document.close(); w.focus(); setTimeout(() => w.print(), 300);
   }

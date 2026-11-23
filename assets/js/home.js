@@ -284,7 +284,7 @@
         <div class="card-box" style="padding:10px"><b style="font-size:1.4rem;color:var(--accent)">${pct == null ? '—' : pct + '%'}</b><div class="hint">نسبة الحضور (60 يومًا)</div></div>
         <button class="card-box att-box" data-att="absent" data-kid="${esc(c.id)}" style="padding:10px"><b style="font-size:1.4rem;color:#c0392b">${a.absent || 0}</b><div class="hint">غياب ›</div></button>
         <button class="card-box att-box" data-att="late" data-kid="${esc(c.id)}" style="padding:10px"><b style="font-size:1.4rem;color:#b9691b">${a.late || 0}</b><div class="hint">تأخر ›</div></button>
-        <button class="card-box att-box" data-att="excused" data-kid="${esc(c.id)}" style="padding:10px"><b style="font-size:1.4rem;color:#2c7be5">${a.excused || 0}</b><div class="hint">غياب بعذر ›</div></button></div>
+        <button class="card-box att-box" data-att="excused" data-kid="${esc(c.id)}" style="padding:10px"><b style="font-size:1.4rem;color:#509BB9">${a.excused || 0}</b><div class="hint">غياب بعذر ›</div></button></div>
       ${(a.recent || []).length ? `<details style="margin-top:10px"><summary class="hint" style="cursor:pointer">سجل الغياب والتأخر</summary><div class="table-wrap" data-title="سجل حضور ${esc(c.name)}" style="margin-top:6px"><table>
         <thead><tr><th>التاريخ</th><th>هجري</th><th>الحصة</th><th>الحالة</th><th>ملاحظة</th></tr></thead><tbody>${a.recent.map((r) => `<tr><td>${esc(r.d)}</td><td>${esc(LMS.hijri(r.d))}</td>
         <td>${r.p ? r.p : 'يومي'}</td><td>${STL[r.s] || r.s}</td><td>${esc(r.n || '')}</td></tr>`).join('')}</tbody></table></div></details>` : ''}

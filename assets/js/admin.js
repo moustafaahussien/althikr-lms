@@ -86,7 +86,7 @@
         ${st.no_email ? `• ${st.no_email} موظف بدون بريد — لن يستطيع الدخول.` : ''}</div>` : ''}
       <div class="section-title"><h2>خطوات تجهيز المنصة</h2></div>
       <div class="grid modules">${steps.map(([n, t, d, done]) => `
-        <div class="module glass"><span class="badge" style="${done ? 'background:#e6f6ee;color:#0f8a4f;border-color:#b7e4cb' : ''}">${done ? 'تم ✓' : 'الخطوة ' + n}</span>
+        <div class="module glass"><span class="badge" style="${done ? 'background:#E5F6EC;color:#007D41;border-color:#99D9B8' : ''}">${done ? 'تم ✓' : 'الخطوة ' + n}</span>
           <span class="ic">${['👥', '🎓', '🧑‍🏫', '✅'][n - 1]}</span><b>${t}</b><small>${d}</small></div>`).join('')}
       </div>`;
   }

@@ -6,13 +6,12 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.sheetjs.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://zpbhzhpvpvehowxvlsgp.supabase.co https://drive.google.com https://*.googleusercontent.com; connect-src 'self' https://zpbhzhpvpvehowxvlsgp.supabase.co wss://zpbhzhpvpvehowxvlsgp.supabase.co; frame-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>الخدمات الإدارية — منصة دار الذكر التعليمية</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/brand.css?v=202611231330">
   <link rel="icon" type="image/png" href="favicon.png">
-  <meta name="theme-color" content="#0f6e6a">
+  <meta name="theme-color" content="#007B51">
   <link rel="manifest" href="supervision/manifest.json?v=2">
-    <link rel="stylesheet" href="assets/css/app.css?v=202611230100">
-  <link rel="stylesheet" href="assets/css/topbar.css?v=202611221955">
+    <link rel="stylesheet" href="assets/css/app.css?v=202611231330">
+  <link rel="stylesheet" href="assets/css/topbar.css?v=202611231330">
   <style>
     .duty-grid { display: grid; grid-template-columns: repeat(5, minmax(170px, 1fr)); gap: 10px; overflow-x: auto; }
     .duty-day { padding: 10px; } .duty-day h3 { margin: 0 0 8px; font-size: 1rem; color: var(--brand); }
@@ -22,16 +21,16 @@
     .types button { font-family: inherit; padding: 14px; border: 1px solid var(--line); border-radius: 14px; background: #fff; cursor: pointer; font-size: .95rem; font-weight: 600; text-align: center; }
     .types button:hover { border-color: var(--brand); background: var(--brand2); } .types button span { font-size: 1.6rem; display: block; }
     .st { padding: 1px 9px; border-radius: 99px; font-size: .78rem; font-weight: 700; white-space: nowrap; }
-    .st.pending, .st.new { background: #fff3e0; color: #b9691b; } .st.approved, .st.resolved { background: #e6f6ee; color: var(--accent); }
-    .st.rejected { background: #fdecea; color: #c0392b; } .st.returned, .st.in_progress { background: #e8f0fd; color: #2c7be5; } .st.cancelled, .st.closed { background: #f1f3f5; color: var(--muted); }
+    .st.pending, .st.new { background: #fff3e0; color: #b9691b; } .st.approved, .st.resolved { background: #E5F6EC; color: var(--accent); }
+    .st.rejected { background: #fdecea; color: #c0392b; } .st.returned, .st.in_progress { background: #e8f0fd; color: #509BB9; } .st.cancelled, .st.closed { background: #f1f3f5; color: var(--muted); }
     .timeline { border-inline-start: 2px solid var(--line); margin: 10px 4px; padding-inline-start: 14px; }
     .timeline div { margin-bottom: 10px; position: relative; } .timeline div::before { content: ''; position: absolute; inset-inline-start: -20px; top: 6px; width: 10px; height: 10px; border-radius: 50%; background: var(--line); }
-    .timeline div.ok::before { background: var(--accent); } .timeline div.no::before { background: #c0392b; } .timeline div.wait::before { background: #e4a842; }
+    .timeline div.ok::before { background: var(--accent); } .timeline div.no::before { background: #c0392b; } .timeline div.wait::before { background: #FFD54C; }
     .kv { display: grid; grid-template-columns: 140px 1fr; gap: 6px 12px; } .kv b { color: var(--muted); font-weight: 600; }
     .subtabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
     .subtabs button { font-family: inherit; border: 1px solid var(--line); background: #fff; border-radius: 99px; padding: 5px 14px; cursor: pointer; }
     .subtabs button.on { background: var(--brand); color: #fff; border-color: var(--brand); }
-    .stars { color: #e4a842; letter-spacing: 1px; }
+    .stars { color: #FFD54C; letter-spacing: 1px; }
     @media (max-width: 800px) { .duty-grid { grid-template-columns: 1fr; } .kv { grid-template-columns: 1fr; } }
   </style>
 </head>
@@ -56,10 +55,10 @@
   <footer class="credit">إعداد وتصميم: مصطفى حسين</footer>
 
   <script src="assets/vendor/supabase-js-2.119.2.js"></script>
-  <script src="assets/js/config.js?v=202611230100"></script>
-  <script src="assets/js/academic-calendar.js?v=202611221130"></script>
-  <script src="assets/js/core.js?v=202611231200"></script>
-  <script src="assets/js/services.js?v=202611231200"></script>
+  <script src="assets/js/config.js?v=202611231330"></script>
+  <script src="assets/js/academic-calendar.js?v=202611231330"></script>
+  <script src="assets/js/core.js?v=202611231330"></script>
+  <script src="assets/js/services.js?v=202611231330"></script>
 </body>
 </html>
 

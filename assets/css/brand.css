@@ -1,0 +1,29 @@
+/* =====================================================================
+   الهوية البصرية لمدارس دار الذكر (Identity — دليل الهوية DAT_Branding)
+   - الخطوط: GE Dinar One للعربي، Poppins للإنجليزي والأرقام اللاتينية
+   - الألوان الأساسية: أخضر دار الذكر PANTONE 137-16C ومعه الأصفر والبرتقالي والأزرق
+   هذا الملف يُحمَّل أولًا في كل صفحات المنصة وصفحات الطباعة والشهادات
+   ===================================================================== */
+@font-face { font-family: 'GE Dinar One'; src: url('../fonts/ge-dinar-one-400.woff2') format('woff2'); font-weight: 300 449; font-display: swap; }
+@font-face { font-family: 'GE Dinar One'; src: url('../fonts/ge-dinar-one-500.woff2') format('woff2'); font-weight: 450 599; font-display: swap; }
+@font-face { font-family: 'GE Dinar One'; src: url('../fonts/ge-dinar-one-700.woff2') format('woff2'); font-weight: 600 900; font-display: swap; }
+@font-face { font-family: 'Poppins'; src: url('../fonts/poppins-400.woff2') format('woff2'); font-weight: 300 449; font-display: swap; }
+@font-face { font-family: 'Poppins'; src: url('../fonts/poppins-500.woff2') format('woff2'); font-weight: 450 549; font-display: swap; }
+@font-face { font-family: 'Poppins'; src: url('../fonts/poppins-600.woff2') format('woff2'); font-weight: 550 649; font-display: swap; }
+@font-face { font-family: 'Poppins'; src: url('../fonts/poppins-700.woff2') format('woff2'); font-weight: 650 900; font-display: swap; }
+
+:root {
+  /* الأخضر الرئيسي ودرجاته (100% / 80% / 60% / 40%) */
+  --dt-green: #007B51; --dt-green-80: #339574; --dt-green-60: #66AF96; --dt-green-40: #99CAB9; --dt-green-dark: #00603F;
+  /* الأخضر الفاتح */
+  --dt-leaf: #00A657; --dt-leaf-dark: #007D41; --dt-leaf-60: #66C99A; --dt-leaf-20: #CCEDDD;
+  /* الأصفر */
+  --dt-yellow: #FFD54C; --dt-yellow-dark: #BFA039; --dt-yellow-60: #FFDE70; --dt-yellow-40: #FFE694;
+  /* البرتقالي */
+  --dt-orange: #F7941D; --dt-orange-dark: #B96F16; --dt-orange-60: #F9A94A; --dt-orange-20: #FCD4A5;
+  /* الأزرق */
+  --dt-blue: #6ACFF6; --dt-blue-dark: #509BB9; --dt-blue-30: #C3ECFB; --dt-blue-10: #E1F5FD;
+  /* المحايدة: نص الشعار والخلفية النعناعية من نماذج الهوية */
+  --dt-ink: #434345; --dt-mint: #E8F4EF;
+  --dt-font: 'Poppins', 'GE Dinar One', system-ui, sans-serif;
+}

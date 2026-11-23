@@ -172,7 +172,7 @@
     A.push({ label: '🖨️ طباعة', cls: 'ghost', onClick: () => { printHTML('تحضير درس: ' + x.title, bodyHTML(x) + PRINT_STYLE); return false; } });
     modal({ title: x.title, wide: true, body: bodyHTML(x) + (x.can_review ? `<label class="f" style="margin-top:12px">ملاحظاتك للمعلم (مطلوبة عند الإعادة)<textarea id="rvNote" rows="3"></textarea></label>` : ''), actions: A });
   }
-  const PRINT_STYLE = '<style>.st,.chip{border:1px solid #ccc;border-radius:99px;padding:1px 8px;margin-left:4px;font-size:12px}.lpv h5{margin:14px 0 4px;color:#0f6e6a}.lpv p{white-space:pre-wrap;margin:0;line-height:1.8}.note-box{border:1px solid #ddd;padding:6px 10px;border-radius:8px;margin:8px 0}</style>';
+  const PRINT_STYLE = '<style>.st,.chip{border:1px solid #ccc;border-radius:99px;padding:1px 8px;margin-left:4px;font-size:12px}.lpv h5{margin:14px 0 4px;color:#007B51}.lpv p{white-space:pre-wrap;margin:0;line-height:1.8}.note-box{border:1px solid #ddd;padding:6px 10px;border-radius:8px;margin:8px 0}</style>';
   function after() { refreshBadge(); const t = ($('#tabs button.on') || {}).dataset; if (t) LOAD[t.tab](); }
 
   function copyDlg(x) {

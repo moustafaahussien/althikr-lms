@@ -111,7 +111,7 @@ function render(R) {
     '<p class="note">الصعوبة: سهل ≥ 80% • متوسط 50–79% • صعب < 50%. التمييز = (إتقان أعلى 27%) − (إتقان أدنى 27%)؛ أقل من 0.2 ضعيف' + (S.length < 6 ? ' (يحتاج 6 طلاب على الأقل)' : '') + '.</p>' +
     '<div class="sub-h">👥 مجموعات الاحتياج (حسب النتيجة الكلية)</div><div class="grp3">' + G.map(gr => '<div style="--c:' + gr[2] + '"><h4>' + gr[0] + ' — ' + gr[1].length + '</h4><small style="color:var(--muted)">' + gr[3] + '</small><div class="codes">' + gr[1].map(s => '<span>' + esc(s.code) + ' · ' + Math.round(s.pct) + '%</span>').join('') + '</div></div>').join('') + '</div>' +
     (SK.filter(k => k.low.length).length ? '<div class="sub-h">🧩 طلاب يحتاجون دعماً في مهارة محددة (أقل من 50%)</div><div class="tablewrap"><table class="recs"><tr><th>المهارة</th><th>الطلاب</th></tr>' + SK.filter(k => k.low.length).map(k => '<tr><td class="tl">' + esc(k.name) + '</td><td><div class="codes">' + k.low.map(c => '<span>' + esc(c) + '</span>').join('') + '</div></td></tr>').join('') + '</table></div>' : '') +
-    '<div class="sub-h">💡 التدخلات المقترحة</div><ul class="reco" style="padding-inline-start:20px;color:#2f3460">' + reco.map(r => '<li>' + esc(r) + '</li>').join('') + '</ul>' +
+    '<div class="sub-h">💡 التدخلات المقترحة</div><ul class="reco" style="padding-inline-start:20px;color:#3A403D">' + reco.map(r => '<li>' + esc(r) + '</li>').join('') + '</ul>' +
     '<p class="note">المجموعات مؤقتة وتتغير حسب كل مهارة — لا تستخدمها تصنيفاً ثابتاً للطلاب. التوصيات قواعد عامة؛ القرار التربوي للمعلم.</p></div>';
   $('#cpAI').onclick = e => A.copy(summaryAI, e.currentTarget);
   $('#out').scrollIntoView({ behavior:'smooth' });

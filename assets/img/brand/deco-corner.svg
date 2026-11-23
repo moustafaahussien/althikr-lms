@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 160">
+  <!-- عناصر الهوية: دوائر وأنصاف دوائر بألوان دار الذكر (ركن سفلي) -->
+  <circle cx="58" cy="118" r="52" fill="none" stroke="#FFD54C" stroke-width="2.2"/>
+  <path d="M0 106 H34 A40 40 0 0 1 34 186 H0 Z" fill="#F7941D"/>
+  <path d="M34 50 A46 46 0 0 1 34 142 Z" fill="#FFD54C"/>
+  <path d="M110 160 A46 46 0 0 1 202 160 Z" fill="#6ACFF6"/>
+  <path d="M110 160 A46 46 0 0 1 156 114 V160 Z" fill="#509BB9" opacity=".85"/>
+  <circle cx="12" cy="80" r="10" fill="#33B673"/>
+</svg>

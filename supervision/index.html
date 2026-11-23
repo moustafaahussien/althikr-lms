@@ -11,27 +11,26 @@
 <meta name="apple-mobile-web-app-title" content="الإشراف التربوي">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" type="image/png" href="icon-192.png">
-<meta name="theme-color" content="#0f6e6a">
+<meta name="theme-color" content="#007B51">
 <title>مكتب الإشراف التربوي – منصة دار الذكر التعليمية</title>
-<script src="i18n.js?v=202611221130"></script>
+<script src="i18n.js?v=202611231330"></script>
 <script src="../assets/vendor/supabase-js-2.119.2.js"></script>
-<script src="../assets/js/config.js?v=202611230100"></script>
+<script src="../assets/js/config.js?v=202611231330"></script>
 <!-- الوضع التجريبي: يعمل المكتب على بيانات تجريبية من demo.js (عبر core.js) دون اتصال بالخادم -->
 <!-- الأساس المشترك للمنصة: نفس الاتصال والجلسة والشريط العلوي والتقويم الدراسي -->
-<script src="../assets/js/academic-calendar.js?v=202611221130"></script>
-<script src="../assets/js/core.js?v=202611231200"></script>
-<link rel="stylesheet" href="../assets/css/app.css?v=202611230100">
-<link rel="stylesheet" href="../assets/css/topbar.css?v=202611221955">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="supervision.css?v=202611231000">
+<script src="../assets/js/academic-calendar.js?v=202611231330"></script>
+<script src="../assets/js/core.js?v=202611231330"></script>
+<link rel="stylesheet" href="../assets/css/app.css?v=202611231330">
+<link rel="stylesheet" href="../assets/css/topbar.css?v=202611231330">
+<link rel="stylesheet" href="../assets/css/brand.css?v=202611231330">
+<link rel="stylesheet" href="supervision.css?v=202611231330">
 </head>
 <body>
 <header id="topbar"></header>
 <!-- شريط مكتب الإشراف تحت الشريط الموحّد: العنوان وأدوات المكتب وتبويباته -->
 <div class="svbar">
   <div class="svhead"><h2 id="appTitle">🧭 مكتب الإشراف التربوي</h2>
-    <div class="svtools"><button class="btn sm" id="inboxBtn" style="background:transparent;color:#fff;border-color:#ffffff66;position:relative">📩 رسائل المكتب<span id="inboxBadge" style="display:none;position:absolute;top:-6px;left:-6px;background:#e4a842;color:#3d2600;border-radius:999px;font-size:11px;padding:0 6px;font-weight:700"></span></button><span id="whoLbl" class="sync"></span><button class="btn sm langbtn" id="langBtn" data-raw title="English / Arabic">EN</button><button class="btn sm" id="codeBtn" style="display:none" title="تغيير كود الدخول">🔑 الكود</button><button class="btn sm" id="viewSw" style="display:none;background:#fff;color:#0f6e6a;border-color:#fff;font-weight:700" title="الرجوع إلى الواجهة الكاملة">⇄ مدير النظام</button><button class="btn sm" id="logoutBtn" style="display:none">خروج</button></div></div>
+    <div class="svtools"><button class="btn sm" id="inboxBtn" style="background:transparent;color:#fff;border-color:#ffffff66;position:relative">📩 رسائل المكتب<span id="inboxBadge" style="display:none;position:absolute;top:-6px;left:-6px;background:#FFD54C;color:#3d2600;border-radius:999px;font-size:11px;padding:0 6px;font-weight:700"></span></button><span id="whoLbl" class="sync"></span><button class="btn sm langbtn" id="langBtn" data-raw title="English / Arabic">EN</button><button class="btn sm" id="codeBtn" style="display:none" title="تغيير كود الدخول">🔑 الكود</button><button class="btn sm" id="viewSw" style="display:none;background:#fff;color:#007B51;border-color:#fff;font-weight:700" title="الرجوع إلى الواجهة الكاملة">⇄ مدير النظام</button><button class="btn sm" id="logoutBtn" style="display:none">خروج</button></div></div>
   <nav id="tabs">
     <button data-t="day" class="on">حصص اليوم</button>
     <button data-t="rem">تذكيراتي <span id="remCount"></span></button>
@@ -68,7 +67,7 @@
   </section>
 
   <section id="p-rem" class="panel">
-    <div class="card sec" id="pushCard" style="border-color:#bfe1de">
+    <div class="card sec" id="pushCard" style="border-color:#99CAB9">
       <h3 style="margin:0 0 6px">📲 التنبيه على الجوال (حتى لو الصفحة مغلقة)</h3>
       <p class="h" id="pushTxt">فعّل التنبيهات مرة واحدة على كل جهاز تريد أن يصلك عليه التنبيه. يصلك إشعار بصوت قبل كل حصة حددتها بالمدة التي اخترتها.</p>
       <div class="bar" style="margin:0">
@@ -168,7 +167,7 @@
       <p class="h">إشعارات تصل لجوالات المشرفين تلقائيًا في الموعد المحدد: مرة واحدة في يوم وساعة، أو متكررة في أيام محددة من الأسبوع (مثل تنبيه صلاة الظهر).</p>
       <div id="schedList"><div class="empty">جارٍ التحميل…</div></div>
     </div>
-    <div class="sec card" style="border-color:#bfe1de">
+    <div class="sec card" style="border-color:#99CAB9">
       <h3>📩 إرسال رسالة للمشرفين</h3>
       <p class="h">تصل كإشعار على جوالات المشرفين الذين فعّلوا التنبيهات، وتظهر أيضًا في «📩 الرسائل» داخل الصفحة لكل المستلمين.</p>
       <form id="bcForm">
@@ -225,10 +224,10 @@
   <button type="button" class="btn sm" id="langBtn2" data-raw style="margin-top:10px">🌐 English</button>
 </form></div>
 
-<script src="config.js?v=202611221130"></script>
-<script src="devplan.js?v=202611221130"></script>
-<script src="plans.js?v=202611221130"></script>
-<script src="supervision.js?v=202611231000"></script>
+<script src="config.js?v=202611231330"></script>
+<script src="devplan.js?v=202611231330"></script>
+<script src="plans.js?v=202611231330"></script>
+<script src="supervision.js?v=202611231330"></script>
 <script>
 (function(){ const b=document.getElementById("viewSw"); if(!b) return;
   if(SV_VIEW()) b.style.display="";

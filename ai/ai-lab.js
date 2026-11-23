@@ -181,7 +181,7 @@ function evaluator(start) {
     const verdict = pct >= 75 ? 'برومبت احترافي — جاهز للاستخدام وإعادة الاستخدام.' : pct >= 50 ? 'جيد — يحتاج تحسين بعض العناصر.' : 'ضعيف — النتيجة ستكون عامة غالباً. جرّب المحسّن.';
     $('#e_res', el).innerHTML = '<div class="score"><div class="ring" style="--p:' + pct + ';--c:' + color + '"><b>' + total + '</b></div><div><b style="font-family:var(--display);font-size:18px">' + total + ' / 80</b><p style="color:var(--muted)">' + esc(verdict) + '</p></div></div>' +
       '<div class="bars">' + rows.map(r => '<div class="bar-row"><span>' + esc(r[0]) + '</span><span class="tr"><i style="width:' + (r[1] * 10) + '%;--c:' + (r[1] >= 7 ? 'var(--green)' : r[1] >= 4 ? 'var(--orange)' : 'var(--red)') + '"></i></span><b>' + r[1] + '/10</b></div>').join('') + '</div>' +
-      (rows.some(r => r[1] < 7) ? '<div class="sub-h">اقتراحات التحسين</div><ul style="padding-inline-start:20px;color:#2f3460">' + rows.filter(r => r[1] < 7).map(r => '<li><b>' + esc(r[0]) + ':</b> ' + esc(r[2]) + '</li>').join('') + '</ul>' : '') +
+      (rows.some(r => r[1] < 7) ? '<div class="sub-h">اقتراحات التحسين</div><ul style="padding-inline-start:20px;color:#3A403D">' + rows.filter(r => r[1] < 7).map(r => '<li><b>' + esc(r[0]) + ':</b> ' + esc(r[2]) + '</li>').join('') + '</ul>' : '') +
       '<p class="note">التقييم آلي تقريبي يعتمد على وجود عناصر البرومبت الجيد، ولا يقيس صحة المحتوى نفسه.</p>' +
       '<div class="f-foot"><span class="sp"></span><button class="btn ghost sm" type="button" id="e_opt">✨ حسّنه بالمحسّن</button></div>';
     $('#e_opt', el).onclick = () => optimizer(s);

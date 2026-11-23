@@ -61,7 +61,7 @@
         <small class="hint">${esc(S.class)} · ${ST.length} طالب · ${C.length} عمود${P.length ? ` · متوسط الفصل ${Math.round(P.reduce((a, b) => a + +b, 0) / P.length)}%` : ''}</small></div>
         ${ed ? '<button class="btn primary" id="gAdd">➕ عمود يدوي</button><button class="btn" id="gSave" disabled>💾 حفظ الدرجات</button>' : ''}
         <button class="btn ghost" id="gCsv" title="تصدير يُفتح في Excel">⬇️ تصدير</button><button class="btn ghost" id="gPrint">🖨️ طباعة</button></div>
-      <div class="legend"><span><i style="background:#6c8ebf"></i>واجب (تلقائي)</span><span><i style="background:#9b6cbf"></i>اختبار إلكتروني (تلقائي)</span><span><i style="background:#2a9d8f"></i>يدوي</span>
+      <div class="legend"><span><i style="background:#6c8ebf"></i>واجب (تلقائي)</span><span><i style="background:#339574"></i>اختبار إلكتروني (تلقائي)</span><span><i style="background:#00A657"></i>يدوي</span>
         ${ed ? '<span>اضغط عنوان أي عمود لتغيير وزنه أو إخفائه</span>' : ''}<span>النسبة النهائية = متوسط موزون للأعمدة المرصودة للطالب</span></div>
       ${!ST.length ? '<div class="notice">لا يوجد طلاب مربوطون بهذا الفصل في المنصة بعد — اربطهم من الإدارة (استيراد توزيع الطلاب على الفصول أو يدويًا).</div>' : ''}
       ${!C.length ? `<div class="empty">لا توجد أعمدة بعد. ستظهر الواجبات والاختبارات الإلكترونية هنا تلقائيًا${ed ? '، ويمكنك إضافة أعمدة يدوية' : ''}.</div>` : ''}

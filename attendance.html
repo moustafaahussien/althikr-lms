@@ -6,29 +6,28 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.sheetjs.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://zpbhzhpvpvehowxvlsgp.supabase.co https://drive.google.com https://*.googleusercontent.com; connect-src 'self' https://zpbhzhpvpvehowxvlsgp.supabase.co wss://zpbhzhpvpvehowxvlsgp.supabase.co; frame-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>الحضور والغياب — منصة دار الذكر التعليمية</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/brand.css?v=202611231330">
   <link rel="icon" type="image/png" href="favicon.png">
-  <meta name="theme-color" content="#0f6e6a">
+  <meta name="theme-color" content="#007B51">
   <link rel="manifest" href="supervision/manifest.json?v=2">
-    <link rel="stylesheet" href="assets/css/app.css?v=202611230100">
-  <link rel="stylesheet" href="assets/css/topbar.css?v=202611221955">
+    <link rel="stylesheet" href="assets/css/app.css?v=202611231330">
+  <link rel="stylesheet" href="assets/css/topbar.css?v=202611231330">
   <style>
     .stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin: 10px 0; }
     .stat { padding: 10px 14px; } .stat b { font-size: 1.4rem; display: block; } .stat small { color: var(--muted); }
-    .stat.a b { color: #c0392b; } .stat.l b { color: #d9822b; } .stat.e b { color: #2c7be5; } .stat.p b { color: var(--accent); }
+    .stat.a b { color: #c0392b; } .stat.l b { color: #d9822b; } .stat.e b { color: #509BB9; } .stat.p b { color: var(--accent); }
     .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
     .seg button { font-family: inherit; border: 0; background: #fff; padding: 5px 10px; cursor: pointer; font-size: .84rem; color: var(--muted); border-inline-start: 1px solid var(--line); }
     .seg button:first-child { border-inline-start: 0; }
-    .seg button.on[data-s=""] { background: #e6f6ee; color: var(--accent); font-weight: 700; }
+    .seg button.on[data-s=""] { background: #E5F6EC; color: var(--accent); font-weight: 700; }
     .seg button.on[data-s=absent] { background: #fdecea; color: #c0392b; font-weight: 700; }
     .seg button.on[data-s=late] { background: #fff3e0; color: #b9691b; font-weight: 700; }
-    .seg button.on[data-s=excused] { background: #e8f0fd; color: #2c7be5; font-weight: 700; }
+    .seg button.on[data-s=excused] { background: #e8f0fd; color: #509BB9; font-weight: 700; }
     tr.st-absent td { background: #fff7f6; } tr.st-late td { background: #fffaf2; } tr.st-excused td { background: #f6f9ff; }
     .note-in { width: 160px; padding: 4px 8px; font-size: .84rem; }
     .savebar { position: sticky; bottom: 0; background: #fff; border-top: 1px solid var(--line); padding: 10px; display: flex; gap: 10px; align-items: center; justify-content: space-between; z-index: 5; border-radius: 0 0 var(--radius) var(--radius); }
     .dot { display:inline-block; padding: 0 7px; border-radius: 99px; font-size: .78rem; font-weight: 700; }
-    .dot.absent { background:#fdecea; color:#c0392b } .dot.late { background:#fff3e0; color:#b9691b } .dot.excused { background:#e8f0fd; color:#2c7be5 }
+    .dot.absent { background:#fdecea; color:#c0392b } .dot.late { background:#fff3e0; color:#b9691b } .dot.excused { background:#e8f0fd; color:#509BB9 }
   </style>
 </head>
 <body>
@@ -65,10 +64,10 @@
   <footer class="credit">إعداد وتصميم: مصطفى حسين</footer>
 
   <script src="assets/vendor/supabase-js-2.119.2.js"></script>
-  <script src="assets/js/config.js?v=202611230100"></script>
-  <script src="assets/js/academic-calendar.js?v=202611221130"></script>
-  <script src="assets/js/core.js?v=202611231200"></script>
-  <script src="assets/js/attendance.js?v=202611230915"></script>
+  <script src="assets/js/config.js?v=202611231330"></script>
+  <script src="assets/js/academic-calendar.js?v=202611231330"></script>
+  <script src="assets/js/core.js?v=202611231330"></script>
+  <script src="assets/js/attendance.js?v=202611231330"></script>
 </body>
 </html>
 

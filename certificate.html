@@ -5,45 +5,43 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://zpbhzhpvpvehowxvlsgp.supabase.co wss://zpbhzhpvpvehowxvlsgp.supabase.co; frame-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>شهادة تدريب — منصة دار الذكر التعليمية</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/brand.css?v=202611231330">
   <link rel="icon" type="image/png" href="favicon.png">
-  <meta name="theme-color" content="#0f6e6a">
-  <link rel="stylesheet" href="assets/css/app.css?v=202611230100">
+  <meta name="theme-color" content="#007B51">
+  <link rel="stylesheet" href="assets/css/app.css?v=202611231330">
   <style>
+    /* شهادة التدريب على نموذج «شهادات شكر» في ملفات الهوية: خلفية بيضاء، الشعار يمين وشعارات الأقسام يسار،
+       الاسم بالأخضر، العناوين الفرعية بالبرتقالي، وعناصر الدوائر في الركنين */
     @page { size: A4 landscape; margin: 0; }
-    body { background: #e9efee; }
+    body { background: #e9efec; }
     .bar { display: flex; gap: 8px; justify-content: center; padding: 14px; flex-wrap: wrap; }
     .wrap { display: flex; justify-content: center; padding: 0 10px 30px; }
-    .cert { width: 297mm; height: 210mm; background: #fff; position: relative; box-shadow: 0 10px 40px rgba(0,0,0,.15); overflow: hidden;
-      font-family: 'IBM Plex Sans Arabic', sans-serif; color: #1d2b2a; transform-origin: top center; }
-    .cert .frame { position: absolute; inset: 9mm; border: 2.2mm solid #0f6e6a; border-radius: 3mm; }
-    .cert .frame::after { content: ''; position: absolute; inset: 2.2mm; border: .5mm solid #c9a24a; border-radius: 2mm; }
-    .cert .corner { position: absolute; width: 38mm; height: 38mm; border: 0 solid #c9a24a; }
-    .cert .c1 { top: 15mm; right: 15mm; border-top-width: 1.4mm; border-right-width: 1.4mm; }
-    .cert .c2 { top: 15mm; left: 15mm; border-top-width: 1.4mm; border-left-width: 1.4mm; }
-    .cert .c3 { bottom: 15mm; right: 15mm; border-bottom-width: 1.4mm; border-right-width: 1.4mm; }
-    .cert .c4 { bottom: 15mm; left: 15mm; border-bottom-width: 1.4mm; border-left-width: 1.4mm; }
-    .cert .wm { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; opacity: .05; pointer-events: none; }
-    .cert .wm img { width: 120mm; }
-    .cert .in { position: absolute; inset: 18mm 26mm 25mm; display: flex; flex-direction: column; align-items: center; text-align: center; }
-    .cert .head { display: flex; width: 100%; align-items: center; justify-content: space-between; }
-    .cert .head .side { width: 70mm; font-size: 3.4mm; line-height: 1.7; color: #4a5a59; }
-    .cert .head .side.r { text-align: right; } .cert .head .side.l { text-align: left; }
-    .cert .logo { height: 30mm; }
-    .cert h1 { font-family: 'Amiri', serif; font-size: 13mm; margin: 1mm 0 0; color: #0f6e6a; letter-spacing: .5mm; }
-    .cert .sub { font-size: 4mm; color: #8a6a1f; font-weight: 600; margin-top: 0; }
-    .cert .txt { font-size: 4.6mm; line-height: 1.85; margin-top: 3mm; max-width: 220mm; }
-    .cert .nm { font-family: 'Amiri', serif; font-size: 10mm; font-weight: 700; color: #1d2b2a; margin: 1mm 0; border-bottom: .4mm solid #c9a24a; padding: 0 10mm 1mm; display: inline-block; }
-    .cert .crs { font-weight: 700; color: #0f6e6a; font-size: 6mm; }
-    .cert .meta { display: flex; gap: 8mm; justify-content: center; margin-top: 3mm; font-size: 3.8mm; color: #4a5a59; flex-wrap: wrap; }
-    .cert .meta b { color: #1d2b2a; }
-    .cert .sig { margin-top: auto; display: grid; grid-template-columns: 1fr 1fr 1fr; width: 100%; gap: 10mm; align-items: end; }
-    .cert .sig div { font-size: 3.8mm; line-height: 1.6; }
-    .cert .sig .t { color: #8a6a1f; font-weight: 700; }
-    .cert .sig .n { font-weight: 700; font-size: 4.4mm; min-height: 6mm; }
-    .cert .sig .ln { border-top: .3mm dashed #9aa; margin-top: 7mm; padding-top: .5mm; color: #9aa; font-size: 3mm; }
-    .cert .foot { position: absolute; bottom: 12.5mm; left: 0; right: 0; text-align: center; font-size: 2.8mm; color: #6b7b7a; }
+    .cert { width: 297mm; height: 210mm; background: #fff; position: relative; box-shadow: 0 10px 40px rgba(0,60,40,.15); overflow: hidden;
+      font-family: 'Poppins', 'GE Dinar One', sans-serif; color: #434345; transform-origin: top center; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .cert .dk { position: absolute; pointer-events: none; }
+    .cert .dk.bl { left: 0; bottom: 0; width: 78mm; }
+    .cert .wm { position: absolute; left: 50%; top: 52%; width: 120mm; transform: translate(-50%, -50%); opacity: .045; pointer-events: none; }
+    .cert .head { position: absolute; top: 14mm; left: 18mm; right: 18mm; display: flex; justify-content: space-between; align-items: flex-start; }
+    .cert .head .lg { height: 26mm; }
+    .cert .head .secs { display: flex; gap: 3mm; align-items: center; margin-top: 4mm; } .cert .head .secs img { height: 9mm; } .cert .head .secs i { width: .3mm; height: 7mm; background: #ccc; }
+    .cert .in { position: absolute; top: 44mm; left: 24mm; right: 24mm; bottom: 20mm; display: flex; flex-direction: column; align-items: center; text-align: center; }
+    .cert h1 { margin: 0; font-size: 12mm; font-weight: 700; color: #007B51; line-height: 1.2; }
+    .cert .en { font-size: 4mm; color: #F7941D; font-weight: 600; letter-spacing: .4mm; text-transform: uppercase; }
+    .cert .bar2 { width: 18mm; height: 1mm; background: #F7941D; border-radius: 1mm; margin: 2.5mm auto 0; }
+    .cert .txt { font-size: 4.5mm; line-height: 1.95; margin-top: 4mm; max-width: 225mm; }
+    .cert .to { color: #F7941D; font-weight: 700; }
+    .cert .nm { display: block; font-size: 10mm; font-weight: 700; color: #007B51; line-height: 1.35; margin: 1mm 0 0; }
+    .cert .job { display: block; font-size: 3.6mm; color: #6b7470; margin-bottom: 1mm; }
+    .cert .crs { display: inline-block; font-weight: 700; color: #fff; background: #33B673; font-size: 5.2mm; padding: .6mm 8mm; border-radius: 99px; box-shadow: 3mm 0 0 #FFD54C; margin: 1mm 3mm 1mm 0; }
+    .cert .meta { display: flex; gap: 8mm; justify-content: center; margin-top: 2mm; font-size: 3.6mm; color: #6b7470; flex-wrap: wrap; }
+    .cert .meta b { color: #434345; }
+    .cert .sig { margin-top: auto; display: grid; grid-template-columns: 1fr 1fr 1fr; width: 100%; gap: 12mm; align-items: end; }
+    .cert .sig div { font-size: 3.7mm; line-height: 1.5; }
+    .cert .sig .t { color: #F7941D; font-weight: 700; }
+    .cert .sig .n { font-weight: 700; font-size: 4.3mm; min-height: 6mm; color: #007B51; }
+    .cert .sig .ln { border-top: .4mm solid #FFD54C; margin: 7mm 8mm 0; padding-top: .5mm; color: #9aa59f; font-size: 2.8mm; }
+    .cert .no { position: absolute; top: 16mm; left: 0; right: 0; text-align: center; font-size: 3mm; color: #6b7470; line-height: 1.6; }
+    .cert .foot { position: absolute; bottom: 6mm; left: 0; right: 0; text-align: center; font-size: 2.6mm; color: #8a948f; direction: ltr; }
     .ver { max-width: 560px; margin: 40px auto; }
     @media print { body { background: #fff; } .bar, .no-print { display: none !important; } .wrap { padding: 0; } .cert { box-shadow: none; transform: none !important; } }
   </style>
@@ -51,9 +49,9 @@
 <body>
   <div id="app"><div class="empty" style="padding:40px">جارٍ التحميل…</div></div>
   <script src="assets/vendor/supabase-js-2.119.2.js"></script>
-  <script src="assets/js/config.js?v=202611230100"></script>
-  <script src="assets/js/academic-calendar.js?v=202611221130"></script>
-  <script src="assets/js/core.js?v=202611231200"></script>
-  <script src="assets/js/certificate.js?v=1"></script>
+  <script src="assets/js/config.js?v=202611231330"></script>
+  <script src="assets/js/academic-calendar.js?v=202611231330"></script>
+  <script src="assets/js/core.js?v=202611231330"></script>
+  <script src="assets/js/certificate.js?v=202611231330"></script>
 </body>
 </html>

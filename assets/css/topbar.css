@@ -2,27 +2,27 @@
    الشريط العلوي الموحّد للمنصة — يُستعمل في كل صفحات المنصة وفي «التعليم عن بعد»
    (كل القواعد محصورة في #topbar أو في عناصر يرسمها core.js حتى لا تتعارض مع تصميم الصفحة)
    ===================================================================== */
-#topbar { --brand: #0f6e6a; --brand2: #e7f4f3; --bg-page: var(--bg, #f4f6f8); --line: #e2e7ec; --ink: #1b2430;
-  font-family: 'IBM Plex Sans Arabic', system-ui, sans-serif; font-size: 15px; line-height: 1.55; direction: rtl; }
+#topbar { --brand: var(--dt-green, #007B51); --brand2: var(--dt-mint, #E8F4EF); --bg-page: var(--bg, #f5f8f6); --line: #e1e9e5; --ink: #2f3133;
+  font-family: var(--dt-font, system-ui, sans-serif); font-size: 15px; line-height: 1.55; direction: rtl; }
 #topbar *, .more-menu * { box-sizing: border-box; }
 #topbar { position: sticky; top: 0; z-index: 50; background: var(--brand); color: #fff; padding: 14px 18px 0; }
 #topbar .hrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 #topbar .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; text-decoration: none; color: #fff; font-size: 19px; }
 #topbar .logo-tile { width: 42px; height: 42px; border-radius: 12px; background: #fff; display: grid; place-items: center; flex: 0 0 auto; padding: 4px; }
 #topbar .logo-tile img { width: 100%; height: 100%; object-fit: contain; }
-#topbar .brand small { display: block; font-weight: 500; font-size: 12px; color: #d6ecea; line-height: 1.2; }
+#topbar .brand small { display: block; font-weight: 500; font-size: 12px; color: #CCEDDD; line-height: 1.2; }
 #topbar .clock { font-size: 15px; opacity: .95; display: flex; gap: 10px; align-items: center; }
 #topbar .clock #clk { font-size: 22px; font-variant-numeric: tabular-nums; letter-spacing: .5px; }
 #topbar .who { display: flex; flex-direction: column; line-height: 1.25; text-align: left; }
 #topbar .who b { font-size: 13.5px; font-weight: 600; }
-#topbar .who small { font-size: 11.5px; color: #d6ecea; }
+#topbar .who small { font-size: 11.5px; color: #CCEDDD; }
 #topbar .hbtn { background: transparent; color: #fff; border-color: #ffffff66; }
 #topbar .hbtn:hover { background: #ffffff18; border-color: #fff; }
 #topbar .lms-nav { display: flex; gap: 4px; margin-top: 12px; overflow-x: auto; align-items: flex-end; }
-#topbar .lms-nav a { color: #d6ecea; padding: 10px 12px; border-radius: 10px 10px 0 0; text-decoration: none; white-space: nowrap; font-weight: 500; }
+#topbar .lms-nav a { color: #CCEDDD; padding: 10px 12px; border-radius: 10px 10px 0 0; text-decoration: none; white-space: nowrap; font-weight: 500; }
 #topbar .lms-nav a:hover { color: #fff; background: #ffffff12; }
 #topbar .lms-nav a.on { background: var(--bg-page); color: var(--brand); font-weight: 700; }
-#topbar .more-btn { background: none; border: 0; color: #d6ecea; padding: 10px 12px; border-radius: 10px 10px 0 0; white-space: nowrap; font-weight: 500; cursor: pointer; }
+#topbar .more-btn { background: none; border: 0; color: #CCEDDD; padding: 10px 12px; border-radius: 10px 10px 0 0; white-space: nowrap; font-weight: 500; cursor: pointer; }
 #topbar .more-btn:hover, #topbar .more-btn[aria-expanded="true"] { color: #fff; background: #ffffff12; }
 #topbar .more-btn.on { background: var(--bg-page); color: var(--brand); font-weight: 700; }
 .more-menu { position: fixed; z-index: 120; min-width: 200px; background: #fff; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 10px 30px rgba(16,24,40,.16); padding: 6px; display: flex; flex-direction: column; }
@@ -35,25 +35,25 @@
 .calbar:hover, .calbar:focus { border-color: #ffffff40; background: #ffffff12; outline: none; }
 .calbar .cc { font-size: 12.5px; color: #ffffffdd; line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 .calbar .cc b { font-weight: 700; color: #fff; }
-.calbar .cc.hol b { color: #ffd98a; }
+.calbar .cc.hol b { color: #FFD54C; }
 .caltbl td, .caltbl th { white-space: normal; }
 .caltbl tr.past td { color: #9aa5b1; }
-.caltbl tr.now td { background: #fff4e0; font-weight: 700; }
+.caltbl tr.now td { background: #FEF1E1; font-weight: 700; }
 #topbar .who { margin: 0; color: #fff; font-weight: 400; }
 #topbar .btn { display: inline-flex; align-items: center; justify-content: center; font-family: inherit; font-weight: 600; cursor: pointer;
   border-radius: 10px; padding: 4px 10px; font-size: .84rem; border: 1px solid #ffffff66; background: transparent; color: #fff; }
 #topbar .menu-btn { display: none; background: transparent; color: #fff; border: 1px solid #ffffff66; border-radius: 10px; font-size: 18px; line-height: 1; padding: 6px 10px; cursor: pointer; }
 #topbar .menu-btn:hover, #topbar .menu-btn[aria-expanded="true"] { background: #ffffff18; border-color: #fff; }
-#topbar .nbadge { background: #e4a842; color: #3d2600; border-radius: 99px; padding: 0 7px; font-size: .75rem; font-weight: 700; margin-inline-start: 4px; }
+#topbar .nbadge { background: #FFD54C; color: #3d2600; border-radius: 99px; padding: 0 7px; font-size: .75rem; font-weight: 700; margin-inline-start: 4px; }
 #topbar .nbadge[hidden] { display: none; }
 #topbar .skip-link { position: absolute; inset-inline-start: 12px; top: -60px; background: #fff; color: var(--brand); padding: 8px 14px; border-radius: 10px; font-weight: 700; z-index: 200; text-decoration: none; }
 #topbar .skip-link:focus { top: 8px; }
-#topbar a:focus-visible, #topbar button:focus-visible, .more-menu a:focus-visible { outline: 3px solid #ffd98a; outline-offset: 2px; }
-.more-menu { font-family: 'IBM Plex Sans Arabic', system-ui, sans-serif; font-size: 15px; line-height: 1.55; direction: rtl; --brand: #0f6e6a; --brand2: #e7f4f3; --ink: #1b2430; --line: #e2e7ec; }
+#topbar a:focus-visible, #topbar button:focus-visible, .more-menu a:focus-visible { outline: 3px solid #FFD54C; outline-offset: 2px; }
+.more-menu { font-family: 'Poppins','GE Dinar One', system-ui, sans-serif; font-size: 15px; line-height: 1.55; direction: rtl; --brand: #007B51; --brand2: #E8F4EF; --ink: #2F3133; --line: #e2e7ec; }
 .more-menu.full { inset-inline: 8px; left: 8px; right: 8px; min-width: 0; max-height: calc(100vh - 140px); overflow: auto; border-radius: 0 0 14px 14px; }
 .more-menu .mm-who { padding: 8px 12px 10px; border-bottom: 1px solid var(--line); margin-bottom: 4px; display: flex; flex-direction: column; }
 .more-menu .mm-who small { color: #66727f; font-size: .8rem; }
-.more-menu .nbadge { background: #e4a842; color: #3d2600; border-radius: 99px; padding: 0 7px; font-size: .75rem; font-weight: 700; margin-inline-start: 4px; }
+.more-menu .nbadge { background: #FFD54C; color: #3d2600; border-radius: 99px; padding: 0 7px; font-size: .75rem; font-weight: 700; margin-inline-start: 4px; }
 .more-menu .nbadge[hidden] { display: none; }
 
 @media (max-width: 720px) {
@@ -70,14 +70,14 @@
 @media print { #topbar, .more-menu { display: none !important; } }
 
 /* نافذة التقويم الدراسي في الصفحات التي لا تحمّل app.css (مثل «التعليم عن بعد») */
-body.lms-solo .modal-wrap { position: fixed; inset: 0; background: rgba(27,36,48,.4); z-index: 400; display: grid; place-items: center; padding: 16px; font-family: 'IBM Plex Sans Arabic', system-ui, sans-serif; font-size: 15px; line-height: 1.55; }
+body.lms-solo .modal-wrap { position: fixed; inset: 0; background: rgba(47,49,51,.4); z-index: 400; display: grid; place-items: center; padding: 16px; font-family: 'Poppins','GE Dinar One', system-ui, sans-serif; font-size: 15px; line-height: 1.55; }
 body.lms-solo .modal-wrap .modal { width: min(980px, 100%); max-height: 90vh; display: flex; flex-direction: column; background: #fff; border-radius: 14px; border: 1px solid #e2e7ec; }
 body.lms-solo .modal-wrap .modal-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid #e2e7ec; background: #fafbfc; border-radius: 14px 14px 0 0; }
 body.lms-solo .modal-wrap .modal-head h3 { margin: 0; font-size: 1.05rem; }
 body.lms-solo .modal-wrap .modal-body { padding: 16px; overflow: auto; }
 body.lms-solo .modal-wrap .modal-foot { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid #e2e7ec; }
 body.lms-solo .modal-wrap .icon-btn { border: 0; background: transparent; font-size: 1.1rem; cursor: pointer; color: #66727f; padding: 4px 8px; border-radius: 8px; }
-body.lms-solo .modal-wrap .btn { font-family: inherit; font-weight: 600; cursor: pointer; border-radius: 10px; padding: 8px 14px; border: 1px solid #0f6e6a; background: #0f6e6a; color: #fff; }
+body.lms-solo .modal-wrap .btn { font-family: inherit; font-weight: 600; cursor: pointer; border-radius: 10px; padding: 8px 14px; border: 1px solid #007B51; background: #007B51; color: #fff; }
 body.lms-solo .modal-wrap .hint { color: #66727f; font-size: .86rem; }
 body.lms-solo .modal-wrap table { width: 100%; border-collapse: collapse; font-size: .92rem; }
 body.lms-solo .modal-wrap th, body.lms-solo .modal-wrap td { padding: 8px 12px; text-align: right; border-bottom: 1px solid #e2e7ec; }
@@ -85,14 +85,14 @@ body.lms-solo .modal-wrap th { background: #fafbfc; }
 
 /* ---------- الوضع التجريبي (ديمو) ---------- */
 .demo-band{position:sticky;top:0;z-index:60;display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;justify-content:center;
-  background:#3a2f8f;color:#fff;font-size:13px;padding:6px 12px;line-height:1.5;text-align:center}
+  background:#00603F;color:#fff;font-size:13px;padding:6px 12px;line-height:1.5;text-align:center}
 .demo-band a{color:#ffe08a;font-weight:600;text-decoration:none}
 .demo-band a:hover{text-decoration:underline}
 .demo-band .db-r{opacity:.95}
 .demo-roles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin:12px 0 6px}
 .demo-roles button{display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 10px;border:1px solid var(--line,#dfe5ec);border-radius:14px;
   background:#fff;cursor:pointer;font:inherit;transition:transform .15s,box-shadow .15s,border-color .15s}
-.demo-roles button:hover,.demo-roles button:focus-visible{transform:translateY(-2px);border-color:#3a2f8f;box-shadow:0 6px 18px rgba(58,47,143,.15)}
+.demo-roles button:hover,.demo-roles button:focus-visible{transform:translateY(-2px);border-color:#00603F;box-shadow:0 6px 18px rgba(0,96,63,.15)}
 .demo-roles button span{font-size:1.6rem}
 .demo-roles button small{color:var(--muted,#667);font-size:12px}
-.demo-link{display:inline-block;margin-top:16px;color:#3a2f8f;font-weight:600;cursor:pointer;background:none;border:0;font:inherit;text-decoration:underline}
+.demo-link{display:inline-block;margin-top:16px;color:#00603F;font-weight:600;cursor:pointer;background:none;border:0;font:inherit;text-decoration:underline}

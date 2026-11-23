@@ -9,7 +9,7 @@
   /* الوضع التجريبي (ديمو): مدرسة افتراضية داخل المتصفح بدل قاعدة البيانات الحقيقية — assets/js/demo.js
      يُحمَّل مباشرة بعد هذا الملف (قبل سكربت الصفحة)، ولا يُنشأ اتصال حقيقي إطلاقًا أثناء التجربة */
   const DEMO = (() => { try { return sessionStorage.getItem('lms_demo') || ''; } catch (_) { return ''; } })();
-  if (DEMO && !window.LMS_DEMO) document.write('<script src="' + BASE + 'assets/js/demo.js?v=202611231200"><\/script>');
+  if (DEMO && !window.LMS_DEMO) document.write('<script src="' + BASE + 'assets/js/demo.js?v=202611231330"><\/script>');
   const sb = DEMO
     ? new Proxy({}, { get: (_, k) => (window.LMS_DEMO ? window.LMS_DEMO.client[k] : undefined) })
     : configured
@@ -406,21 +406,27 @@
   }
 
   /* ---------- الطباعة والتصدير الموحّدان لكل التقارير ---------- */
-  const PRINT_CSS = `@page{size:A4;margin:14mm 12mm}*{box-sizing:border-box}body{font-family:'IBM Plex Sans Arabic',Tahoma,sans-serif;color:#1b2430;margin:0;direction:rtl;font-size:12px}
-    .ph{display:flex;align-items:center;gap:12px;border-bottom:3px solid #0f6e6a;padding-bottom:8px;margin-bottom:12px}
-    .ph img{width:62px;height:62px;object-fit:contain}.ph h1{margin:0;font-size:18px;color:#0f6e6a}.ph .s{color:#66727f;font-size:11px}.ph .d{margin-inline-start:auto;text-align:left;font-size:11px;color:#444}
-    h2{font-size:15px;margin:10px 0 6px}table{width:100%;border-collapse:collapse;margin:6px 0 12px}th,td{border:1px solid #c9d3dc;padding:5px 7px;text-align:right;vertical-align:top}
-    th{background:#e8f2f1;color:#0b5653}tr:nth-child(even) td{background:#fafcfc}.btn,.no-print,.hijri-hint,button{display:none!important}a{color:inherit;text-decoration:none}
-    .pf{margin-top:14px;border-top:1px solid #ddd;padding-top:6px;color:#888;font-size:10px;display:flex;justify-content:space-between}`;
+  // ورق رسمي حسب دليل الهوية: الشعار يمين، شعارات الأقسام يسار، العنوان في شريط أخضر، وعناصر الدوائر وبيانات التواصل أسفل الصفحة
+  const PRINT_CSS = `@page{size:A4;margin:12mm 12mm 16mm}*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    body{font-family:'Poppins','GE Dinar One',Tahoma,sans-serif;color:#434345;margin:0;direction:rtl;font-size:12px;line-height:1.6}
+    .ph{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:6px;margin-bottom:10px}
+    .ph .lg{height:58px}.ph .secs{display:flex;gap:6px;align-items:center}.ph .secs img{height:24px}.ph .secs i{width:1px;height:20px;background:#ccc}
+    .pt{display:flex;align-items:center;gap:10px;margin:0 0 12px}.pt h1{margin:0;background:#33B673;color:#fff;font-size:17px;font-weight:700;padding:5px 24px;border-radius:99px;box-shadow:12px 0 0 #FFD54C;margin-right:12px}
+    .pt .s{color:#6b7470;font-size:11px}.pt .d{margin-inline-start:auto;text-align:left;font-size:11px;color:#434345}
+    h2{font-size:14.5px;margin:12px 0 6px;color:#007B51}table{width:100%;border-collapse:collapse;margin:6px 0 12px}th,td{border:1px solid #cfdcd5;padding:5px 7px;text-align:right;vertical-align:top}
+    th{background:#007B51;color:#fff;font-weight:600}tr:nth-child(even) td{background:#F3F8F5}.btn,.no-print,.hijri-hint,button{display:none!important}a{color:inherit;text-decoration:none}
+    .pf{margin-top:16px;border-top:2px solid #FFD54C;padding-top:6px;color:#6b7470;font-size:9.5px;display:flex;justify-content:space-between;align-items:flex-end;gap:10px;direction:ltr}
+    .pf .ct{line-height:1.45}.pf .deco{width:70px;height:50px}`;
   function printHTML(title, html) {
     const w = window.open('', '_blank');
     if (!w) { toast('اسمح للمتصفح بفتح نافذة الطباعة', 'warn'); return; }
     const base = location.href.replace(/[^/]*([?#].*)?$/, '').replace(/supervision\/$/, '');
     w.document.write(`<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${esc(title)}</title>
-      <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;600;700&display=swap" rel="stylesheet"><style>${PRINT_CSS}</style></head><body>
-      <div class="ph"><img src="${base}assets/img/logo.png" alt=""><div><h1>${esc(title)}</h1><div class="s">${esc(C.SCHOOL_NAME || 'مدارس دار الذكر')} — ${esc(C.PLATFORM_NAME || '')}</div></div>
-      <div class="d">${esc(dateLine())}</div></div>${html}
-      <div class="pf"><span>${esc(C.PLATFORM_NAME || '')}</span><span>طُبع في ${esc(new Date().toLocaleString('ar-SA-u-ca-gregory-nu-latn'))}</span></div>
+      <link rel="stylesheet" href="${base}assets/css/brand.css"><style>${PRINT_CSS}</style></head><body>
+      <div class="ph"><img class="lg" src="${base}assets/img/brand/logo-h.svg" alt="${esc(C.SCHOOL_NAME || 'مدارس دار الذكر')}">
+        <div class="secs"><img src="${base}assets/img/brand/sec-girls.png" alt=""><i></i><img src="${base}assets/img/brand/sec-boys.png" alt=""><i></i><img src="${base}assets/img/brand/sec-american.png" alt=""></div></div>
+      <div class="pt"><h1>${esc(title)}</h1><div class="s">${esc(C.PLATFORM_NAME || '')}</div><div class="d">${esc(dateLine())}</div></div>${html}
+      <div class="pf"><img class="deco" src="${base}assets/img/brand/deco-corner.svg" alt=""><div class="ct">T. +966 12 6590700 · P.O Box 54467 Jeddah 21514 · www.althikr.edu.sa<br>${esc(C.PLATFORM_NAME || '')} — طُبع في ${esc(new Date().toLocaleString('ar-SA-u-ca-gregory-nu-latn'))}</div></div>
       <script>document.fonts&&document.fonts.ready.then(()=>setTimeout(()=>print(),250));<\/script></body></html>`);
     w.document.close();
   }

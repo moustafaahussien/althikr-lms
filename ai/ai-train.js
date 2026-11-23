@@ -56,7 +56,7 @@ function openLesson(id) {
   const L = D.training.find(x => x.id === id); if (!L) return;
   const r = rec(id);
   const sec = (icon, title, inner) => '<div class="lesson-part"><h4>' + icon + ' ' + esc(title) + '</h4>' + inner + '</div>';
-  const html = '<div class="panel-h" style="--c:#6D4BFF"><span class="ic">' + L.icon + '</span><div><h2>' + esc(A.L(L.t)) + '</h2><p>' + esc(A.L(L.level)) + ' · ⏱ ' + L.mins + ' دقيقة</p></div></div>' +
+  const html = '<div class="panel-h" style="--c:#007B51"><span class="ic">' + L.icon + '</span><div><h2>' + esc(A.L(L.t)) + '</h2><p>' + esc(A.L(L.level)) + ' · ⏱ ' + L.mins + ' دقيقة</p></div></div>' +
     '<div class="stepper" id="lsSteps"></div>' +
     sec('🎯', 'ناتج التعلم', '<div class="outcome">' + esc(L.outcome) + '</div>') +
     sec('📘', 'شرح مختصر', L.explain.map(s => '<div class="lesson-sec"><h4>' + esc(s[0]) + '</h4><p>' + esc(s[1]) + '</p></div>').join('')) +
@@ -136,16 +136,16 @@ function printCert(c, name) {
   const w = window.open('', '_blank');
   if (!w) return A.toast('اسمح بالنوافذ المنبثقة لعرض الشهادة', true);
   w.document.write('<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>شهادة — ' + esc(name) + '</title>' +
-    '<link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;700;900&family=Sora:wght@600;800&display=swap" rel="stylesheet">' +
-    '<style>@page{size:A4 landscape;margin:0}body{margin:0;font-family:"Noto Kufi Arabic",Tahoma;background:#eef0fb}.c{width:297mm;height:210mm;box-sizing:border-box;padding:16mm;background:#fff;position:relative;overflow:hidden;margin:auto}' +
-    '.c:before{content:"";position:absolute;inset:8mm;border:2px solid #6D4BFF;border-radius:10mm}.c:after{content:"";position:absolute;width:160mm;height:160mm;border-radius:50%;background:radial-gradient(circle,#6D4BFF22,transparent 70%);top:-60mm;left:-40mm}' +
+    '<link rel="stylesheet" href="' + new URL('../assets/css/brand.css', location.href).href + '">' +
+    '<style>@page{size:A4 landscape;margin:0}body{margin:0;font-family:"GE Dinar One",Tahoma;background:#EEF3F0}.c{width:297mm;height:210mm;box-sizing:border-box;padding:16mm;background:#fff;position:relative;overflow:hidden;margin:auto}' +
+    '.c:before{content:"";position:absolute;inset:8mm;border:2px solid #007B51;border-radius:10mm}.c:after{content:"";position:absolute;width:160mm;height:160mm;border-radius:50%;background:radial-gradient(circle,#007B5122,transparent 70%);top:-60mm;left:-40mm}' +
     '.in{position:relative;z-index:1;text-align:center;padding-top:6mm}.top{display:flex;justify-content:space-between;align-items:center;padding:0 10mm}.top img{height:20mm}' +
-    'h1{font-size:30pt;margin:6mm 0 2mm;background:linear-gradient(90deg,#6D4BFF,#0EA5D6,#14B8A6);-webkit-background-clip:text;color:transparent}h2{font-family:Sora;color:#4F46E5;margin:0;font-size:15pt;letter-spacing:.08em}' +
-    '.nm{font-size:28pt;font-weight:900;margin:8mm 0 2mm;color:#14173A}.t{font-size:13pt;color:#565D8C;line-height:1.9;max-width:220mm;margin:auto}.ls{font-size:9.5pt;color:#565D8C;margin-top:5mm;line-height:1.8}' +
-    '.ft{position:absolute;bottom:16mm;left:20mm;right:20mm;display:flex;justify-content:space-between;font-size:10pt;color:#565D8C}.ft b{color:#14173A}.lvl{font-size:40pt}' +
+    'h1{font-size:30pt;margin:6mm 0 2mm;background:linear-gradient(90deg,#007B51,#509BB9,#6ACFF6);-webkit-background-clip:text;color:transparent}h2{font-family:Sora;color:#00A657;margin:0;font-size:15pt;letter-spacing:.08em}' +
+    '.nm{font-size:28pt;font-weight:900;margin:8mm 0 2mm;color:#2F3133}.t{font-size:13pt;color:#5E6662;line-height:1.9;max-width:220mm;margin:auto}.ls{font-size:9.5pt;color:#5E6662;margin-top:5mm;line-height:1.8}' +
+    '.ft{position:absolute;bottom:16mm;left:20mm;right:20mm;display:flex;justify-content:space-between;font-size:10pt;color:#5E6662}.ft b{color:#2F3133}.lvl{font-size:40pt}' +
     '.bar{position:fixed;top:10px;left:10px}@media print{.bar{display:none}body{background:#fff}}</style></head><body>' +
-    '<div class="bar"><button onclick="print()" style="font:inherit;padding:8px 18px;border-radius:10px;border:0;background:#6D4BFF;color:#fff;cursor:pointer">🖨️ طباعة / حفظ PDF</button></div>' +
-    '<div class="c"><div class="in"><div class="top"><img src="' + location.href.replace(/ai\/[^/]*$/, '') + 'assets/school-logo.png" onerror="this.style.visibility=\'hidden\'"><div class="lvl">' + c.icon + '</div><img src="' + location.href.replace(/ai\/[^/]*$/, '') + 'assets/unit-logo.png" onerror="this.style.visibility=\'hidden\'"></div>' +
+    '<div class="bar"><button onclick="print()" style="font:inherit;padding:8px 18px;border-radius:10px;border:0;background:#007B51;color:#fff;cursor:pointer">🖨️ طباعة / حفظ PDF</button></div>' +
+    '<div class="c"><div class="in"><div class="top"><img src="' + location.href.replace(/ai\/[^/]*$/, '') + 'assets/img/logo.png" onerror="this.style.visibility=\'hidden\'"><div class="lvl">' + c.icon + '</div><img src="' + location.href.replace(/ai\/[^/]*$/, '') + 'assets/unit-logo.png" onerror="this.style.visibility=\'hidden\'"></div>' +
     '<h1>شهادة إتمام مسار المعلم الذكي</h1><h2>' + esc(c.en) + '</h2>' +
     '<div class="t" style="margin-top:6mm">تشهد وحدة مهارات القرن 21 بمدارس دار الذكر بأن</div><div class="nm">' + esc(name) + '</div>' +
     '<div class="t">أتمّ متطلبات مستوى <b>«' + esc(c.name.ar) + '»</b> باجتياز الاختبارات وإنجاز المنتجات التطبيقية وتحقيق معايير الإتقان' + (c.needPublished ? ' ونشر منتج تعليمي في معرض المنصة' : '') + '.</div>' +

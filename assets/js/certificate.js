@@ -18,7 +18,7 @@
   if (Q.get('no')) {
     const { data, error } = await sb.rpc('trn_verify', { p_no: Q.get('no') });
     if (error) return fail(errMsg(error));
-    app.innerHTML = `<div class="ver card glass" style="padding:22px;text-align:center"><img src="assets/img/logo.png" alt="" style="height:80px">
+    app.innerHTML = `<div class="ver card glass" style="padding:22px;text-align:center"><img src="assets/img/brand/logo-v.svg" alt="" style="height:110px">
       <h2 style="margin:8px 0">التحقق من شهادة تدريب</h2><p class="hint" dir="ltr">${esc(Q.get('no'))}</p>
       ${data && data.valid ? `<div class="notice ok" style="text-align:right">✅ شهادة صحيحة صادرة من ${esc(C.SCHOOL_NAME || 'مدارس دار الذكر')}<br>
         <b>${esc(data.name)}</b> — ${esc(data.title)}<br>${esc(hrs(data.hours))}${data.start ? ' — ' + esc(greg(data.start)) : ''}<br><span class="hint">تاريخ الإصدار: ${esc(greg(data.issued_at))}</span></div>`
@@ -38,21 +38,21 @@
   app.innerHTML = `<div class="bar no-print"><button class="btn primary" id="pr">🖨️ طباعة / حفظ PDF</button><a class="btn" href="services.html#trn">↩ العودة</a>
       <span class="hint" style="align-self:center">اختر «حفظ كـ PDF» واتجاه الصفحة «أفقي»</span></div>
     <div class="wrap"><div class="cert" id="cert">
-      <div class="frame"></div><div class="corner c1"></div><div class="corner c2"></div><div class="corner c3"></div><div class="corner c4"></div>
-      <div class="wm"><img src="assets/img/logo-mark.png" alt=""></div>
+      <img class="wm" src="assets/img/brand/icon.svg" alt="">
+      <img class="dk bl" src="assets/img/brand/deco-corner.svg" alt="">
+      <div class="head"><img class="lg" src="assets/img/brand/logo-h.svg" alt="${esc(c.school || C.SCHOOL_NAME)}">
+        <div class="secs"><img src="assets/img/brand/sec-girls.png" alt=""><i></i><img src="assets/img/brand/sec-boys.png" alt=""><i></i><img src="assets/img/brand/sec-american.png" alt=""></div></div>
+      <div class="no">رقم الشهادة: <b dir="ltr">${esc(c.cert_no)}</b> — تاريخ الإصدار: ${esc(greg(c.issued_at))} الموافق ${esc(hij(c.issued_at))}</div>
       <div class="in">
-        <div class="head"><div class="side r">المملكة العربية السعودية<br>${esc(c.school || C.SCHOOL_NAME)}<br>التطوير المهني للمعلمين</div>
-          <img class="logo" src="assets/img/logo.png" alt="">
-          <div class="side l">رقم الشهادة: <b dir="ltr">${esc(c.cert_no)}</b><br>تاريخ الإصدار: ${esc(greg(c.issued_at))}<br>${esc(hij(c.issued_at))}</div></div>
-        <h1>شهادة تدريب</h1><div class="sub">Training Certificate</div>
-        <div class="txt">تشهد ${esc(c.school || C.SCHOOL_NAME)} بأن الأستاذ/ة<br><span class="nm">${esc(c.name)}</span>${c.job ? `<br><span class="hint">${esc(c.job)}</span>` : ''}<br>
-          قد أتمّ/ت حضور البرنامج التدريبي<br><span class="crs">«${esc(c.title)}»</span><br>
-          بواقع <b>${esc(hrs(c.hours))}</b>${period ? ' ' + esc(period) : ''}${c.mode ? ` (${esc(c.mode)})` : ''}</div>
+        <h1>شهادة تدريب</h1><div class="en">Training Certificate</div><div class="bar2"></div>
+        <div class="txt">تشهد ${esc(c.school || C.SCHOOL_NAME)} بأن <span class="to">الأستاذ/ة</span>
+          <span class="nm">${esc(c.name)}</span>${c.job ? `<span class="job">${esc(c.job)}</span>` : ''}
+          قد أتمّ/ت البرنامج التدريبي <span class="crs">${esc(c.title)}</span><br>
+          بواقع <b>${esc(hrs(c.hours))}</b>${period ? ' ' + esc(period) : ''}${c.mode ? ` (${esc(c.mode)})` : ''}<br>متمنين له/ا دوام التوفيق والنجاح.</div>
         <div class="meta">${c.provider ? `<span>الجهة المنفّذة: <b>${esc(c.provider)}</b></span>` : ''}${c.approved_by ? `<span>اعتمد التدريب: <b>${esc(c.approved_by)}</b></span>` : ''}</div>
-        <p style="margin:3mm 0 0;font-size:3.8mm">متمنين له/ا دوام التوفيق والنجاح</p>
         <div class="sig">${sig('مقدّم الدورة', c.presenter)}${sig(c.edu_title, c.edu_name)}${sig(c.exec_title, c.exec_name)}</div>
       </div>
-      <div class="foot">للتحقق من صحة الشهادة: <span dir="ltr">${esc(verifyUrl(c.cert_no))}</span></div>
+      <div class="foot">www.althikr.edu.sa · للتحقق من الشهادة: ${esc(verifyUrl(c.cert_no))}</div>
     </div></div>`;
   document.getElementById('pr').onclick = () => print();
   // تصغير الشهادة لتناسب الشاشة (لا يؤثر على الطباعة)

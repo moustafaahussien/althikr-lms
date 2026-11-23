@@ -9,11 +9,11 @@ if (new URLSearchParams(location.search).get('demo') !== '1') return;
 const KEY = 'ai_demo_db_v3';
 const RW = { content:25, pedagogy:25, design:20, ease:15, reuse:15 };
 const DEMO_APP = `<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>تحدي الكسور</title>
-<style>body{font-family:Tahoma,sans-serif;background:linear-gradient(135deg,#eef2ff,#ecfeff);margin:0;min-height:100vh;display:grid;place-items:center}
-.c{background:#fff;border-radius:22px;padding:28px;width:min(520px,92vw);box-shadow:0 20px 50px -20px #4f46e580;text-align:center}
-h1{color:#4f46e5;margin:0 0 6px}.q{font-size:28px;margin:18px 0;font-weight:700}.o{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-button{font:inherit;font-size:20px;padding:14px;border:2px solid #e0e7ff;border-radius:14px;background:#f8faff;cursor:pointer}
-button:hover{border-color:#6d4bff}.ok{background:#d1fae5!important;border-color:#10b981!important}.no{background:#fee2e2!important;border-color:#ef4444!important}
+<style>body{font-family:Tahoma,sans-serif;background:linear-gradient(135deg,#E8F4EF,#E1F5FD);margin:0;min-height:100vh;display:grid;place-items:center}
+.c{background:#fff;border-radius:22px;padding:28px;width:min(520px,92vw);box-shadow:0 20px 50px -20px #00A65780;text-align:center}
+h1{color:#00A657;margin:0 0 6px}.q{font-size:28px;margin:18px 0;font-weight:700}.o{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+button{font:inherit;font-size:20px;padding:14px;border:2px solid #D6EDE2;border-radius:14px;background:#F7FAF8;cursor:pointer}
+button:hover{border-color:#007B51}.ok{background:#d1fae5!important;border-color:#10b981!important}.no{background:#fee2e2!important;border-color:#ef4444!important}
 .s{margin-top:14px;color:#64748b}</style></head><body><div class="c"><h1>⚡ تحدي الكسور</h1><div class="s" id="s">السؤال 1 من 5 — النقاط: 0</div>
 <div class="q" id="q"></div><div class="o" id="o"></div></div><script>
 var Q=[["½ + ¼ =",["¾","⅔","²⁄₆","1"],0],["⅓ + ⅓ =",["⅔","²⁄₆","1","⅓"],0],["1 − ¼ =",["¾","½","⅓","⅛"],0],["½ × 2 =",["1","¼","2","½"],0],["⅖ + ⅕ =",["⅗","³⁄₁₀","⅘","1"],0]],i=0,sc=0;

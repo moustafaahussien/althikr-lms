@@ -130,8 +130,8 @@ function planText(ev) {
   return lines.join("\n");
 }
 function printDoc(title, bodyHtml, ltr) {
-  const html = `<!doctype html><html lang="${ltr ? "en" : "ar"}" dir="${ltr ? "ltr" : "rtl"}"><head><meta charset="utf-8"><title>${esc(title)}</title>
-<style>@page{size:A4;margin:12mm}body{font-family:"IBM Plex Sans Arabic",Tahoma,sans-serif;font-size:12.5px;color:#000;margin:0}
+  const html = `<!doctype html><html lang="${ltr ? "en" : "ar"}" dir="${ltr ? "ltr" : "rtl"}"><head><meta charset="utf-8"><link rel="stylesheet" href="${new URL('../assets/css/brand.css', location.href).href}"><title>${esc(title)}</title>
+<style>@page{size:A4;margin:12mm}body{font-family:"Poppins","GE Dinar One",Tahoma,sans-serif;font-size:12.5px;color:#000;margin:0}
 .top{display:flex;justify-content:space-between;align-items:center}.top div{font-weight:700;line-height:1.6}.top img{height:64px}
 h2{text-align:center;margin:8px 0;font-size:17px}table{width:100%;border-collapse:collapse;margin-bottom:8px}td,th{border:1px solid #8aaed6;padding:5px 6px;vertical-align:top;text-align:start}
 th{background:#eef4fb}.g{font-weight:700;margin:10px 0 4px;padding:4px 8px;border-radius:6px}.g.w{background:#fde8e8}.g.a{background:#fff4d6}
@@ -274,7 +274,7 @@ function renderSessions() {
     <div class="stat ${dueS.length + dueP.length ? "next" : ""}"><div class="k">متابعات مستحقة</div><div class="v">${dueS.length + dueP.length}</div><div class="k">جلسات وخطط تطوير</div></div>
     <div class="stat"><div class="k">متابعات قادمة</div><div class="v">${upS}</div></div>
     <div class="stat"><div class="k">خطط تطوير محفوظة</div><div class="v">${evList().filter(x => x.plan).length}</div></div>`;
-  const dueHtml = (dueS.length || dueP.length) ? `<div class="card sec" style="border-color:#f3d39a;background:#fffaf0;margin-bottom:12px"><h3 style="margin:0 0 6px">📌 متابعات مستحقة</h3>
+  const dueHtml = (dueS.length || dueP.length) ? `<div class="card sec" style="border-color:#FCD4A5;background:#fffaf0;margin-bottom:12px"><h3 style="margin:0 0 6px">📌 متابعات مستحقة</h3>
     ${dueS.map(s => `<div class="evrow" data-raw><div class="who"><b>${esc(s.teacher)}</b> · جلسة: ${esc(s.title)}<div class="sync">موعد المتابعة ${esc(s.follow)}</div></div><div class="bar" style="margin:0"><button class="btn sm" data-sopen="${esc(s.id)}">فتح</button><button class="btn sm pri" data-sdone="${esc(s.id)}">✓ تمت المتابعة</button></div></div>`).join("")}
     ${dueP.map(x => `<div class="evrow" data-raw><div class="who"><b>${esc(x.teacher)}</b> · خطة تطوير بعد زيارة ${esc(x.date)}<div class="sync">موعد المتابعة ${esc(x.plan.follow)}</div></div><div class="bar" style="margin:0"><button class="btn sm" data-popen="${esc(x.id)}">فتح الخطة</button><button class="btn sm pri" data-pdone="${esc(x.id)}">✓ تمت المتابعة</button></div></div>`).join("")}</div>` : "";
   box.innerHTML = dueHtml + (L.length ? L.map(s => { const st = s.followDone ? '<span class="chip">✓ تمت المتابعة</span>' : s.follow ? (s.follow <= today ? '<span class="chip lw">متابعة مستحقة</span>' : `<span class="chip">متابعة ${esc(s.follow)}</span>`) : "";

@@ -14,7 +14,7 @@
 
   // ستارة حتى يتم التحقق من الحساب
   const veil = document.createElement('style');
-  veil.textContent = 'body>*:not(#lmsGate){visibility:hidden} #lmsGate{position:fixed;inset:0;display:grid;place-items:center;font-family:Tahoma,sans-serif;color:#565D8C;z-index:99999}';
+  veil.textContent = 'body>*:not(#lmsGate){visibility:hidden} #lmsGate{position:fixed;inset:0;display:grid;place-items:center;font-family:Tahoma,sans-serif;color:#5E6662;z-index:99999}';
   document.head.appendChild(veil);
   function gateMsg(html) {
     let g = document.getElementById('lmsGate');
@@ -26,7 +26,7 @@
   // الوضع التجريبي للمنصة: المعلم الذكي يحتاج الخادم الحقيقي، فلا يعمل داخل التجربة
   let DEMO_ON = false; try { DEMO_ON = !!sessionStorage.getItem('lms_demo'); } catch (_) {}
   const ready = (async () => {
-    if (DEMO_ON) { const msg = () => gateMsg('🎬<br><b>المعلم الذكي</b> غير متاح في الوضع التجريبي.<br><a href="../home.html" style="color:#6D4BFF">← العودة للمنصة التجريبية</a>');
+    if (DEMO_ON) { const msg = () => gateMsg('🎬<br><b>المعلم الذكي</b> غير متاح في الوضع التجريبي.<br><a href="../home.html" style="color:#007B51">← العودة للمنصة التجريبية</a>');
       document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', msg) : msg(); return new Promise(() => {}); }
     const { data: { session } } = await sb.auth.getSession();
     if (!session) { toLogin(); return new Promise(() => {}); }
@@ -34,7 +34,7 @@
     if (error || !ctx || !ctx.registered) { toLogin(); return new Promise(() => {}); }
     const p = ctx.profile;
     if (['student', 'parent'].includes(p.role)) {
-      document.addEventListener('DOMContentLoaded', () => gateMsg('🤖<br><b>المعلم الذكي</b> متاح لمنسوبي المدرسة فقط.<br><a href="../home.html" style="color:#6D4BFF">← العودة للمنصة</a>'));
+      document.addEventListener('DOMContentLoaded', () => gateMsg('🤖<br><b>المعلم الذكي</b> متاح لمنسوبي المدرسة فقط.<br><a href="../home.html" style="color:#007B51">← العودة للمنصة</a>'));
       return new Promise(() => {});
     }
     veil.remove(); const g = document.getElementById('lmsGate'); if (g) g.remove();

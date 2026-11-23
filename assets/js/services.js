@@ -258,7 +258,7 @@
   async function loadTrn() {
     const el = $('#tab-trn');
     el.innerHTML = `<div class="toolbar glass" style="padding:10px"><div class="subtabs" id="tTabs" style="margin:0"><button data-b="mine" class="on">سجلي التدريبي</button>
-      ${SUPER ? '<button data-b="review">✅ بانتظار اعتمادي <span id="tRvN" hidden style="background:#e4a842;color:#3d2600;border-radius:99px;padding:0 7px;font-size:.75rem;font-weight:700"></span></button><button data-b="all">سجلات المعلمين</button><button data-b="sum">ملخص الساعات</button>' : ''}</div><span class="grow"></span>
+      ${SUPER ? '<button data-b="review">✅ بانتظار اعتمادي <span id="tRvN" hidden style="background:#FFD54C;color:#3d2600;border-radius:99px;padding:0 7px;font-size:.75rem;font-weight:700"></span></button><button data-b="all">سجلات المعلمين</button><button data-b="sum">ملخص الساعات</button>' : ''}</div><span class="grow"></span>
       <label class="hint">من <input type="date" id="tFrom"></label><label class="hint">إلى <input type="date" id="tTo"></label>
       <button class="btn primary" id="tNew">➕ إضافة تدريب</button></div><div id="tBody"></div>`;
     $('#tTabs').onclick = (e) => { const b = e.target.closest('button'); if (!b) return; TBOX = b.dataset.b; $$('#tTabs button').forEach((x) => x.classList.toggle('on', x === b)); paintTrn(); };

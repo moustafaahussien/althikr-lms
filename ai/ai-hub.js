@@ -30,10 +30,10 @@ Object.assign(A.I18N.ar, { hub:{
   openBuilder:"🧩 ابنِ برومبتك بنفسك", prSearch:"ابحث في البرومبتات…", fLevel:"المستوى", fTool:"الأداة", allLevels:"كل المستويات", allTools:"كل الأدوات", more:"عرض المزيد",
   inputs:"المدخلات", outputs:"المخرجات", check:"راجع النتيجة", toolsUse:"الأدوات", wf:"سير عمل", byTeacher:"من", platformPrompt:"من المنصة", openProd:"عرض المنتج", evalIt:"قيّم", shown:"معروض",
   labH:"مختبر المعلم الذكي", labP:"أدوات تعمل داخل المنصة: ابنِ برومبتك، حسّنه، قيّمه، وحلّل نتائج طلابك دون رفع بياناتهم.",
-  lab:{ builder:["🧩","مولّد البرومبت","اختر المهمة والمادة والصف والمستوى وشكل المخرجات، واحصل على برومبت متكامل.","#6D4BFF"],
-        optimizer:["✨","محسّن البرومبت","الصق طلباً بسيطاً واحصل على برومبت احترافي مع شرح ما تحسّن ولماذا.","#0EA5D6"],
-        evaluator:["📏","مقيّم البرومبت","درجة من 80 وفق ثمانية معايير مع اقتراحات تحسين.","#0E9F76"],
-        analyzer:["📊","محلل نتائج الطلاب","ارفع ملف النتائج: مؤشرات الأسئلة والمهارات، مجموعات الاحتياج، تدخلات مقترحة، وتقرير مطبوع — داخل متصفحك.","#E8790A"] },
+  lab:{ builder:["🧩","مولّد البرومبت","اختر المهمة والمادة والصف والمستوى وشكل المخرجات، واحصل على برومبت متكامل.","#007B51"],
+        optimizer:["✨","محسّن البرومبت","الصق طلباً بسيطاً واحصل على برومبت احترافي مع شرح ما تحسّن ولماذا.","#509BB9"],
+        evaluator:["📏","مقيّم البرومبت","درجة من 80 وفق ثمانية معايير مع اقتراحات تحسين.","#00A657"],
+        analyzer:["📊","محلل نتائج الطلاب","ارفع ملف النتائج: مؤشرات الأسئلة والمهارات، مجموعات الاحتياج، تدخلات مقترحة، وتقرير مطبوع — داخل متصفحك.","#F7941D"] },
   learnH:"مركز المعرفة", learnP:"الثقافة بالذكاء الاصطناعي، توظيفه في التدريس، صناعة المنتجات، تحليل البيانات التعليمية، والذكاء الاصطناعي في STEM.", policy:"🛡️ سياسة الاستخدام والخصوصية", related:"مرتبط بهذا المحور",
   prodH:"معرض منتجات المعلمين", prodP:"منتجات صنعها زملاؤك وفريق المنصة — جرّبها مباشرة، واقرأ المشكلة التي تعالجها وكيف صُنعت وكيف تُستخدم، وقيّمها بمعايير تربوية.",
   pSearch:"ابحث بالعنوان أو المعلم أو الأداة…", fSubject:"المادة", fStage:"المرحلة", fType:"النوع", fTask:"الاستخدام", fSort:"الترتيب",
@@ -135,7 +135,7 @@ function promptCard(p, idx) {
     '<div class="pf"><button class="btn xs grad" type="button" data-copy>' + esc(A.T('common.copy')) + '</button><button class="btn xs ghost" type="button" data-evalp>📏 ' + esc(A.T('hub.evalIt')) + '</button>' +
     (idx == null ? '<a class="btn xs soft" href="' + link(p.id) + '">' + esc(A.T('hub.openProd')) + '</a>' : '') + '</div></div>';
 }
-const GRADS = ['linear-gradient(135deg,#6D4BFF,#0EA5D6)','linear-gradient(135deg,#E63E7C,#6D4BFF)','linear-gradient(135deg,#0E9F76,#0EA5D6)','linear-gradient(135deg,#E8790A,#E63E7C)','linear-gradient(135deg,#4F46E5,#14B8A6)','linear-gradient(135deg,#8B5CF6,#EC4899)'];
+const GRADS = ['linear-gradient(135deg,#007B51,#509BB9)','linear-gradient(135deg,#B96F16,#007B51)','linear-gradient(135deg,#00A657,#509BB9)','linear-gradient(135deg,#F7941D,#B96F16)','linear-gradient(135deg,#00A657,#6ACFF6)','linear-gradient(135deg,#00A657,#F7941D)'];
 function gradFor(id) { let h = 0; String(id).split('').forEach(c => { h = (h * 31 + c.charCodeAt(0)) >>> 0; }); return GRADS[h % GRADS.length]; }
 function initials(n) { const w = String(n || '').replace(/[()]/g, '').trim().split(/\s+/); return (w[0] || '?').charAt(0) + (w[1] ? w[1].charAt(0) : ''); }
 function ratingTxt(p) { return p.ratingCount ? '<span class="rating">★ ' + Math.round(p.ratingAvg) + '% <small style="color:var(--soft);font-weight:500">(' + p.ratingCount + ')</small></span>' : ''; }
@@ -249,7 +249,7 @@ function agentCard(a) {
 function openAgent(id) {
   const a = D.agents.find(x => x.id === id); if (!a) return;
   const inst = D.agentInstructions(a);
-  const m = A.modal('<div class="panel-h"><span class="ic" style="background:rgba(109,75,255,.1)">' + a.icon + '</span><div><h2>' + esc(L(a.name)) + '</h2><p><span class="lvl l' + a.level + '">' + esc(D.agentLevels[a.level].ar) + '</span> — ' + esc(D.agentLevels[a.level].d) + '</p></div></div>' +
+  const m = A.modal('<div class="panel-h"><span class="ic" style="background:rgba(0,123,81,.1)">' + a.icon + '</span><div><h2>' + esc(L(a.name)) + '</h2><p><span class="lvl l' + a.level + '">' + esc(D.agentLevels[a.level].ar) + '</span> — ' + esc(D.agentLevels[a.level].d) + '</p></div></div>' +
     '<dl class="crit"><dt>التخصص</dt><dd>' + esc(a.spec) + '</dd><dt>المرحلة</dt><dd>' + esc(A.stageName(a.stage)) + '</dd><dt>الفئة المستهدفة</dt><dd>' + esc(a.audience) + '</dd><dt>المهمة</dt><dd>' + esc(a.task) + '</dd><dt>الملفات المطلوبة</dt><dd>' + esc(a.files) + '</dd><dt>شكل المخرجات</dt><dd>' + esc(a.output) + '</dd></dl>' +
     '<div class="sub-h">🧭 المهام التي ينفذها (منهجية العمل)</div><ol class="nice">' + a.method.map(s => '<li><span>' + esc(s) + '</span></li>').join('') + '</ol>' +
     '<div class="sub-h">🧪 مثال على مخرجاته</div><div class="examplebox">' + esc(a.example) + '</div>' +

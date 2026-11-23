@@ -6,45 +6,44 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.sheetjs.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://zpbhzhpvpvehowxvlsgp.supabase.co https://drive.google.com https://*.googleusercontent.com; connect-src 'self' https://zpbhzhpvpvehowxvlsgp.supabase.co wss://zpbhzhpvpvehowxvlsgp.supabase.co; frame-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>الاختبارات — منصة دار الذكر التعليمية</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/brand.css?v=202611231330">
   <link rel="icon" type="image/png" href="favicon.png">
-  <meta name="theme-color" content="#0f6e6a">
+  <meta name="theme-color" content="#007B51">
   <link rel="manifest" href="supervision/manifest.json?v=2">
-    <link rel="stylesheet" href="assets/css/app.css?v=202611230100">
-  <link rel="stylesheet" href="assets/css/topbar.css?v=202611221955">
+    <link rel="stylesheet" href="assets/css/app.css?v=202611231330">
+  <link rel="stylesheet" href="assets/css/topbar.css?v=202611231330">
   <style>
     .hw-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
     .hw { display: block; width: 100%; text-align: right; font: inherit; background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 12px; cursor: pointer;
           transition: border-color .15s, box-shadow .15s; }
-    .hw:hover, .hw:focus-visible { border-color: var(--brand); box-shadow: 0 4px 14px rgba(15,110,106,.1); }
+    .hw:hover, .hw:focus-visible { border-color: var(--brand); box-shadow: 0 4px 14px rgba(0,123,81,.1); }
     .hw b { display: block; font-size: 1rem; margin-bottom: 2px; } .hw small { color: var(--muted); display: block; }
     .hw .row { display: flex; justify-content: space-between; align-items: center; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
     .prog { height: 6px; background: #eef2f4; border-radius: 99px; overflow: hidden; margin-top: 6px; } .prog i { display: block; height: 100%; background: var(--brand); }
     .st { display: inline-block; font-size: .74rem; padding: 1px 8px; border-radius: 99px; font-weight: 600; }
-    .st.none { background: #eef2f4; color: #5b6b78; } .st.submitted { background: #fff3d6; color: #8a5a00; } .st.graded { background: #dff3ef; color: #0f6e6a; }
+    .st.none { background: #eef2f4; color: #5b6b78; } .st.submitted { background: #fff3d6; color: #8a5a00; } .st.graded { background: #E8F4EF; color: #007B51; }
     .st.returned { background: #fde4ea; color: #a3244a; } .st.late { background: #fde4ea; color: #a3244a; } .st.closed { background: #e8e8ef; color: #555; }
     .hwv p { white-space: pre-wrap; line-height: 1.8; margin: 4px 0 10px; } .hwv .links a { display: inline-block; margin: 2px 0 2px 10px; }
-    .fb { background: #f4f9f8; border: 1px solid #cfe7e2; border-radius: 12px; padding: 8px 12px; margin: 8px 0; } .fb.ret { background: #fdeef2; border-color: #f3b8c8; }
+    .fb { background: #F3F8F5; border: 1px solid #B3DBCB; border-radius: 12px; padding: 8px 12px; margin: 8px 0; } .fb.ret { background: #fdeef2; border-color: #f3b8c8; }
     .ros td { vertical-align: top; white-space: normal; } .ros .ans { max-width: 340px; font-size: .86rem; white-space: pre-wrap; }
     .ros input.sc { width: 70px; } .ros input.fbk { width: 100%; min-width: 140px; }
     .sec-h { margin: 18px 0 8px; font-size: 1rem; color: var(--muted); }
-    .st.open { background: #dff3ef; color: #0f6e6a; } .st.upcoming { background: #e6eefc; color: #2a4f9a; } .st.review { background: #fff3d6; color: #8a5a00; }
+    .st.open { background: #E8F4EF; color: #007B51; } .st.upcoming { background: #e6eefc; color: #2a4f9a; } .st.review { background: #fff3d6; color: #8a5a00; }
     .qb { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; }
     .qb .qh { display: flex; gap: 6px; align-items: flex-start; } .qb .qh .grow { white-space: pre-wrap; line-height: 1.7; }
-    .qb ol { margin: 6px 0 0; padding-inline-start: 22px; } .qb li.ok { color: #0f6e6a; font-weight: 700; }
+    .qb ol { margin: 6px 0 0; padding-inline-start: 22px; } .qb li.ok { color: #007B51; font-weight: 700; }
     .qb label.pick { display: flex; gap: 8px; align-items: flex-start; }
     .qimg { display: block; max-width: 100%; max-height: 320px; border-radius: 10px; border: 1px solid var(--line); margin: 6px 0; }
-    table.mt { border-collapse: collapse; margin: 6px 0; } table.mt td { padding: 4px 8px; border-bottom: 1px solid #eef2f4; } table.mt td.ok { color: #0f6e6a; font-weight: 700; } table.mt select { min-width: 160px; }
+    table.mt { border-collapse: collapse; margin: 6px 0; } table.mt td { padding: 4px 8px; border-bottom: 1px solid #eef2f4; } table.mt td.ok { color: #007B51; font-weight: 700; } table.mt select { min-width: 160px; }
     .pair-row span { color: var(--muted); }
     .opt-row { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; } .opt-row input[type=text] { flex: 1; }
     .take { max-width: 820px; margin: 0 auto; } .take .q { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-bottom: 10px; }
     .take .q h4 { margin: 0 0 8px; white-space: pre-wrap; line-height: 1.8; font-size: 1rem; } .take .q h4 small { color: var(--muted); font-weight: 500; }
     .take .opt { display: flex; gap: 10px; align-items: center; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; margin: 6px 0; cursor: pointer; }
-    .take .opt:has(input:checked) { border-color: var(--brand); background: #f1f8f7; }
+    .take .opt:has(input:checked) { border-color: var(--brand); background: #F1F8F4; }
     .timer { position: sticky; top: 8px; z-index: 5; display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 14px; margin-bottom: 10px; }
     .timer b { font-size: 1.3rem; font-variant-numeric: tabular-nums; } .timer.low b { color: #a3244a; }
-    .res .q { border-inline-start: 4px solid #ccc; } .res .q.ok { border-inline-start-color: #2a9d8f; } .res .q.bad { border-inline-start-color: #d1495b; } .res .q.man { border-inline-start-color: #e9a23b; }
+    .res .q { border-inline-start: 4px solid #ccc; } .res .q.ok { border-inline-start-color: #00A657; } .res .q.bad { border-inline-start-color: #d1495b; } .res .q.man { border-inline-start-color: #e9a23b; }
   </style>
 </head>
 <body>
@@ -68,9 +67,9 @@
   <footer class="credit">إعداد وتصميم: مصطفى حسين</footer>
 
   <script src="assets/vendor/supabase-js-2.119.2.js"></script>
-  <script src="assets/js/config.js?v=202611230100"></script>
-  <script src="assets/js/academic-calendar.js?v=202611221130"></script>
-  <script src="assets/js/core.js?v=202611231200"></script>
-  <script src="assets/js/exams.js?v=202611230915"></script>
+  <script src="assets/js/config.js?v=202611231330"></script>
+  <script src="assets/js/academic-calendar.js?v=202611231330"></script>
+  <script src="assets/js/core.js?v=202611231330"></script>
+  <script src="assets/js/exams.js?v=202611231330"></script>
 </body>
 </html>

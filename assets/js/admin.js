@@ -57,9 +57,6 @@
   }
   $('#tabs').onclick = (e) => { const b = e.target.closest('button[data-tab]'); if (b) openTab(b.dataset.tab); };
 
-  try { await loadRefs(); } catch (e) { toast(errMsg(e), 'err'); }
-  const startTab = location.hash.slice(1);
-  openTab(Object.prototype.hasOwnProperty.call(tabs, startTab) ? startTab : 'overview');
 
   /* ===================================================================
      نظرة عامة
@@ -1027,4 +1024,9 @@
       } catch (er) { toast(errMsg(er), 'err'); }
     };
   }
+
+  // البدء بعد تعريف كل الثوابت (مثل IMPORTS) — فتح تبويب الاستيراد مباشرة من الرابط كان يسبق تعريفها
+  try { await loadRefs(); } catch (e) { toast(errMsg(e), 'err'); }
+  const startTab = location.hash.slice(1);
+  openTab(Object.prototype.hasOwnProperty.call(tabs, startTab) ? startTab : 'overview');
 })();

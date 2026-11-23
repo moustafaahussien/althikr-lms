@@ -476,6 +476,10 @@
     document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', start) : start();
   }
 
+  // عامل الخدمة (sw.js): التحديثات تظهر فور النشر بدل انتظار ذاكرة GitHub Pages
+  if ('serviceWorker' in navigator && !/\/supervision\//.test(location.pathname)) {
+    window.addEventListener('load', () => { navigator.serviceWorker.register(BASE + 'sw.js', { scope: BASE }).catch(() => {}); });
+  }
   window.LMS = { sb, C, configured, ROLE_LABELS, esc, $, $$, toast, modal, confirmBox, errMsg,
                  fetchAll, signInWithGoogle, signOut, getContext, cached, clearCache, requireAuth, downloadCSV, rememberNext, takeNext,
                  getView, setView, canSwitch, applyView, mountTopbar, BASE, hijri, dateLine, printHTML, printTable, exportTable, tableRows, ymd, cal, clsText, isGroupCls, DEMO };

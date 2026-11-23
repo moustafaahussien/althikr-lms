@@ -1,7 +1,7 @@
 
 -- اختبار 43 (يُلغى كله بالتراجع): معلم له مشرف ← يسجّل تدريبًا ← لا يعتمد نفسه ← مشرفه يعيده ثم يعتمده بدون شهادة ← يصدرها لاحقًا ← المعلم يرى الشهادة ← التحقق العام
 do $T$
-declare t record; sv record; x record; tid bigint; r jsonb; res text := '';
+declare t record; sv record; x record; tid bigint; r jsonb; res text := ''; cno text;
 begin
   select v.teacher_id, tp.email temail, v.supervisor_id, sp.email semail into t
     from v_teacher_supervisors v join profiles tp on tp.id = v.teacher_id join profiles sp on sp.id = v.supervisor_id
@@ -29,8 +29,8 @@ begin
 
   perform set_config('request.jwt.claims', json_build_object('email', t.temail, 'role','authenticated')::text, true); set local role authenticated;
   perform public.trn_save(jsonb_build_object('id', tid, 'title', 'دورة اختبار', 'provider', 'جهة', 'presenter', 'د. مقدم', 'hours', 6, 'start_date', current_date::text));
-  res := res || ' afterEdit=' || (select status from trainings where id = tid);
   reset role;
+  res := res || ' afterEdit=' || (select status from trainings where id = tid);
 
   perform set_config('request.jwt.claims', json_build_object('email', t.semail, 'role','authenticated')::text, true); set local role authenticated;
   r := public.trn_review(tid, 'approve', null, false); res := res || ' approvedNoCert=' || coalesce(r->>'cert_no', 'null');
@@ -44,8 +44,9 @@ begin
   r := public.trn_cert(tid); res := res || ' cert=' || (r->>'name' is not null)::text || '/' || (r->>'presenter') || '/' || (r->>'edu_title') || '/' || (r->>'exec_title');
   reset role;
 
+  cno := (select cert_no from trainings where id = tid);
   set local role anon;
-  r := public.trn_verify((select cert_no from trainings where id = tid)); res := res || ' verify=' || (r->>'valid');
+  r := public.trn_verify(cno); res := res || ' verify=' || (r->>'valid');
   r := public.trn_verify('DTH-0000-99999'); res := res || ' fake=' || (r->>'valid');
   reset role;
   raise exception 'TEST %', res;

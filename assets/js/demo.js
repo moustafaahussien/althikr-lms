@@ -1093,6 +1093,56 @@
   })());
 
   // ======================================================================
+  //  مكتب الإشراف التربوي (نسخة تجريبية من دوال sv_* — sql/06 و sql/08)
+  // ======================================================================
+  Object.assign(RPC, (function () {
+    const SVR = () => ({ admin: 'sys', leadership: 'admin', principal: 'admin', supervisor: 'member' })[MYROLE()] || null;
+    const SV = () => (DB.SV = DB.SV || { data: {}, msgs: [{ id: 1, at: Date.now() - 864e5 * 2, title: 'اجتماع المشرفين', body: 'اجتماع المشرفين التربويين الأحد القادم بعد الحصة الرابعة في قاعة الاجتماعات.', from: 'مسؤول النظام' }], sched: [] });
+    const supName = (id) => (DB.profiles.find((x) => x.id === id) || {}).full_name || '';
+    const supers = () => [...new Set(DB.supervision.map((x) => x.supervisor_id))];
+    const no = (e) => ({ ok: false, error: e || 'not_member' });
+    // جدول المشرف: حصص المعلمين الذين يشرف عليهم (ورقة لكل مشرف)
+    function ttFor(ids) {
+      // ورقة لكل (مشرف × مرحلة) كما في جداول المدرسة الحقيقية (مفتاح المرحلة = الورقة + الصف)
+      const SN = { 1: 'ابتدائي', 2: 'متوسط', 3: 'ثانوي' }, sheets = [], slots = [], stages = {};
+      ids.forEach((sid) => { const T = new Set(DB.supervision.filter((x) => x.supervisor_id === sid).map((x) => x.teacher_id));
+        [1, 2, 3].forEach((st) => { const L = DB.tt_slots.filter((x) => T.has(x.teacher_id) && x.sheet_id === st); if (!L.length) return;
+          const k = sheets.length; sheets.push({ k, idx: k, owner: sid, owner_name: supName(sid), dept: '', name: SN[st], label: SN[st] + ' — ' + supName(sid) });
+          L.forEach((x) => { stages[k + '|' + x.track + '|' + x.grade_num] = SN[st];
+            slots.push({ s: k, d: x.day, p: x.period, k: 'class', t: supName(x.teacher_id), c: x.cls, tr: x.track, g: x.grade_num, sc: x.section,
+              sj: (DB.subjects.find((b) => b.id === x.subject_id) || {}).name_ar || '', r: null }); }); }); });
+      return { ok: true, mirror: ids.length > 1, sheets, slots, subjects: {}, stages };
+    }
+    return {
+      sv_login() { const r = SVR(); if (!r) return { ok: false, error: 'not_member', name: name(ME_ID) }; const d = SV().data[ME_ID];
+        return { ok: true, id: ME_ID, name: name(ME_ID), dept: MYROLE() === 'supervisor' ? 'الإشراف التربوي' : '', admin: ['sys', 'admin'].includes(r), sys: r === 'sys', role: r === 'member' ? '' : r,
+          data: d ? d.data : null, stamp: d ? d.stamp : 0 }; },
+      sv_ver() { return SVR() ? { ok: true, stamp: (SV().data[ME_ID] || {}).stamp || 0 } : no(); },
+      sv_msgs() { return SVR() ? { ok: true, msgs: SV().msgs } : no(); },
+      sv_save({ p_data, p_stamp }) { if (!SVR()) return no(); SV().data[ME_ID] = { data: p_data, stamp: p_stamp || Date.now() }; save(); return { ok: true, stamp: p_stamp || 0 }; },
+      sv_push_test() { return { ok: false, error: 'demo' }; },
+      sv_tt_get({ p_all }) { const r = SVR(); if (!r) return no(); if (p_all && r !== 'sys') return no('not_sys');
+        const mine = supers().includes(ME_ID) ? [ME_ID] : [];
+        return ttFor(p_all ? supers() : mine); },
+      sv_tt_meta() { return { ok: true, updated: iso(new Date()) }; },
+      sv_tt_put() { return { ok: false, error: 'في الوضع التجريبي لا يُعدّل الجدول' }; },
+      sv_export() { return { ok: true, rows: [] }; },
+      sv_import() { return { ok: false, error: 'demo' }; },
+      sv_admin({ p }) { const r = SVR(); const a = String((p && p.action) || '');
+        if (!['sys', 'admin'].includes(r)) return no('not_admin');
+        const users = () => supers().concat(DB.profiles.filter((x) => x.role === 'admin').map((x) => x.id)).filter((v, i, A) => A.indexOf(v) === i)
+          .map((id) => ({ code: id, name: supName(id), dept: P(id).role === 'admin' ? 'مسؤول النظام' : 'الإشراف التربوي', email: P(id).email || '', active: true, admin: P(id).role === 'admin', role: P(id).role === 'admin' ? 'sys' : '', stamp: 0 }));
+        if (a === 'admin_list') return { ok: true, users: users() };
+        if (a === 'admin_msgs') return { ok: true, msgs: SV().msgs };
+        if (a === 'admin_sched_list') return { ok: true, sched: SV().sched };
+        if (a === 'admin_push_status') return { ok: true, has_key: false };
+        if (a === 'admin_school') return { ok: true, school: [] };
+        if (a === 'admin_broadcast') { SV().msgs.unshift({ id: Date.now(), at: Date.now(), title: p.title || '', body: p.body || '', from: name(ME_ID) }); save(); return { ok: true }; }
+        return { ok: false, error: 'في الوضع التجريبي لا تُعدّل بيانات المشرفين' }; }
+    };
+  })());
+
+  // ======================================================================
   //  العميل التجريبي
   // ======================================================================
   const session = { access_token: 'demo', token_type: 'bearer', user: { id: ME_ID, email: (ME() || {}).email, role: 'authenticated' } };

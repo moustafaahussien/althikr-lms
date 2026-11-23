@@ -9,7 +9,7 @@ const D = window.AI_DATA;
 const I18N = {
 ar: {
   brand:"المعلم الذكي", brandSub:"الذكاء الاصطناعي لمعلمي دار الذكر", school:"مدارس دار الذكر",
-  nav:{ guide:"الدليل", agents:"الوكلاء", training:"التدريب", prompts:"البرومبتات", lab:"المختبر", learn:"المعرفة", products:"المعرض", add:"أضف منتجك", back:"منصة دار الذكر التعليمية", home:"الرئيسية", favs:"مفضلتي", admin:"لوحة الإدارة" },
+  nav:{ guide:"الدليل", agents:"الوكلاء", training:"التدريب", prompts:"البرومبتات", lab:"المختبر", learn:"المعرفة", products:"المعرض", add:"أضف منتجك", back:"منصة دار الذكر التعليمية", platform:"المنصة", home:"الرئيسية", favs:"مفضلتي", admin:"لوحة الإدارة" },
   price:{ free:"مجاني", freemium:"مجاني بحدود", edu:"مجاني بحساب Google للتعليم", paid:"مدفوع" },
   arLvl:{ good:"عربي ممتاز", ok:"عربي جيد", low:"الأفضل بالإنجليزية" },
   common:{ open:"فتح", copy:"نسخ", copied:"تم النسخ ✓", close:"إغلاق", all:"الكل", search:"ابحث…", loading:"جارٍ التحميل…",
@@ -23,7 +23,7 @@ ar: {
 },
 en: {
   brand:"Smart Teacher", brandSub:"AI for Dar Al-Thikr teachers", school:"Dar Al-Thikr Schools",
-  nav:{ guide:"Guide", agents:"Agents", training:"Training", prompts:"Prompts", lab:"Lab", learn:"Knowledge", products:"Showcase", add:"Add your product", back:"Dar Al-Thikr learning platform", home:"Home", favs:"My favorites", admin:"Admin dashboard" },
+  nav:{ guide:"Guide", agents:"Agents", training:"Training", prompts:"Prompts", lab:"Lab", learn:"Knowledge", products:"Showcase", add:"Add your product", back:"Dar Al-Thikr learning platform", platform:"Platform", home:"Home", favs:"My favorites", admin:"Admin dashboard" },
   price:{ free:"Free", freemium:"Free tier", edu:"Free with Google for Education", paid:"Paid" },
   arLvl:{ good:"Great Arabic", ok:"Good Arabic", low:"Best in English" },
   common:{ open:"Open", copy:"Copy", copied:"Copied ✓", close:"Close", all:"All", search:"Search…", loading:"Loading…",
@@ -214,6 +214,7 @@ function shell(page) {
       '<span class="bt"><b data-t="brand"></b><small data-t="brandSub"></small></span></a>' +
     '<nav class="links" aria-label="Main">' + (page === 'admin' ? '' : links.map(l => '<a href="' + h + l[1] + '" data-t="nav.' + l[0] + '"></a>').join('')) + '</nav>' +
     '<div class="nav-act">' +
+      '<a class="homebtn" href="../home.html" data-t-aria="nav.back" title="منصة دار الذكر التعليمية"><span aria-hidden="true">🏠</span> <span data-t="nav.platform"></span></a>' +
       (page === 'admin' ? '' : '<button class="favbtn" type="button" data-favs data-t-aria="nav.favs" title="♥"><span>♥</span><i id="favCount"></i></button>') +
       (page === 'admin' ? '' : '<a class="admbtn" href="admin.html' + (DEMO ? '?demo=1' : '') + '" data-t-aria="nav.admin" title="لوحة الإدارة / Admin">🔐</a>') +
       (page === 'admin' ? '' : '<button class="btn sm grad" type="button" data-add><span>＋</span> <span data-t="nav.add"></span></button>') +

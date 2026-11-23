@@ -26,6 +26,11 @@
     '<a href="../home.html" style="display:inline-block;margin:6px;padding:8px 16px;border-radius:10px;background:#0f6e6a;color:#fff;text-decoration:none">← العودة للمنصة التجريبية</a></div></div>'; });
 })();
 </script>
+<!-- الأساس المشترك للمنصة: نفس الاتصال والجلسة والشريط العلوي والتقويم الدراسي -->
+<script src="../assets/js/academic-calendar.js?v=202611221130"></script>
+<script>window.LMS_NO_ENHANCE=true;</script>
+<script src="../assets/js/core.js?v=202611231000"></script>
+<link rel="stylesheet" href="../assets/css/topbar.css?v=202611221955">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -37,24 +42,25 @@
 *{box-sizing:border-box}
 body{margin:0;font-family:"IBM Plex Sans Arabic",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:15px;line-height:1.55}
 button,input,select{font:inherit}
-header{background:var(--brand);color:#fff;padding:14px 18px 0}
+.svbar{background:var(--brand);color:#fff;padding:8px 18px 0}
+.svhead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.svhead h2{margin:0;font-size:17px;color:#fff}
 .hrow{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 h1{font-size:19px;margin:0;font-weight:700}
 .brandlink{display:flex;align-items:center;gap:10px;color:#fff;text-decoration:none}
 .logo-tile{width:42px;height:42px;border-radius:12px;background:#fff;display:grid;place-items:center;flex:0 0 auto;padding:4px}
 .logo-tile img{width:100%;height:100%;object-fit:contain}
 .brandlink small.plat{display:block;font-size:12px;color:#d6ecea;font-weight:500;line-height:1.2}
-.clock{font-size:15px;opacity:.95;display:flex;gap:10px;align-items:center}
+.svtools{font-size:15px;opacity:.95;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 @media (max-width:600px){
-  header{padding:10px 10px 0}
-  .clock{flex-wrap:wrap;gap:6px;width:100%}
-  .clock #whoLbl{display:none}
-  .clock b{font-size:18px}
+  .svbar{padding:6px 10px 0}
+  .svtools{gap:6px}
+  .svtools #whoLbl{display:none}
   .calbar .cc{font-size:11.5px}
   .calbar .cc{font-size:12px;white-space:normal}
   html,body{overflow-x:hidden}
 }
-.clock b{font-size:22px;font-variant-numeric:tabular-nums;letter-spacing:.5px}
+
 
 .calbar{display:flex;flex-direction:column;justify-content:center;gap:1px;align-items:flex-start;margin-inline-start:auto;flex:0 0 auto;align-self:center;cursor:pointer;padding:1px 8px;border-radius:10px;border:1px solid transparent}
 .calbar:empty{display:none}
@@ -221,11 +227,11 @@ dialog::backdrop{background:#0006}
 </style>
 </head>
 <body>
-<header>
-  <div class="hrow">
-    <a class="brandlink" href="../home.html" title="منصة دار الذكر التعليمية"><span class="logo-tile"><img src="../assets/img/logo-mark.png" alt="مدارس دار الذكر"></span><span><h1 id="appTitle">مكتب الإشراف التربوي</h1><small class="plat">منصة دار الذكر التعليمية</small></span></a>
-    <div class="clock"><button class="btn sm" id="inboxBtn" style="background:transparent;color:#fff;border-color:#ffffff66;position:relative">📩 الرسائل<span id="inboxBadge" style="display:none;position:absolute;top:-6px;left:-6px;background:#e4a842;color:#3d2600;border-radius:999px;font-size:11px;padding:0 6px;font-weight:700"></span></button><span id="whoLbl" class="sync"></span><button class="btn sm langbtn" id="langBtn" data-raw title="English / Arabic">EN</button><button class="btn sm" id="codeBtn" style="display:none" title="تغيير كود الدخول">🔑 الكود</button><button class="btn sm" id="viewSw" style="display:none;background:#fff;color:#0f6e6a;border-color:#fff;font-weight:700" title="الرجوع إلى الواجهة الكاملة">⇄ مدير النظام</button><a class="btn sm" id="lmsHome" href="../home.html" style="background:transparent;color:#fff;border-color:#ffffff66;text-decoration:none" title="العودة إلى منصة المدرسة">🏠 منصة المدرسة</a><button class="btn sm" id="logoutBtn" style="background:transparent;color:#fff;border-color:#ffffff66">خروج</button><span id="todayLbl"></span><b id="clk">--:--</b></div>
-  </div>
+<header id="topbar"></header>
+<!-- شريط مكتب الإشراف تحت الشريط الموحّد: العنوان وأدوات المكتب وتبويباته -->
+<div class="svbar">
+  <div class="svhead"><h2 id="appTitle">🧭 مكتب الإشراف التربوي</h2>
+    <div class="svtools"><button class="btn sm" id="inboxBtn" style="background:transparent;color:#fff;border-color:#ffffff66;position:relative">📩 رسائل المكتب<span id="inboxBadge" style="display:none;position:absolute;top:-6px;left:-6px;background:#e4a842;color:#3d2600;border-radius:999px;font-size:11px;padding:0 6px;font-weight:700"></span></button><span id="whoLbl" class="sync"></span><button class="btn sm langbtn" id="langBtn" data-raw title="English / Arabic">EN</button><button class="btn sm" id="codeBtn" style="display:none" title="تغيير كود الدخول">🔑 الكود</button><button class="btn sm" id="viewSw" style="display:none;background:#fff;color:#0f6e6a;border-color:#fff;font-weight:700" title="الرجوع إلى الواجهة الكاملة">⇄ مدير النظام</button><button class="btn sm" id="logoutBtn" hidden>خروج</button></div></div>
   <nav id="tabs">
     <button data-t="day" class="on">حصص اليوم</button>
     <button data-t="rem">تذكيراتي <span id="remCount"></span></button>
@@ -234,9 +240,8 @@ dialog::backdrop{background:#0006}
     <button data-t="week">جدول معلم</button>
     <button data-t="sch" id="schTab" style="display:none">🏫 جدول المدرسة</button>
     <button data-t="adm" id="admTab" style="display:none">المشرفون</button>
-    <div id="calBar" class="calbar" role="button" tabindex="0" title="التقويم الدراسي 1448هـ"></div>
   </nav>
-</header>
+</div>
 <main>
   <section id="p-day" class="panel on">
     <div id="timeNotice"></div>
@@ -421,7 +426,6 @@ dialog::backdrop{background:#0006}
 </form></div>
 
 <script src="config.js?v=202611221130"></script>
-<script src="../assets/js/academic-calendar.js?v=202611221130"></script>
 <script src="devplan.js?v=202611221130"></script>
 <script src="plans.js?v=202611221130"></script>
 <script>
@@ -645,7 +649,7 @@ function esc(s){ return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&
 function ymd(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
 function parseYmd(s){ const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d); }
 /* التقويم الدراسي (academic-calendar.js): الإجازة التي يقع فيها اليوم */
-function calHol(ds){ return ((window.ACAD&&window.ACAD.hol)||[]).find(h=>ds>=h.f && ds<=h.to)||null; }
+function calHol(ds){ return LMS.cal.hol(ds); }   // التقويم المشترك (core.js)
 function fmtDate(d){ try{ return d.toLocaleDateString(LOC(),{weekday:"long",day:"numeric",month:"long"}); }catch(e){ return DAYS[d.getDay()]+" "+ymd(d); } }
 function nowMin(){ const n=new Date(); return n.getHours()*60+n.getMinutes()+n.getSeconds()/60; }
 function toast(msg){ const t=document.getElementById("toast"); t.textContent=msg; t.style.display="block"; clearTimeout(toast._t); toast._t=setTimeout(()=>t.style.display="none",3000); }
@@ -1144,9 +1148,8 @@ async function loadRemote(silent){
 }
 /* ===== الدخول الموحّد مع منصة المدرسة ===== */
 const LMS_LOGIN = new URL("../index.html?next=supervision/", location.href).href;
-const SB = (window.supabase && window.LMS_CONFIG && !/YOUR-/.test(LMS_CONFIG.SUPABASE_URL))
-  ? window.supabase.createClient(LMS_CONFIG.SUPABASE_URL, LMS_CONFIG.SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false } })
-  : null;
+// اتصال واحد بقاعدة البيانات للمنصة كلها (من core.js) — نفس الجلسة ونفس تجديد الدخول
+const SB = (window.LMS && LMS.sb && !window.__SV_DEMO) ? LMS.sb : null;
 async function lmsToken(){ if(!SB) return null; const { data: { session } } = await SB.auth.getSession(); return session ? session.access_token : null; }
 function ssoState(msg){ document.getElementById("login").classList.remove("off"); document.getElementById("linkBox").style.display="none"; document.getElementById("ssoState").style.display=""; document.getElementById("ssoState").textContent=msg||""; document.getElementById("loginErr").textContent=""; }
 function showLogin(msg){ ssoState(msg||""); }
@@ -1178,6 +1181,8 @@ async function startWithCode(code){
 async function initCloud(){
   if(!SB){ ssoState("تعذّر تحميل منصة المدرسة. أعد تحميل الصفحة."); return; }
   ssoState("جارٍ الدخول بحساب المدرسة…");
+  // الشريط العلوي الموحّد (ويحوّل لصفحة الدخول إن لم تكن هناك جلسة)
+  try{ await LMS.mountTopbar("supervision/"); const lo=document.getElementById("lmsLogout"); if(lo) lo.onclick=()=>document.getElementById("logoutBtn").onclick(); }catch(e){}
   let tok=null; try{ tok=await lmsToken(); }catch(e){}
   if(!tok){ location.href=LMS_LOGIN; return; }
   let r;
@@ -2257,14 +2262,11 @@ function openCalDlg(){
   const d=document.getElementById("dlg"); d.style.maxWidth="680px"; d.showModal(); b.querySelector("#calX").onclick=()=>d.close();
   d.addEventListener("close",()=>{ d.style.maxWidth=""; },{once:true});
 }
-document.getElementById("calBar").onclick=openCalDlg;
-document.getElementById("calBar").onkeydown=e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); openCalDlg(); } };
+// شريط التقويم والساعة في الشريط الموحّد (core.js)
 let calDayKey="";
 function tick(){
   const n=new Date();
-  if(ymd(n)!==calDayKey){ calDayKey=ymd(n); renderCal(); }
-  document.getElementById("clk").textContent=String(n.getHours()).padStart(2,"0")+":"+String(n.getMinutes()).padStart(2,"0");
-  document.getElementById("todayLbl").textContent=fmtDate(n);
+  if(ymd(n)!==calDayKey){ calDayKey=ymd(n); }
   checkAlarms();
 }
 let lastMin=-1;

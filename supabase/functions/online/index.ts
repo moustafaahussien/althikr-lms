@@ -1343,6 +1343,48 @@ async function whoAmICached_(req) {
   return me;
 }
 
+
+/* =====================================================================
+   رابط Google Meet تلقائي لكل حصة (sql/47) — action=meetGen
+   يُستدعى من الجدولة اليومية (بالمفتاح السري) أو من مدير النظام بجلسته
+   ===================================================================== */
+async function meetGen_(prep) {
+  const items = prep.items || [], days = prep.days || [];
+  const CID = Deno.env.get("GOOGLE_CLIENT_ID"), CSEC = Deno.env.get("GOOGLE_CLIENT_SECRET");
+  if (!CID || !CSEC) return { ok: false, error: "google_secrets", planned: items.length };
+  await SB.from("ol_meet_links").delete().lt("day", todayStr_(-30));
+  if (!items.length) return { ok: true, planned: 0, created: 0 };
+  const { data: ex } = await SB.from("ol_meet_links").select("day,room,period").in("day", days);
+  const have = new Set((ex || []).map((r) => r.day + "|" + r.room + "|" + r.period));
+  const todo = items.filter((i) => !have.has(i.day + "|" + i.room + "|" + i.period));
+  if (!todo.length) return { ok: true, planned: items.length, todo: 0, created: 0 };
+  const { data: map, error: e1 } = await SB.rpc("olm_resolve", { p_names: [...new Set(todo.map((i) => i.teacher))] });
+  if (e1) throw e1;
+  const pids = [...new Set(Object.values(map || {}))];
+  const { data: toks } = pids.length ? await SB.from("gm_tokens").select("profile_id,refresh_token").in("profile_id", pids) : { data: [] };
+  const tokOf = Object.fromEntries((toks || []).map((t) => [t.profile_id, t.refresh_token]));
+  const byT = {}; let noMatch = 0, noLink = 0, created = 0, failed = 0; const errors = [], unmatched = new Set();
+  todo.forEach((i) => { const pid = (map || {})[i.teacher]; if (!pid) { noMatch++; unmatched.add(i.teacher); return; } if (!tokOf[pid]) { noLink++; return; } (byT[pid] = byT[pid] || []).push(i); });
+  await Promise.all(Object.keys(byT).map(async (pid) => {
+    const tr = await fetch("https://oauth2.googleapis.com/token", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ client_id: CID, client_secret: CSEC, refresh_token: tokOf[pid], grant_type: "refresh_token" }) });
+    const tj = await tr.json().catch(() => ({}));
+    if (!tr.ok || !tj.access_token) { failed++; const msg = "token: " + (tj.error_description || tj.error || tr.status); errors.push(msg);
+      await SB.from("gm_tokens").update({ last_error: msg.slice(0, 300) }).eq("profile_id", pid); return; }
+    for (const i of byT[pid]) {
+      const r = await fetch("https://meet.googleapis.com/v2/spaces", { method: "POST", headers: { Authorization: "Bearer " + tj.access_token, "Content-Type": "application/json" },
+        body: JSON.stringify({ config: { accessType: "TRUSTED", entryPointAccess: "ALL" } }) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.meetingUri) { failed++; const msg = "meet: " + ((j.error && j.error.message) || r.status); errors.push(msg);
+        await SB.from("gm_tokens").update({ last_error: msg.slice(0, 300) }).eq("profile_id", pid); return; }
+      const { error } = await SB.from("ol_meet_links").insert({ day: i.day, room: i.room, period: i.period, teacher: i.teacher, profile_id: pid, uri: j.meetingUri, space: j.name || null });
+      if (!error) created++;
+    }
+    await SB.from("gm_tokens").update({ last_ok: new Date().toISOString(), last_error: null }).eq("profile_id", pid);
+  }));
+  return { ok: true, planned: items.length, todo: todo.length, created, noMatch, noLink, failed, errors: errors.slice(0, 5), unmatched: [...unmatched].slice(0, 40) };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   try {
@@ -1374,6 +1416,26 @@ Deno.serve(async (req) => {
       dailyReport(); await flushBook(); resetRequest_();
       return json({ ok: true });
     });
+
+    // ---- روابط Meet التلقائية: الجدولة (بالمفتاح السري) أو مدير النظام/الإدارة العليا بجلستهم ----
+    if (act === "meetGen") {
+      const prep = await withLock(async () => {
+        await loadProps();
+        let ok = !!PROPS.ADMIN_SECRET && secret === PROPS.ADMIN_SECRET;
+        if (!ok) { const m = await whoAmI(req); ok = !!(m && !m.bad && (m.role === "admin" || m.role === "leadership")); }
+        if (!ok) return { forbidden: true };
+        await syncBook([]); FRESH_AT_ = Date.now(); REQ = { email: "", name: "", role: "" }; resetRequest_();
+        const T = readAll_(true);
+        const days = (Array.isArray(body.days) && body.days.length ? body.days.map(normDate_).filter(Boolean) : [todayStr_(0), todayStr_(1), todayStr_(2)]).slice(0, 5);
+        const items = [];
+        days.forEach((d) => { const rooms = plannedDay_(T, d); Object.keys(rooms).forEach((k) => { const R = rooms[k];
+          R.periods.forEach((x) => { if (!x.teacher || x.code) return; items.push({ day: d, room: R.key, period: x.p, teacher: x.teacher }); }); }); });
+        resetRequest_();
+        return { items, days };
+      });
+      if (prep.forbidden) return json({ ok: false, error: "forbidden" }, 403);
+      return json(await meetGen_(prep));
+    }
 
     // ---- حالة الإيقاف (بدون دخول) ----
     if (req.method === "GET" && url.searchParams.get("status")) { await refreshShared_([], false); return json({ ok: true, paused: isPaused_() }); }

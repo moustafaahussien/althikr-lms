@@ -9,7 +9,7 @@
   /* الوضع التجريبي (ديمو): مدرسة افتراضية داخل المتصفح بدل قاعدة البيانات الحقيقية — assets/js/demo.js
      يُحمَّل مباشرة بعد هذا الملف (قبل سكربت الصفحة)، ولا يُنشأ اتصال حقيقي إطلاقًا أثناء التجربة */
   const DEMO = (() => { try { return sessionStorage.getItem('lms_demo') || ''; } catch (_) { return ''; } })();
-  if (DEMO && !window.LMS_DEMO) document.write('<script src="' + BASE + 'assets/js/demo.js?v=202611231530"><\/script>');
+  if (DEMO && !window.LMS_DEMO) document.write('<script src="' + BASE + 'assets/js/demo.js?v=202611231620"><\/script>');
   const sb = DEMO
     ? new Proxy({}, { get: (_, k) => (window.LMS_DEMO ? window.LMS_DEMO.client[k] : undefined) })
     : configured
@@ -137,6 +137,15 @@
     const redirectTo = BASE + 'index.html';
     const queryParams = parent === true ? { prompt: 'select_account' } : { hd: C.SCHOOL_DOMAIN, prompt: 'select_account' };
     const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo, queryParams } });
+    if (error) toast(errMsg(error), 'err');
+  }
+
+  // ربط Google Meet (sql/47): موافقة المعلم مرة واحدة على إنشاء اجتماعات Meet باسمه لحصصه الأونلاين
+  const MEET_SCOPE = 'https://www.googleapis.com/auth/meetings.space.created';
+  async function linkMeet() {
+    let email = ''; try { const { data } = await sb.auth.getSession(); email = (data.session && data.session.user.email) || ''; } catch (_) {}
+    const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: BASE + 'meet-link.html', scopes: MEET_SCOPE,
+      queryParams: { access_type: 'offline', prompt: 'consent', hd: C.SCHOOL_DOMAIN, login_hint: email } } });
     if (error) toast(errMsg(error), 'err');
   }
 
@@ -490,7 +499,7 @@
   const norm = (t) => String(t ?? '').normalize('NFC').replace(/[\u064B-\u0652\u0670\u0640]/g, '')
     .replace(/[أإآٱ]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه').toLowerCase().replace(/\s+/g, ' ').trim();
   const has = (text, q) => norm(text).includes(norm(q));
-  window.LMS = { sb, C, configured, ROLE_LABELS, esc, $, $$, toast, modal, confirmBox, errMsg, norm, has,
+  window.LMS = { sb, C, configured, ROLE_LABELS, esc, $, $$, toast, modal, confirmBox, errMsg, norm, has, linkMeet,
                  fetchAll, signInWithGoogle, signOut, getContext, cached, clearCache, requireAuth, downloadCSV, rememberNext, takeNext,
                  getView, setView, canSwitch, applyView, mountTopbar, BASE, hijri, dateLine, printHTML, printTable, exportTable, tableRows, ymd, cal, clsText, isGroupCls, DEMO };
 })();

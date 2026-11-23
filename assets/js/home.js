@@ -159,6 +159,22 @@
     if (role === 'parent' || (ctx.children || []).length) await parentPanel();
   } catch (e) { toast(errMsg(e), 'err'); }
   noClassAlert();
+  meetCard();
+
+  // ---------- روابط Google Meet التلقائية للحصص الأونلاين (sql/47) ----------
+  async function meetCard() {
+    if (['student', 'parent'].includes(role) || LMS.DEMO) return;
+    const { data, error } = await sb.rpc('gm_status');
+    if (error || !data) return;
+    if (!data.linked && role !== 'teacher') return;
+    const up = (data.upcoming || []).length;
+    panel.insertAdjacentHTML('beforeend', `<div class="card glass" style="display:flex;gap:12px;align-items:center;margin:14px 0;padding:12px 14px">
+      <span style="font-size:1.8rem">🎥</span><div style="flex:1"><b>روابط Google Meet لحصصك الأونلاين</b><br>
+      <small class="hint">${data.linked ? (data.error ? `<span style="color:#a3244a">تعذّر إنشاء الروابط آخر مرة — أعد الربط</span>` : `✓ حسابك مربوط${up ? ` — ${up} رابط جاهز لحصصك القادمة` : ' — تُنشأ الروابط تلقائيًا قبل كل يوم دراسي أونلاين'}`)
+        : 'اربط حسابك مرة واحدة لتُنشئ المنصة رابط Meet مستقلًا لكل حصة أونلاين لك، ويظهر لطلابك تلقائيًا.'}</small></div>
+      <button class="btn sm ${data.linked && !data.error ? 'ghost' : 'primary'}" id="gmLink">${data.linked ? (data.error ? 'إعادة الربط' : 'إعادة الربط') : '🔗 ربط حسابي'}</button></div>`);
+    $('#gmLink').onclick = () => LMS.linkMeet();
+  }
 
   // ---------- تنبيه: طلاب بدون فصل (لمن يرى دليل الطلاب) ----------
   async function noClassAlert() {
@@ -197,6 +213,22 @@
       html += `<div class="notice warn" style="margin-top:14px">تنبيه: ${st.students_no_email ? `${st.students_no_email} طالب بدون بريد مدرسي. ` : ''}${st.no_email ? `${st.no_email} موظف بدون بريد.` : ''}</div>`;
     }
     panel.insertAdjacentHTML('beforeend', html);
+    meetAdmin();
+  }
+  async function meetAdmin() {
+    if (LMS.DEMO) return;
+    const { data, error } = await sb.rpc('gm_admin'); if (error || !data) return;
+    const bad = (data.linked || []).filter((x) => x.error).length;
+    panel.insertAdjacentHTML('beforeend', `<div class="card glass" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:14px 0;padding:12px 14px">
+      <span style="font-size:1.6rem">🎥</span><div style="flex:1;min-width:220px"><b>روابط Google Meet التلقائية</b><br><small class="hint">${data.linked.length} معلم ربط حسابه${bad ? ` (<span style="color:#a3244a">${bad} بحاجة لإعادة الربط</span>)` : ''} · روابط اليوم: <b>${data.today}</b> · الغد: <b>${data.tomorrow}</b></small></div>
+      <button class="btn sm" id="gmGen">⚡ إنشاء الروابط الآن</button><span class="hint" id="gmRes"></span></div>`);
+    $('#gmGen').onclick = async () => {
+      const b = $('#gmGen'); b.disabled = true; $('#gmRes').textContent = 'جارٍ الإنشاء…';
+      try { const { data: s } = await sb.auth.getSession();
+        const r = await fetch(C.SUPABASE_URL + '/functions/v1/online', { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: C.SUPABASE_ANON_KEY, Authorization: 'Bearer ' + s.session.access_token }, body: JSON.stringify({ action: 'meetGen' }) }).then((x) => x.json());
+        $('#gmRes').innerHTML = r.ok ? `أُنشئ ${r.created} رابط من ${r.todo ?? r.planned} حصة${r.noLink ? ` · ${r.noLink} حصة لمعلمين لم يربطوا` : ''}${r.noMatch ? ` · ${r.noMatch} حصة لأسماء غير معروفة` : ''}`
+          : `<span style="color:#a3244a">${r.error === 'google_secrets' ? 'بقي إدخال مفاتيح جوجل في إعدادات الخادم' : esc(r.error || 'خطأ')}</span>`;
+      } catch (e) { $('#gmRes').textContent = errMsg(e); } finally { b.disabled = false; } };
   }
 
   // ---------- الموظفون: فصولي + الفصول ضمن النطاق ----------

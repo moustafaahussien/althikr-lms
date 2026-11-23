@@ -10,10 +10,10 @@
 <meta name="theme-color" content="#007B51">
   <link rel="manifest" href="../supervision/manifest.json?v=2">
 <script src="../assets/vendor/supabase-js-2.119.2.js"></script>
-<script src="../assets/js/config.js?v=202611231530"></script>
+<script src="../assets/js/config.js?v=202611231620"></script>
 <script>window.LMS_NO_ENHANCE = true;</script>
 <script src="../assets/js/academic-calendar.js?v=202611231330"></script>
-<script src="../assets/js/core.js?v=202611231530"></script>
+<script src="../assets/js/core.js?v=202611231620"></script>
 <link rel="stylesheet" href="../assets/css/topbar.css?v=202611231330">
 <meta name="description" content="روابط الفصول الافتراضية وجداول الحصص لجميع صفوف مدارس دار الذكر">
 <link rel="stylesheet" href="../assets/css/brand.css?v=202611231330">
@@ -1141,6 +1141,7 @@ async function refresh(){
     } else if (res && res.ok){
       FALLBACK = false;
       applyResponse(res); LOAD_STATE = "ok"; LAST_LOAD = new Date(); LOGIN_ERR = "";
+      loadAutoLinks();
       LS.set("ol-cache", JSON.stringify({ code:CODE, at:LAST_LOAD.getTime(), res }));
       flushJoins();
     } else if (res && res.error === "invalid"){
@@ -1196,6 +1197,21 @@ async function tryFallback(){
   }catch(e){ console.error("[fallback]", e); return false; }
 }
 
+/* روابط Google Meet التلقائية لكل حصة (sql/47): الصف|الفصل + التاريخ + رقم الحصة ← الرابط */
+let AUTO = new Map();
+async function loadAutoLinks(){
+  if (!SB || isDemo()) return;
+  try{
+    const d0 = new Date(Date.now() - 864e5), d1 = new Date(Date.now() + 8 * 864e5);
+    const f = (d) => d.toLocaleDateString("en-CA", { timeZone:"Asia/Riyadh" });
+    const { data, error } = await SB.rpc("olm_links", { p_from:f(d0), p_to:f(d1) });
+    if (error || !Array.isArray(data)) return;
+    const m = new Map(data.map(x => [x.d + "|" + x.r + "|" + x.p, x.u]));
+    const changed = m.size !== AUTO.size || [...m].some(([k, v]) => AUTO.get(k) !== v);
+    AUTO = m; if (changed && typeof renderAll === "function") renderAll();
+  }catch(e){ console.warn("[auto links]", e); }
+}
+const autoLink = (ds, key, p) => AUTO.get(ds + "|" + key + "|" + p) || "";
 function applyResponse(res){
   buildData(res);
   // أي رد ناجح من الخادم معناه أن النظام يعمل — إلا لمدير النظام فيصله وضع الإيقاف الحقيقي
@@ -1282,14 +1298,14 @@ function timetable(group, ds){
   let rows;
   if (group.dated[ds]){
     // حصص مُدخلة لهذا التاريخ: تحل محل الجدول الأسبوعي (ولكل حصة رابطها إن وُجد)
-    rows = group.dated[ds].map(p => ({ kind:"p", p:p.p, subject:p.subject, teacher:p.teacher, link:p.link,
+    rows = group.dated[ds].map(p => ({ kind:"p", p:p.p, subject:p.subject, teacher:p.teacher, link:p.link || autoLink(ds, group.key, p.p),
       start: p.start ?? tmap.get(p.p)?.start ?? null, end: p.end ?? tmap.get(p.p)?.end ?? null }));
   } else {
     const wd = dateOf(ds).getDay();
     if (wd > 4) return [];
     const per = group.periods.filter(p => p.day === "all" || p.day === wd);
     const byP = new Map(); per.forEach(p => { if (!byP.has(p.p) || p.day !== "all") byP.set(p.p, p); });
-    rows = [...byP.values()].map(p => ({ kind:"p", p:p.p, subject:p.subject, teacher:p.teacher, start:tmap.get(p.p)?.start ?? null, end:tmap.get(p.p)?.end ?? null }));
+    rows = [...byP.values()].map(p => ({ kind:"p", p:p.p, subject:p.subject, teacher:p.teacher, link:autoLink(ds, group.key, p.p) || undefined, start:tmap.get(p.p)?.start ?? null, end:tmap.get(p.p)?.end ?? null }));
   }
   // الفسحة تظهر في جدول الفصل الكامل فقط، لا في عرض مشرف المادة (حصص مادته فقط)
   if (rows.length && !partialMode()) T.filter(x => x.p === "break").forEach(b => rows.push({ kind:"b", label:b.label, start:b.start, end:b.end }));

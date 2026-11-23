@@ -160,6 +160,28 @@ Deno.serve(async (req) => {
       return json({ ok: true });
     });
 
+    // ---- رابط Meet تجريبي لصاحب الجلسة (للتأكد من أن الربط يعمل) ----
+    if (act === "meetTest") {
+      const m = await whoAmI(req);
+      if (!m || m.bad || !m.known) return json({ ok: false, error: "forbidden" }, 403);
+      const CID = Deno.env.get("GOOGLE_CLIENT_ID"), CSEC = Deno.env.get("GOOGLE_CLIENT_SECRET");
+      if (!CID || !CSEC) return json({ ok: false, error: "google_secrets" });
+      const { data: t } = await SB.from("gm_tokens").select("profile_id,refresh_token").eq("email", m.email).maybeSingle();
+      if (!t) return json({ ok: false, error: "not_linked" });
+      const tr = await fetch("https://oauth2.googleapis.com/token", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ client_id: CID, client_secret: CSEC, refresh_token: t.refresh_token, grant_type: "refresh_token" }) });
+      const tj = await tr.json().catch(() => ({}));
+      if (!tr.ok || !tj.access_token) { const msg = "token: " + (tj.error_description || tj.error || tr.status);
+        await SB.from("gm_tokens").update({ last_error: msg.slice(0, 300) }).eq("profile_id", t.profile_id); return json({ ok: false, error: msg }); }
+      const r = await fetch("https://meet.googleapis.com/v2/spaces", { method: "POST", headers: { Authorization: "Bearer " + tj.access_token, "Content-Type": "application/json" },
+        body: JSON.stringify({ config: { accessType: "TRUSTED", entryPointAccess: "ALL" } }) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.meetingUri) { const msg = "meet: " + ((j.error && j.error.message) || r.status);
+        await SB.from("gm_tokens").update({ last_error: msg.slice(0, 300) }).eq("profile_id", t.profile_id); return json({ ok: false, error: msg }); }
+      await SB.from("gm_tokens").update({ last_ok: new Date().toISOString(), last_error: null }).eq("profile_id", t.profile_id);
+      return json({ ok: true, uri: j.meetingUri });
+    }
+
     // ---- روابط Meet التلقائية: الجدولة (بالمفتاح السري) أو مدير النظام/الإدارة العليا بجلستهم ----
     if (act === "meetGen") {
       const prep = await withLock(async () => {

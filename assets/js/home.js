@@ -166,14 +166,23 @@
     if (['student', 'parent'].includes(role) || LMS.DEMO) return;
     const { data, error } = await sb.rpc('gm_status');
     if (error || !data) return;
-    if (!data.linked && role !== 'teacher') return;
+    // يظهر لكل الموظفين: المعلم لربط حسابه، والإداري للتجربة أو إن كان يقدّم حصصًا
     const up = (data.upcoming || []).length;
     panel.insertAdjacentHTML('beforeend', `<div class="card glass" style="display:flex;gap:12px;align-items:center;margin:14px 0;padding:12px 14px">
       <span style="font-size:1.8rem">🎥</span><div style="flex:1"><b>روابط Google Meet لحصصك الأونلاين</b><br>
       <small class="hint">${data.linked ? (data.error ? `<span style="color:#a3244a">تعذّر إنشاء الروابط آخر مرة — أعد الربط</span>` : `✓ حسابك مربوط${up ? ` — ${up} رابط جاهز لحصصك القادمة` : ' — تُنشأ الروابط تلقائيًا قبل كل يوم دراسي أونلاين'}`)
         : 'اربط حسابك مرة واحدة لتُنشئ المنصة رابط Meet مستقلًا لكل حصة أونلاين لك، ويظهر لطلابك تلقائيًا.'}</small></div>
-      <button class="btn sm ${data.linked && !data.error ? 'ghost' : 'primary'}" id="gmLink">${data.linked ? (data.error ? 'إعادة الربط' : 'إعادة الربط') : '🔗 ربط حسابي'}</button></div>`);
+      ${data.linked ? '<button class="btn sm primary" id="gmTest">🧪 رابط تجريبي</button>' : ''}
+      <button class="btn sm ${data.linked && !data.error ? 'ghost' : 'primary'}" id="gmLink">${data.linked ? 'إعادة الربط' : '🔗 ربط حسابي'}</button></div>`);
     $('#gmLink').onclick = () => LMS.linkMeet();
+    if (data.linked) $('#gmTest').onclick = async () => {
+      const b = $('#gmTest'); b.disabled = true; b.textContent = 'جارٍ الإنشاء…';
+      const w = window.open('', '_blank');   // تُفتح قبل الانتظار حتى لا يحجبها المتصفح
+      try { const { data: s } = await sb.auth.getSession();
+        const r = await fetch(C.SUPABASE_URL + '/functions/v1/online', { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: C.SUPABASE_ANON_KEY, Authorization: 'Bearer ' + s.session.access_token }, body: JSON.stringify({ action: 'meetTest' }) }).then((x) => x.json());
+        if (r.ok) { if (w) w.location = r.uri; else location.href = r.uri; toast('✓ الربط يعمل — أُنشئ رابط: ' + r.uri, 'ok'); }
+        else { if (w) w.close(); toast(r.error === 'google_secrets' ? 'بقي إدخال مفاتيح جوجل في إعدادات الخادم' : r.error === 'not_linked' ? 'حسابك غير مربوط — اضغط «ربط حسابي»' : 'تعذّر الإنشاء: ' + r.error, 'err'); }
+      } catch (e) { if (w) w.close(); toast(errMsg(e), 'err'); } finally { b.disabled = false; b.textContent = '🧪 رابط تجريبي'; } };
   }
 
   // ---------- تنبيه: طلاب بدون فصل (لمن يرى دليل الطلاب) ----------

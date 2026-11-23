@@ -38,7 +38,8 @@
   // ---------------- الحقول لكل مستلم ----------------
   const fmt = (d) => DCert.fmtDate(d, S.ltr);
   function varsOf(r) {
-    const v = Object.assign({ 'المدرسة': DEF.school, 'التاريخ': fmt(S.date), 'اللقب': r.rtype === 'student' ? S.lqStudent : r.rtype === 'staff' ? S.lqStaff : '',
+    const blank = {}; R.forEach((x) => Object.keys(x.vars || {}).forEach((k) => { blank[k] = ''; }));   // حقل موجود لبعض الأسماء فقط ← فارغ للباقين
+    const v = Object.assign(blank, { 'المدرسة': DEF.school, 'التاريخ': fmt(S.date), 'اللقب': r.rtype === 'student' ? S.lqStudent : r.rtype === 'staff' ? S.lqStaff : '',
       'الصف': '', 'الفصل': '', 'المرحلة': '', 'الوظيفة': '' }, r.vars || {});
     return v;
   }

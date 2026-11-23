@@ -644,6 +644,8 @@ function escL(s){ return esc(s).replace(/(\d+\s*-\s*[^\s)،]+)/g,"\u2066$1\u2069
 function esc(s){ return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 function ymd(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
 function parseYmd(s){ const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d); }
+/* التقويم الدراسي (academic-calendar.js): الإجازة التي يقع فيها اليوم */
+function calHol(ds){ return ((window.ACAD&&window.ACAD.hol)||[]).find(h=>ds>=h.f && ds<=h.to)||null; }
 function fmtDate(d){ try{ return d.toLocaleDateString(LOC(),{weekday:"long",day:"numeric",month:"long"}); }catch(e){ return DAYS[d.getDay()]+" "+ymd(d); } }
 function nowMin(){ const n=new Date(); return n.getHours()*60+n.getMinutes()+n.getSeconds()/60; }
 function toast(msg){ const t=document.getElementById("toast"); t.textContent=msg; t.style.display="block"; clearTimeout(toast._t); toast._t=setTimeout(()=>t.style.display="none",3000); }
@@ -692,6 +694,10 @@ function renderDay(){
   const list=document.getElementById("dayList"), hero=document.getElementById("hero");
   if(!ENTRIES.length){ hero.innerHTML=""; list.innerHTML=`<div class="card empty" style="line-height:2">لم يُرفع جدول حصصك بعد.<br>جدول الحصص يرفعه مدير المرحلة من <b>«إعدادات المدرسة»</b> في منصة دار الذكر التعليمية.</div>`; return; }
   if(day>4){ hero.innerHTML=""; list.innerHTML=`<div class="card empty">${DAYS[day]} إجازة، لا توجد حصص. اختر يومًا آخر.</div>`; return; }
+  const H=calHol(ymd(d));
+  if(H){ hero.innerHTML=""; list.innerHTML=`<div class="card empty" style="line-height:2">🏖️ <b>${esc(window.LANG==="en"?H.en:H.ar)}</b> حسب التقويم الدراسي — لا توجد حصص.<br>
+      <button type="button" class="btn" id="goBack">عرض حصص يوم العودة (${esc(fmtDate(parseYmd(H.back)))})</button></div>`;
+    document.getElementById("goBack").onclick=()=>{ viewDate=parseYmd(H.back); renderDay(); }; return; }
   const items=filtered(day);
   const showFree=document.getElementById("fFree").checked, hidePast=document.getElementById("fHidePast").checked;
   // تجميع حسب (الحصة + التوقيت). نعرض حسب رقم الحصة، ولكل جدول توقيته
@@ -781,8 +787,8 @@ function nextOccurrence(r, from=new Date()){
   if(r.mode==="once"){ const d=parseYmd(r.date); d.setMinutes(sm); return d; }
   const start=parseYmd(r.from); const base=new Date(from); base.setHours(0,0,0,0);
   let d = base<start? new Date(start): base;
-  for(let i=0;i<14;i++){ const dd=new Date(d); dd.setDate(d.getDate()+i); dd.setMinutes(sm);
-    if(dd.getDay()===e.day && dd.getTime()>=from.getTime()-60000 && ymd(dd)>=r.from && (!r.until||ymd(dd)<=r.until)) return dd; }
+  for(let i=0;i<70;i++){ const dd=new Date(d); dd.setDate(d.getDate()+i); dd.setMinutes(sm);
+    if(dd.getDay()===e.day && !calHol(ymd(dd)) && dd.getTime()>=from.getTime()-60000 && ymd(dd)>=r.from && (!r.until||ymd(dd)<=r.until)) return dd; }
   return null;
 }
 
@@ -847,7 +853,7 @@ function buildPushQueue(){
     const t=periodTime(e); const sm=toMin(t.s); if(sm==null) return;
     const dates=[];
     if(r.mode==="once") dates.push(parseYmd(r.date));
-    else { const d0=new Date(); d0.setHours(0,0,0,0); for(let i=0;i<42;i++){ const d=new Date(d0); d.setDate(d0.getDate()+i); const ds=ymd(d); if(d.getDay()===e.day && ds>=r.from && (!r.until||ds<=r.until)) dates.push(d); } }
+    else { const d0=new Date(); d0.setHours(0,0,0,0); for(let i=0;i<42;i++){ const d=new Date(d0); d.setDate(d0.getDate()+i); const ds=ymd(d); if(d.getDay()===e.day && !calHol(ds) && ds>=r.from && (!r.until||ds<=r.until)) dates.push(d); } }
     dates.forEach(d=>{ const at=new Date(d); at.setHours(0,sm-(r.lead||5),0,0); const ms=at.getTime(); if(ms<now-60000||ms>horizon) return;
       out.push({id:r.id+"@"+ymd(d), at:ms, title:TR(`🔔 بعد ${r.lead||5} دقائق: حصة ${e.teacher}`), body:TR(`${subjectOf(e)} · ${clsLabel(e)} · الحصة ${e.period} (${t.s})`)+(r.note?" · "+r.note:""), date:ymd(d)}); });
   });

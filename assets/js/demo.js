@@ -1120,6 +1120,57 @@
           teachers: DB.teaching_assignments.filter((t) => t.class_id === p_class).map((t) => ({ name: name(t.teacher_id), subject: sname(t.subject_id) })),
           students: stuIn([p_class]).sort((a, b) => name(a.profile_id).localeCompare(name(b.profile_id), 'ar')).map((s) => ({ id: s.profile_id, name: name(s.profile_id), no: s.student_number, guardian: s.guardian_name, phone: s.guardian_phone,
             absent: cnt(s.profile_id, 'absent'), late: cnt(s.profile_id, 'late'), pf: M().pf.filter((i) => i.student_id === s.profile_id && i.status === 'approved').length })) }; }
+      ,
+      // ===== دليل الطلاب (sql/44) — للإداريين فقط =====
+      sd_list({ p_q, p_stage, p_grade, p_class, p_flag, p_limit, p_offset }) {
+        const R = MYROLE(); if (!['admin', 'leadership', 'principal', 'staff'].includes(R)) deny('دليل الطلاب للإداريين فقط');
+        const stg = R === 'principal' ? [myStage()] : DB.stages.map((x) => x.id);
+        const f = ymd(daysAgo(30)), daily = DB.att_sessions.filter((x) => x.period === 0 && x.day >= f).map((x) => x.id);
+        const ab30 = (sid) => DB.att_marks.filter((m) => m.student_id === sid && m.status === 'absent' && daily.includes(m.session_id)).length;
+        const q = String(p_q || '').trim();
+        const all = DB.students.filter((x) => stg.includes(grade(x.grade_id).stage_id));
+        const L = all.filter((x) => (!p_stage || grade(x.grade_id).stage_id === p_stage) && (!p_grade || x.grade_id === p_grade) && (!p_class || x.class_id === p_class)
+            && (!q || name(x.profile_id).includes(q) || x.student_number === q)
+            && (!p_flag || (p_flag === 'noclass' && !x.class_id) || (p_flag === 'inactive' && P(x.profile_id).active === false) || (p_flag === 'noguardian' && !x.guardian_phone) || (p_flag === 'absent' && ab30(x.profile_id) >= 3)))
+          .sort((a, b) => name(a.profile_id).localeCompare(name(b.profile_id), 'ar'));
+        const off = p_offset || 0, lim = Math.min(p_limit || 60, 200);
+        return { total: L.length, rows: L.slice(off, off + lim).map((x) => { const g = grade(x.grade_id); return { id: x.profile_id, name: name(x.profile_id), number: x.student_number, active: P(x.profile_id).active !== false,
+            stage: stage(g.stage_id).name_ar, grade: g.name_ar, class: x.class_id ? klass(x.class_id).name : null, class_id: x.class_id, absent30: ab30(x.profile_id) }; }),
+          filters: { stages: DB.stages.filter((x) => stg.includes(x.id)).map((x) => ({ id: x.id, name: x.name_ar })),
+            grades: DB.grades.filter((g) => stg.includes(g.stage_id) && all.some((x) => x.grade_id === g.id)).map((g) => ({ id: g.id, stage: g.stage_id, name: g.name_ar })),
+            classes: DB.classes.filter((c) => stg.includes(grade(c.grade_id).stage_id)).map((c) => ({ id: c.id, grade: c.grade_id, name: c.name })) },
+          summary: { all: all.length, noclass: all.filter((x) => !x.class_id).length }, can_private: true };
+      },
+      sd_get({ p_id }) {
+        const R = MYROLE(); if (!['admin', 'leadership', 'principal', 'staff'].includes(R)) deny('دليل الطلاب للإداريين فقط');
+        const s = DB.students.find((x) => x.profile_id === p_id); if (!s) deny('غير موجود');
+        const g = grade(s.grade_id); if (R === 'principal' && g.stage_id !== myStage()) deny('دليل الطلاب للإداريين فقط');
+        const cid = s.class_id, c = cid ? klass(cid) : null, yf = ymd(daysAgo(90)), pr = P(p_id), sp = (DB.student_private || []).find((x) => x.profile_id === p_id);
+        const marks = DB.att_marks.filter((m) => m.student_id === p_id).map((m) => ({ m, a: DB.att_sessions.find((x) => x.id === m.session_id) })).filter((x) => x.a && x.a.day >= yf);
+        const cnt = (st, daily) => marks.filter((x) => x.m.status === st && (daily ? x.a.period === 0 : x.a.period > 0)).length;
+        const hw = M().hw.filter((h) => (h.class_ids || []).includes(cid)), sub = (h) => M().hs.find((x) => x.hw_id === h.id && x.student_id === p_id);
+        const sibs = DB.students.filter((x) => x.profile_id !== p_id && x.guardian_phone && x.guardian_phone === s.guardian_phone);
+        return {
+          info: { id: p_id, name: name(p_id), email: pr.email, active: pr.active !== false, number: s.student_number, stage: stage(g.stage_id).name_ar, grade: g.name_ar, grade_id: g.id,
+            class: c ? c.name : null, class_id: cid, track: s.track, notes: s.notes, guardian_name: s.guardian_name, guardian_phone: s.guardian_phone,
+            homeroom: c && c.homeroom_teacher_id ? name(c.homeroom_teacher_id) : null },
+          private: sp ? { national_id: sp.national_id, nationality: sp.nationality, dob: sp.date_of_birth, parent_email: sp.parent_email } : null,
+          guardians: DB.pp.children.includes(p_id) ? DB.pp.guardians.map((x) => ({ name: x.name, phone: '966' + x.phone.slice(1), kind: 'pin', active: x.has_pin, last_login: iso(daysAgo(2)) })) : [],
+          siblings: sibs.map((x) => ({ id: x.profile_id, name: name(x.profile_id), class: x.class_id ? lbl(x.class_id) : null })),
+          teachers: DB.teaching_assignments.filter((t) => t.class_id === cid).map((t) => ({ teacher: name(t.teacher_id), subject: sname(t.subject_id) })),
+          attendance: { from: yf, days_taken: new Set(DB.att_sessions.filter((x) => x.grade_id === s.grade_id && x.period === 0 && x.day >= yf && (!x.class_id || x.class_id === cid)).map((x) => x.day)).size,
+            absent: cnt('absent', true), late: cnt('late', true), excused: cnt('excused', true), period_absent: cnt('absent', false),
+            marks: marks.sort((a, b) => (a.a.day < b.a.day ? 1 : -1)).map((x) => ({ d: x.a.day, p: x.a.period, s: x.m.status, n: x.m.note || null })) },
+          grades: cid ? [...new Set(DB.teaching_assignments.filter((t) => t.class_id === cid).map((t) => t.subject_id))].map((sid) => { const cols = gbCols(cid, sid).filter((x) => !x.hidden), sc = gbScores(cid, sid, p_id);
+              return { subject: sname(sid), pct: gbPct(cols, sc), columns: cols.map((x) => ({ key: x.key, title: x.title, max: x.max })), scores: sc }; }).filter((x) => x.columns.length) : [],
+          homework: { assigned: hw.length, submitted: hw.filter(sub).length, late: hw.filter((h) => (sub(h) || {}).late).length, missing: hw.filter((h) => !sub(h) && new Date(h.due_at) < now()).length,
+            items: hw.map((h) => { const x = sub(h); return { title: h.title, subject: sname(h.subject_id), due: h.due_at, max: h.max_score, status: x ? (x.status || 'submitted') : (new Date(h.due_at) < now() ? 'missing' : 'open'), score: x ? x.score : null, late: x ? x.late : false }; }) },
+          exams: M().ex.filter((e) => (e.class_ids || []).includes(cid)).map((e) => { const a = M().ea.find((x) => x.exam_id === e.id && x.student_id === p_id);
+            return { title: e.title, subject: sname(e.subject_id), opens: e.opens_at, score: a ? a.score : null, max: a ? a.max_score : null, review: a ? a.needs_review : false,
+              status: !a ? (new Date(e.closes_at) < now() ? 'missed' : 'open') : (a.submitted_at ? 'done' : 'started') }; }),
+          portfolio: M().pf.filter((i) => i.student_id === p_id).map((i) => ({ title: i.title, kind: i.kind, date: i.item_date, level: i.level, result: i.result, status: i.status })),
+          complaints: [], can_private: true };
+      }
     };
   })());
 

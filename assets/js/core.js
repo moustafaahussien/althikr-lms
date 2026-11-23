@@ -9,7 +9,7 @@
   /* الوضع التجريبي (ديمو): مدرسة افتراضية داخل المتصفح بدل قاعدة البيانات الحقيقية — assets/js/demo.js
      يُحمَّل مباشرة بعد هذا الملف (قبل سكربت الصفحة)، ولا يُنشأ اتصال حقيقي إطلاقًا أثناء التجربة */
   const DEMO = (() => { try { return sessionStorage.getItem('lms_demo') || ''; } catch (_) { return ''; } })();
-  if (DEMO && !window.LMS_DEMO) document.write('<script src="' + BASE + 'assets/js/demo.js?v=202611231330"><\/script>');
+  if (DEMO && !window.LMS_DEMO) document.write('<script src="' + BASE + 'assets/js/demo.js?v=202611231420"><\/script>');
   const sb = DEMO
     ? new Proxy({}, { get: (_, k) => (window.LMS_DEMO ? window.LMS_DEMO.client[k] : undefined) })
     : configured

@@ -39,7 +39,7 @@
     view.innerHTML = `<div class="toolbar glass" style="padding:10px"><input id="cq" class="grow" type="search" placeholder="ابحث بالمادة أو الفصل أو المعلم…"></div>
       ${mine.length ? `<h3 class="sec-h">سجلاتي</h3><div class="crs">${mine.map(card).join('')}</div>` : ''}
       ${other.length ? `<h3 class="sec-h">سجلات للمتابعة (${other.length})</h3><div class="crs">${other.map(card).join('')}</div>` : ''}`;
-    $('#cq').oninput = (e) => { const q = e.target.value.trim(); $$('.crs button', view).forEach((b) => { b.hidden = !!q && !b.innerText.includes(q); }); };
+    $('#cq').oninput = (e) => { const q = e.target.value.trim(); $$('.crs button', view).forEach((b) => { b.hidden = !!q && !LMS.has(b.innerText, q); }); };
     view.onclick = (e) => { const b = e.target.closest('[data-c]'); if (b) location.hash = 'c=' + b.dataset.c; };
   }
 

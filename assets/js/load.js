@@ -40,7 +40,7 @@
     const q = $('#q').value.trim(), st = $('#stg').value, su = $('#sub').value, sp = $('#sup').value;
     return ALL.filter((r) => (!st || r.stages.split('، ').includes(st)) && (!su || r.subjects.split('، ').includes(su))
       && (!sp || r.sup.split('، ').includes(sp))
-      && (!q || [r.name, r.subjects, r.title, r.list.map((c) => c.label).join(' ')].join(' ').includes(q)))
+      && (!q || LMS.has([r.name, r.subjects, r.title, r.list.map((c) => c.label).join(' ')].join(' '), q)))
       .sort((a, b) => b.periods - a.periods || a.name.localeCompare(b.name, 'ar'));
   }
   function render() {

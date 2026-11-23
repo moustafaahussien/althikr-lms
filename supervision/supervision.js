@@ -234,7 +234,7 @@ function filtered(day){
     && (fsub===""||subjectOf(e)===fsub)
     && (fst===""||e.kind!=="class"||stageFilterOf(e)===fst)
     && (ft===""||e.teacher===ft)
-    && (!q || (e.teacher||e.text||"").includes(q) || (e.cls||"").includes(q) || clsLabel(e).includes(q) || subjectOf(e).includes(q) || (LANG==="en" && (TR(clsLabel(e))+" "+TR(subjectOf(e))).toLowerCase().includes(q.toLowerCase()))));
+    && (!q || LMS.has((e.teacher||e.text||""), q) || LMS.has((e.cls||""), q) || LMS.has(clsLabel(e), q) || LMS.has(subjectOf(e), q) || (LANG==="en" && (TR(clsLabel(e))+" "+TR(subjectOf(e))).toLowerCase().includes(q.toLowerCase()))));
 }
 
 function fillFilters(){
@@ -951,7 +951,7 @@ function schRows(day){
     const k=(e.cls||"")+"|"+(e.subject||""); const c=t.cells[e.period]=t.cells[e.period]||{}; c[k]={cls:clsShort(e),lbl:clsShort(e),subj:e.subject,room:e.room}; t.any=true; });
   let rows=Object.values(T);
   if(stg) rows=rows.filter(t=>t.stages.has(stg));
-  if(q) rows=rows.filter(t=>(t.teacher+" "+[...t.subjects].join(" ")+" "+[...t.sups].join(" ")).toLowerCase().includes(q) || Object.values(t.cells).some(c=>Object.values(c).some(x=>(x.cls+" "+x.subj).toLowerCase().includes(q))));
+  if(q) rows=rows.filter(t=>LMS.has((t.teacher+" "+[...t.subjects].join(" ")+" "+[...t.sups].join(" ")), q) || Object.values(t.cells).some(c=>Object.values(c).some(x=>LMS.has((x.cls+" "+x.subj), q))));
   const so=t=>{ const a=[...t.stages].map(x=>STAGE_FILTER_ORDER.indexOf(x)).filter(x=>x>=0); return a.length?Math.min(...a):99; };
   return rows.sort((a,b)=>so(a)-so(b)||a.teacher.localeCompare(b.teacher,"ar"));
 }
@@ -1692,7 +1692,7 @@ function renderEvals(){
   const box=document.getElementById("evListBox"); if(!box) return;
   if(evRenumber()) savePrefs();
   const q=(document.getElementById("evQ").value||"").trim(), from=document.getElementById("evFrom").value, to=document.getElementById("evTo").value;
-  const L=evList().filter(x=>(!q||(x.teacher+" "+x.subj+" "+x.cls).includes(q)) && (!from||x.date>=from) && (!to||x.date<=to)).sort((a,b)=>b.date.localeCompare(a.date)||b.updated-a.updated);
+  const L=evList().filter(x=>(!q||LMS.has((x.teacher+" "+x.subj+" "+x.cls), q)) && (!from||x.date>=from) && (!to||x.date<=to)).sort((a,b)=>b.date.localeCompare(a.date)||b.updated-a.updated);
   const done=L.filter(evComplete), doneStd=done.filter(x=>!isDasc(x)), doneD=done.filter(isDasc);
   const avg=doneStd.length?doneStd.reduce((a,x)=>a+evTotal(x),0)/doneStd.length:0, avgD=doneD.length?doneD.reduce((a,x)=>a+evAvg(x),0)/doneD.length:0;
   const grp={}; done.forEach(x=>{ const k=x.teacher+"|"+(isDasc(x)?"dasc":"std"); (grp[k]=grp[k]||[]).push(x); });

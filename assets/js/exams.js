@@ -73,7 +73,7 @@
     if (!BANK_SUBJ) { $('#bList').innerHTML = '<div class="empty">لا توجد مواد مسندة إليك.</div>'; return; }
     let L; try { L = await call('qb_list', { p_subject: BANK_SUBJ }); } catch (e) { $('#bList').innerHTML = `<div class="notice err">${esc(errMsg(e))}</div>`; return; }
     const paint = () => { const q = $('#bQ').value.trim(), t = $('#bT').value;
-      const F = L.filter((x) => (!t || x.qtype === t) && (!q || (x.body + ' ' + (x.topic || '')).includes(q)));
+      const F = L.filter((x) => (!t || x.qtype === t) && (!q || LMS.has((x.body + ' ' + (x.topic || '')), q)));
       const mine = F.filter((x) => x.mine), others = F.filter((x) => !x.mine);
       const row = (x) => qHTML(x, `${x.used ? `<span class="chip gray" title="عدد الاختبارات التي استخدمته">في ${x.used} اختبار</span>` : ''}
         ${x.mine ? `<button class="btn sm ghost" data-ed="${x.id}" title="تعديل">✏️</button><button class="btn sm ghost" data-del="${x.id}" title="حذف">🗑️</button>` : ''}`);
@@ -377,7 +377,7 @@
       <h3 class="sec-h">كل الاختبارات</h3><div class="table-wrap"><table id="aT"><thead><tr><th>المعلم</th><th>العنوان</th><th>المادة</th><th>الفصول</th><th>الموعد</th><th>الحالة</th><th>سلّم</th><th>المتوسط</th><th></th></tr></thead><tbody>
       ${L.map((x) => `<tr><td>${esc(x.teacher)}</td><td>${esc(x.title)}</td><td>${esc(x.subject || '')}</td><td>${esc(x.classes.map(short).join('، '))}</td><td>${esc(fmt(x.opens_at))}</td>
         <td>${chip(x.state, STATE[x.state])}</td><td>${x.submitted} / ${x.students}</td><td>${x.avg != null ? x.avg + '%' : '—'}</td><td><button class="btn sm" data-ex="${x.id}">فتح</button></td></tr>`).join('')}</tbody></table></div>`;
-    $('#aQ').oninput = (e) => { const q = e.target.value.trim(); $$('#aT tbody tr').forEach((tr) => { tr.hidden = !!q && !tr.innerText.includes(q); }); };
+    $('#aQ').oninput = (e) => { const q = e.target.value.trim(); $$('#aT tbody tr').forEach((tr) => { tr.hidden = !!q && !LMS.has(tr.innerText, q); }); };
     pane.onclick = (e) => { const c = e.target.closest('[data-ex]'); if (c) teacherView(+c.dataset.ex); };
   }
 

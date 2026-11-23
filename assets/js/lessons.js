@@ -114,7 +114,7 @@
     let L; try { L = await call('lp_list', { p_box: 'all', p_from: FLT.from || null, p_to: FLT.to || null, p_status: FLT.status || null }); }
     catch (e) { $('#allList').innerHTML = `<div class="notice err">${esc(errMsg(e))}</div>`; return; }
     const paint = () => {
-      const q = ($('#fQ').value || '').trim(); const R = L.filter((x) => !q || [x.teacher, x.subject, x.title, ...x.classes].join(' ').includes(q));
+      const q = ($('#fQ').value || '').trim(); const R = L.filter((x) => !q || LMS.has([x.teacher, x.subject, x.title, ...x.classes].join(' '), q));
       // ملخص لكل معلم
       const by = {}; R.forEach((x) => { const o = by[x.teacher] = by[x.teacher] || { n: 0, ok: 0, wait: 0, ret: 0 }; o.n++; o[x.status === 'approved' ? 'ok' : x.status === 'submitted' ? 'wait' : 'ret']++; });
       $('#allList').innerHTML = R.length ? `<div class="table-wrap" style="margin-bottom:12px"><table><thead><tr><th>المعلم</th><th>عدد التحاضير</th><th>معتمد</th><th>بانتظار الاعتماد</th><th>مُعاد</th></tr></thead><tbody>

@@ -146,7 +146,7 @@
       ${L.length ? `<div class="tl" id="feed">${L.map((i) => itemHTML(i, P, ` · <a href="#s=${esc(i.student_id)}"><b>${esc(i.student)}</b></a> · ${esc(i.class || '')}`)).join('')}</div>`
         : `<div class="empty">${tab === 'pending' ? '🎉 لا توجد إنجازات بانتظار الاعتماد.' : 'لا توجد إنجازات معتمدة بعد.'}</div>`}`;
     const flt = () => { const k = $('#fK').value, q = $('#fQ').value.trim();
-      $$('#feed .it').forEach((a) => { const i = L.find((x) => x.id === +a.dataset.id); a.hidden = (k && i.kind !== k) || (q && !a.innerText.includes(q)); }); };
+      $$('#feed .it').forEach((a) => { const i = L.find((x) => x.id === +a.dataset.id); a.hidden = (k && i.kind !== k) || (q && !LMS.has(a.innerText, q)); }); };
     $('#fK').onchange = flt; $('#fQ').oninput = flt;
     if ($('#feed')) bindActs($('#feed'), P, () => drawFeed(tab), () => P);
   }

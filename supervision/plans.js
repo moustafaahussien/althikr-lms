@@ -265,7 +265,7 @@ function printSession(s) {
 function renderSessions() {
   const box = document.getElementById("sesList"); if (!box) return;
   const q = (document.getElementById("sesQ").value || "").trim(), today = ymd(new Date());
-  const L = sesList().filter(s => !q || (s.teacher + " " + s.title + " " + (s.subj || "")).includes(q)).sort((a, b) => String(b.date).localeCompare(String(a.date)) || (b.updated || 0) - (a.updated || 0));
+  const L = sesList().filter(s => !q || LMS.has((s.teacher + " " + s.title + " " + (s.subj || "")), q)).sort((a, b) => String(b.date).localeCompare(String(a.date)) || (b.updated || 0) - (a.updated || 0));
   // المتابعات المستحقة: من الجلسات + من خطط التطوير
   const dueS = sesList().filter(s => sesDue(s, today)), dueP = evList().filter(x => x.plan && x.plan.follow && !x.plan.followDone && x.plan.follow <= today);
   const upS = sesList().filter(s => s.follow && !s.followDone && s.follow > today).length + evList().filter(x => x.plan && x.plan.follow && !x.plan.followDone && x.plan.follow > today).length;

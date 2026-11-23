@@ -7,7 +7,7 @@
   const ME = ctx.profile;
 
   // ---------- أدوات ----------
-  const norm = (t) => String(t ?? '').trim().toLowerCase()
+  const norm = (t) => String(t ?? '').trim().toLowerCase().replace(/[\u064B-\u0652\u0670]/g, '')
     .replace(/[أإآٱ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/ـ/g, '')
     .replace(/[٠-٩]/g, (d) => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/\s+/g, ' ');
   const opts = (items, val, lab, sel, empty) =>

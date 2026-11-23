@@ -6,8 +6,7 @@
   const { sb, esc, $, $$, errMsg, requireAuth } = LMS;
   const ctx = await requireAuth();
   const view = $('#view');
-  const ROLES = ['admin', 'leadership', 'principal', 'staff'];
-  if (!ROLES.includes(ctx.profile.role)) { view.innerHTML = '<div class="notice">دليل الطلاب متاح للإداريين فقط.</div>'; return; }
+  if (['student', 'parent'].includes(ctx.profile.role)) { view.innerHTML = '<div class="notice">دليل الطلاب متاح للإداريين فقط.</div>'; return; }
   const call = async (fn, args) => { const { data, error } = await sb.rpc(fn, args || {}); if (error) throw error; return data; };
   const PAGE = 60;
   const F = { q: '', stage: '', grade: '', cls: '', flag: '', off: 0 };
@@ -18,7 +17,8 @@
 
   window.addEventListener('hashchange', route);
   route();
-  function route() { const m = /s=([0-9a-f-]{36})/.exec(location.hash); if (m) openStudent(m[1]); else listView(); }
+  function route() { const m = /s=([0-9a-f-]{36})/.exec(location.hash); if (m) return openStudent(m[1]);
+    if (/^#(noclass|absent|noguardian|inactive)$/.test(location.hash)) F.flag = location.hash.slice(1); listView(); }
 
   // ---------------- القائمة ----------------
   async function listView() {
@@ -52,7 +52,7 @@
     let D;
     try { D = await call('sd_list', { p_q: F.q || null, p_stage: F.stage ? +F.stage : null, p_grade: F.grade ? +F.grade : null, p_class: F.cls ? +F.cls : null,
       p_flag: F.flag || null, p_limit: PAGE, p_offset: F.off }); }
-    catch (e) { res.innerHTML = `<div class="notice err">${esc(errMsg(e))}</div>`; return; }
+    catch (e) { view.innerHTML = `<div class="notice">${esc(errMsg(e))}</div>`; return; }
     if (!META) { META = D.filters; fillSel(); }
     $('#sum').innerHTML = `<b>${D.total}</b> طالب${F.q || F.stage || F.flag ? ' مطابق' : ''} من ${D.summary.all}${D.summary.noclass ? ` — <span style="color:#a3244a">${D.summary.noclass} بدون فصل</span>` : ''}`;
     res.innerHTML = D.rows.length ? `<div class="sl">${D.rows.map((s) => `<button class="st ${s.active ? '' : 'off'}" data-s="${s.id}"><span class="av">${ini(s.name)}</span>

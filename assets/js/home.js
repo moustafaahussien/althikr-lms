@@ -158,6 +158,16 @@
     if (role === 'student') await studentPanel();
     if (role === 'parent' || (ctx.children || []).length) await parentPanel();
   } catch (e) { toast(errMsg(e), 'err'); }
+  noClassAlert();
+
+  // ---------- تنبيه: طلاب بدون فصل (لمن يرى دليل الطلاب) ----------
+  async function noClassAlert() {
+    if (['student', 'parent'].includes(role)) return;
+    const { data, error } = await sb.rpc('sd_list', { p_q: null, p_stage: null, p_grade: null, p_class: null, p_flag: 'noclass', p_limit: 8, p_offset: 0 });
+    if (error || !data || !data.total) return;
+    panel.insertAdjacentHTML('afterbegin', `<div class="notice warn" style="margin:0 0 14px">⚠️ <b>${data.total} ${data.total === 1 ? 'طالب' : 'طلاب'} بدون فصل</b> — وزّعهم على فصولهم حتى يظهروا في الحضور والواجبات والدرجات:
+      ${data.rows.map((r) => `<a href="students.html#s=${r.id}">${esc(r.name)}</a> <span class="hint">(${esc(r.grade)} ${esc(r.stage)})</span>`).join('، ')}${data.total > data.rows.length ? ` … <a href="students.html#noclass">عرض الكل</a>` : ''}</div>`);
+  }
 
   function scopeText(s) {
     const parts = [];
@@ -183,8 +193,8 @@
       html += `<div class="grid stats" style="margin-top:14px">${st.by_section.map((s) =>
         `<div class="stat glass"><div class="n">${s.students}</div><div class="l">طلاب ${esc(s.section)} — ${s.classes} فصل</div></div>`).join('')}</div>`;
     }
-    if (role === 'admin' && (st.no_class || st.no_email || st.students_no_email)) {
-      html += `<div class="notice warn" style="margin-top:14px">تنبيه: ${st.no_class ? `${st.no_class} طالب لم يُوزَّعوا على فصول بعد. ` : ''}${st.students_no_email ? `${st.students_no_email} طالب بدون بريد مدرسي. ` : ''}${st.no_email ? `${st.no_email} موظف بدون بريد.` : ''}</div>`;
+    if (role === 'admin' && (st.no_email || st.students_no_email)) {
+      html += `<div class="notice warn" style="margin-top:14px">تنبيه: ${st.students_no_email ? `${st.students_no_email} طالب بدون بريد مدرسي. ` : ''}${st.no_email ? `${st.no_email} موظف بدون بريد.` : ''}</div>`;
     }
     panel.insertAdjacentHTML('beforeend', html);
   }

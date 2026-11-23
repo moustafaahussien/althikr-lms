@@ -1123,14 +1123,14 @@
       ,
       // ===== دليل الطلاب (sql/44) — للإداريين فقط =====
       sd_list({ p_q, p_stage, p_grade, p_class, p_flag, p_limit, p_offset }) {
-        const R = MYROLE(); if (!['admin', 'leadership', 'principal', 'staff'].includes(R)) deny('دليل الطلاب للإداريين فقط');
+        const R = MYROLE(); if (!['admin', 'leadership', 'principal', 'supervisor', 'staff'].includes(R)) deny('دليل الطلاب للإداريين فقط');
         const stg = R === 'principal' ? [myStage()] : DB.stages.map((x) => x.id);
         const f = ymd(daysAgo(30)), daily = DB.att_sessions.filter((x) => x.period === 0 && x.day >= f).map((x) => x.id);
         const ab30 = (sid) => DB.att_marks.filter((m) => m.student_id === sid && m.status === 'absent' && daily.includes(m.session_id)).length;
         const q = String(p_q || '').trim();
         const all = DB.students.filter((x) => stg.includes(grade(x.grade_id).stage_id));
         const L = all.filter((x) => (!p_stage || grade(x.grade_id).stage_id === p_stage) && (!p_grade || x.grade_id === p_grade) && (!p_class || x.class_id === p_class)
-            && (!q || name(x.profile_id).includes(q) || x.student_number === q)
+            && (!q || window.LMS.has(name(x.profile_id), q) || x.student_number === q)
             && (!p_flag || (p_flag === 'noclass' && !x.class_id) || (p_flag === 'inactive' && P(x.profile_id).active === false) || (p_flag === 'noguardian' && !x.guardian_phone) || (p_flag === 'absent' && ab30(x.profile_id) >= 3)))
           .sort((a, b) => name(a.profile_id).localeCompare(name(b.profile_id), 'ar'));
         const off = p_offset || 0, lim = Math.min(p_limit || 60, 200);
@@ -1142,7 +1142,7 @@
           summary: { all: all.length, noclass: all.filter((x) => !x.class_id).length }, can_private: true };
       },
       sd_get({ p_id }) {
-        const R = MYROLE(); if (!['admin', 'leadership', 'principal', 'staff'].includes(R)) deny('دليل الطلاب للإداريين فقط');
+        const R = MYROLE(); if (!['admin', 'leadership', 'principal', 'supervisor', 'staff'].includes(R)) deny('دليل الطلاب للإداريين فقط');
         const s = DB.students.find((x) => x.profile_id === p_id); if (!s) deny('غير موجود');
         const g = grade(s.grade_id); if (R === 'principal' && g.stage_id !== myStage()) deny('دليل الطلاب للإداريين فقط');
         const cid = s.class_id, c = cid ? klass(cid) : null, yf = ymd(daysAgo(90)), pr = P(p_id), sp = (DB.student_private || []).find((x) => x.profile_id === p_id);

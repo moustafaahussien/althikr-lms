@@ -57,7 +57,7 @@
       ${!LMS.cal.isSchoolDay($('#day').value) ? `<div class="notice warn" style="margin:0 0 8px">🏖️ هذا اليوم ليس يومًا دراسيًا حسب التقويم (${esc(LMS.cal.why($('#day').value))}) — لا يلزم تسجيل الحضور.</div>` : ''}
       ${sess ? `<div class="notice" style="margin:0 0 8px">✓ مسجَّل بواسطة <b>${esc(sess.by || '')}</b> — ${esc(new Date(sess.taken_at).toLocaleString('ar-SA-u-ca-gregory-nu-latn'))}. أي حفظ جديد يستبدل التسجيل السابق.</div>`
         : `<div class="notice warn" style="margin:0 0 8px">لم يُسجَّل حضور ${per ? 'الحصة ' + per : 'اليوم'} لهذا ${$('#cls').value ? 'الفصل' : 'الصف'} بعد (${esc(hijri($('#day').value))}). الجميع «حاضر» افتراضيًا — حدّد الغائب والمتأخر فقط ثم احفظ.</div>`}`;
-    const rows = L.filter((s) => !q || s.name.includes(q) || String(s.no || '').includes(q));
+    const rows = L.filter((s) => !q || LMS.has(s.name, q) || LMS.has(String(s.no || ''), q));
     $('#roster').innerHTML = head + `<div class="table-wrap" data-title="كشف الحضور — ${esc($('#grp').selectedOptions[0].textContent)} — ${$('#day').value}" style="max-height:none"><table>
       <thead><tr><th>#</th><th>الطالب</th><th>رقم الطالب</th><th>الفصل</th><th>الحالة</th><th>ملاحظة</th></tr></thead><tbody>
       ${rows.map((s, i) => { const m = MARKS[s.id] || { st: '', n: '' };

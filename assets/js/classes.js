@@ -18,7 +18,7 @@
   function list() {
     $('#fQ').closest('.toolbar').hidden = false;
     const q = $('#fQ').value.trim(), abs = $('#fAbs').checked;
-    const R = L.filter((c) => (!q || [c.label, c.homeroom].join(' ').includes(q)) && (!abs || c.absent_today));
+    const R = L.filter((c) => (!q || LMS.has([c.label, c.homeroom].join(' '), q)) && (!abs || c.absent_today));
     const tot = L.reduce((a, c) => a + c.students, 0), ab = L.reduce((a, c) => a + c.absent_today, 0);
     const SD = LMS.cal.isSchoolDay(LMS.ymd(new Date())), WHY = LMS.cal.why(LMS.ymd(new Date()));
     const groups = []; R.forEach((c) => { const k = c.stage + '|' + c.grade; let g = groups.find((x) => x.k === k); if (!g) groups.push(g = { k, stage: c.stage, grade: c.grade, cs: [] }); g.cs.push(c); });
@@ -43,6 +43,6 @@
       <div class="table-wrap" data-title="طلاب ${esc(D.class)}"><table id="sT"><thead><tr><th>#</th><th>الطالب</th><th>الرقم</th><th>ولي الأمر</th><th>الجوال</th><th>غياب</th><th>تأخر</th><th>الإنجازات</th></tr></thead><tbody>
       ${S.map((s, i) => `<tr><td>${i + 1}</td><td>${esc(s.name)}</td><td>${esc(s.no || '')}</td><td>${esc(s.guardian || '')}</td><td dir="ltr">${esc(s.phone || '')}</td>
         <td>${s.absent ? `<b style="color:#a3244a">${s.absent}</b>` : 0}</td><td>${s.late}</td><td><a href="portfolio.html#s=${esc(s.id)}">${s.pf ? '🏅 ' + s.pf : 'فتح الملف'}</a></td></tr>`).join('') || '<tr><td colspan="8" class="empty">لا يوجد طلاب مربوطون بهذا الفصل بعد</td></tr>'}</tbody></table></div>`;
-    $('#sQ').oninput = (e) => { const q = e.target.value.trim(); $$('#sT tbody tr').forEach((tr) => { tr.hidden = !!q && !tr.innerText.includes(q); }); };
+    $('#sQ').oninput = (e) => { const q = e.target.value.trim(); $$('#sT tbody tr').forEach((tr) => { tr.hidden = !!q && !LMS.has(tr.innerText, q); }); };
   }
 })();

@@ -30,7 +30,7 @@
   }
   function paint() {
     const sid = +$('#fS').value || null, q = $('#fQ').value.trim();
-    const L = ALL.filter((x) => (KIND === 'mine' ? x.mine : !KIND || x.kind === KIND) && (!sid || x.subject_id === sid) && (!q || [x.title, x.grade, x.owner, x.subject, x.note].join(' ').includes(q)));
+    const L = ALL.filter((x) => (KIND === 'mine' ? x.mine : !KIND || x.kind === KIND) && (!sid || x.subject_id === sid) && (!q || LMS.has([x.title, x.grade, x.owner, x.subject, x.note].join(' '), q)));
     view.innerHTML = L.length ? `<div class="lib">${L.map((x) => `<button class="li" data-id="${x.id}"><span><span class="k ${x.kind}">${KN[x.kind]}</span> ${x.subject ? `<small>${esc(x.subject)}</small>` : ''}</span>
         <b>${esc(x.title)}</b>${x.snip ? `<p>${esc(x.snip)}</p>` : ''}${x.n_questions ? `<small>${x.n_questions} سؤال</small>` : ''}
         <small>${esc(x.grade || '')}</small><small>شاركه: ${esc(x.owner)} · ${esc(when(x.created_at))}${x.uses ? ` · استُخدم ${x.uses} مرة` : ''}</small></button>`).join('')}</div>`

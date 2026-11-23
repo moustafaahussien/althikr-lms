@@ -187,7 +187,7 @@
       <h3 class="sec-h">كل الواجبات</h3><div class="table-wrap"><table id="aT"><thead><tr><th>المعلم</th><th>العنوان</th><th>المادة</th><th>الفصول</th><th>التسليم</th><th>سلّم</th><th>صُحّح</th><th></th></tr></thead><tbody>
       ${L.map((x) => `<tr><td>${esc(x.teacher)}</td><td>${esc(x.title)}</td><td>${esc(x.subject || '')}</td><td>${esc(x.classes.map(short).join('، '))}</td><td>${esc(fmt(x.due_at))}</td>
         <td>${x.submitted} / ${x.students}</td><td>${x.graded}</td><td><button class="btn sm" data-hw="${x.id}">فتح</button></td></tr>`).join('')}</tbody></table></div>`;
-    $('#aQ').oninput = (e) => { const q = e.target.value.trim(); $$('#aT tbody tr').forEach((tr) => { tr.hidden = !!q && !tr.innerText.includes(q); }); };
+    $('#aQ').oninput = (e) => { const q = e.target.value.trim(); $$('#aT tbody tr').forEach((tr) => { tr.hidden = !!q && !LMS.has(tr.innerText, q); }); };
     pane.onclick = (e) => { const c = e.target.closest('[data-hw]'); if (c) teacherView(+c.dataset.hw); };
     noHwBox();
   }

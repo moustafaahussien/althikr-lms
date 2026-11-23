@@ -6,7 +6,7 @@
    ===================================================================== */
 (function () {
   'use strict';
-  const KEY = 'lms_demo', DBKEY = 'lms_demo_db', VER = 6;
+  const KEY = 'lms_demo', DBKEY = 'lms_demo_db', VER = 7;
   const ROLE = (() => { try { return sessionStorage.getItem(KEY) || ''; } catch (_) { return ''; } })();
   if (!ROLE) return;
 
@@ -160,7 +160,8 @@
     DB.terms = [{ id: 1, year_id: 1, name: 'الفصل الدراسي الأول', starts_on: '2026-08-23', ends_on: '2027-01-07', is_current: true },
       { id: 2, year_id: 1, name: 'الفصل الدراسي الثاني', starts_on: '2027-01-17', ends_on: '2027-06-10', is_current: false }];
     DB.app_settings = [{ key: 'school_name', value: 'مدارس النموذج الأهلية (تجريبي)' }, { key: 'allowed_domains', value: [DOMAIN] },
-      { key: 'student_login_enabled', value: true }, { key: 'parent_login_enabled', value: true }];
+      { key: 'student_login_enabled', value: true }, { key: 'parent_login_enabled', value: true },
+      { key: 'cert_edu_title', value: 'مدير التعليم' }, { key: 'cert_edu_name', value: 'أ. فهد السبيعي (تجريبي)' }, { key: 'cert_exec_title', value: 'المدير التنفيذي' }, { key: 'cert_exec_name', value: 'د. ناصر المالكي (تجريبي)' }];
     DB.request_types = [
       { key: 'permission', name: 'استئذان', icon: '🚪', fields: [{ k: 'date', l: 'التاريخ', t: 'date', req: true }, { k: 'from', l: 'من الساعة', t: 'time', req: true }, { k: 'to', l: 'إلى الساعة', t: 'time', req: true }, { k: 'reason', l: 'السبب', t: 'textarea', req: true }], workflow: ['manager'], active: true, sort: 1 },
       { key: 'leave', name: 'إجازة', icon: '🏖️', fields: [{ k: 'kind', l: 'نوع الإجازة', t: 'select', req: true, opts: ['اضطرارية', 'مرضية', 'زواج', 'وفاة', 'أمومة / أبوة', 'أخرى'] }, { k: 'from', l: 'من تاريخ', t: 'date', req: true }, { k: 'to', l: 'إلى تاريخ', t: 'date', req: true }, { k: 'reason', l: 'التفاصيل', t: 'textarea' }], workflow: ['manager', 'leadership'], active: true, sort: 2 },
@@ -222,9 +223,9 @@
 
     // ----- التدريب -----
     DB.training = [
-      { id: 1, pid: IDS.teacher, title: 'استراتيجيات التعلم النشط في الرياضيات', provider: 'إدارة التدريب', mode: 'حضوري', start: ymd(daysAgo(60)), end: ymd(daysAgo(59)), hours: 10, certificate: null, self_rating: 5, self_note: 'طبقت استراتيجية فكّر-زاوج-شارك في وحدة الكسور.', impact_rating: 4, impact_note: 'ظهر أثرها في الزيارة الأخيرة', impact_by: IDS.supervisor },
-      { id: 2, pid: IDS.teacher, title: 'التقويم البنائي', provider: 'منصة مدرستي', mode: 'عن بعد', start: ymd(daysAgo(20)), end: ymd(daysAgo(20)), hours: 3, certificate: null, self_rating: 4, self_note: '', impact_rating: null, impact_note: '', impact_by: null },
-      { id: 3, pid: t2.id, title: 'تدريس العلوم بالاستقصاء', provider: 'مركز التدريب', mode: 'حضوري', start: ymd(daysAgo(30)), end: ymd(daysAgo(29)), hours: 8, certificate: null, self_rating: 4, self_note: '', impact_rating: null, impact_note: '', impact_by: null }];
+      { id: 1, pid: IDS.teacher, title: 'استراتيجيات التعلم النشط في الرياضيات', provider: 'إدارة التدريب', mode: 'حضوري', start: ymd(daysAgo(60)), end: ymd(daysAgo(59)), hours: 10, certificate: null, self_rating: 5, self_note: 'طبقت استراتيجية فكّر-زاوج-شارك في وحدة الكسور.', impact_rating: 4, impact_note: 'ظهر أثرها في الزيارة الأخيرة', impact_by: IDS.supervisor, presenter: 'د. خالد العتيبي', status: 'approved', review_by: IDS.supervisor, review_at: iso(daysAgo(55)), cert_no: 'DTH-2026-00001', cert_issued_at: iso(daysAgo(55)) },
+      { id: 2, pid: IDS.teacher, title: 'التقويم البنائي', provider: 'منصة مدرستي', mode: 'عن بعد', start: ymd(daysAgo(20)), end: ymd(daysAgo(20)), hours: 3, certificate: null, self_rating: 4, self_note: '', impact_rating: null, impact_note: '', impact_by: null, presenter: 'أ. منى الشهري', status: 'pending' },
+      { id: 3, pid: t2.id, title: 'تدريس العلوم بالاستقصاء', provider: 'مركز التدريب', mode: 'حضوري', start: ymd(daysAgo(30)), end: ymd(daysAgo(29)), hours: 8, certificate: null, self_rating: 4, self_note: '', impact_rating: null, impact_note: '', impact_by: null, presenter: 'د. سامي الزهراني', status: 'pending' }];
 
     // ----- المناوبة -----
     DB.duty = []; let did = 0;
@@ -428,7 +429,7 @@
       can_act: r.status === 'pending' && !!cur && (cur.approver_id === ME_ID || MYROLE() === 'admin'),
       steps: r.steps.map((s) => ({ step: s.step, kind: s.kind, approver: name(s.approver_id), decision: s.decision || null, by: s.by_id ? name(s.by_id) : null, at: s.at || null, note: s.note || '' })) };
   }
-  function trnItem(t) { return Object.assign({}, t, { name: name(t.pid), mine: t.pid === ME_ID, impact_by: t.impact_by ? name(t.impact_by) : null }); }
+  function trnItem(t) { return Object.assign({ status: 'pending' }, t, { name: name(t.pid), mine: t.pid === ME_ID, impact_by: t.impact_by ? name(t.impact_by) : null, review_by: t.review_by ? name(t.review_by) : null }); }
 
   const RPC = {
     my_context() {
@@ -652,6 +653,7 @@
     const hasSup = (tid) => DB.supervision.some((x) => x.teacher_id === tid && x.supervisor_id !== tid);
     const canApprove = (tid) => tid !== ME_ID && (DB.supervision.some((x) => x.supervisor_id === ME_ID && x.teacher_id === tid)
       || (MYROLE() === 'principal' && !hasSup(tid) && DB.teaching_assignments.some((t) => t.teacher_id === tid && grade(klass(t.class_id).grade_id).stage_id === myStage())));
+    const trnIssue = (t) => { if (!t.cert_no) Object.assign(t, { cert_no: 'DTH-' + new Date().getFullYear() + '-' + String(t.id).padStart(5, '0'), cert_issued_at: iso(now()), cert_issued_by: ME_ID }); };
     const canFollow = () => isSuper() || DB.supervision.some((x) => x.supervisor_id === ME_ID);
     const sname = (id) => (subj(id) || {}).name_ar || null;
     const stuIn = (cids) => DB.students.filter((s) => cids.includes(s.class_id) && (P(s.profile_id) || {}).active !== false);
@@ -825,6 +827,35 @@
         M().lp.push(l); save(); return { ok: true, id: l.id }; },
       lp_submit({ p_id }) { const l = lpOf(p_id); if (l.teacher_id !== ME_ID || !['draft', 'returned'].includes(l.status)) deny('لا يمكن إرسال هذا التحضير'); Object.assign(l, { status: 'submitted', submitted_at: iso(now()) }); save(); return { ok: true }; },
       lp_unsubmit({ p_id }) { const l = lpOf(p_id); if (l.teacher_id !== ME_ID || l.status !== 'submitted') deny('لا يمكن سحب هذا التحضير'); l.status = 'draft'; save(); return { ok: true }; },
+      // ---- اعتماد التدريب وشهاداته (sql/43) ----
+      trn_list({ p_pid, p_from, p_to }) {
+        let L = DB.training.filter((t) => (!p_pid || t.pid === p_pid) && (!p_from || (t.end || t.start) >= p_from) && (!p_to || t.start <= p_to));
+        if (!p_pid && !isSuper()) L = L.filter((t) => t.pid === ME_ID);
+        return { rows: L.map((t) => Object.assign(trnItem(t), { can_review: canApprove(t.pid) })), can_all: isSuper() };
+      },
+      trn_save({ p }) { if (!String(p.title || '').trim()) deny('اكتب اسم البرنامج التدريبي');
+        const row = { title: p.title, provider: p.provider, presenter: p.presenter || null, mode: p.mode, start: p.start_date || null, end: p.end_date || null, hours: Number(p.hours) || 0, self_rating: Number(p.self_rating) || null, self_note: p.self_note || '', status: 'pending' };
+        if (p.id) { const t = DB.training.find((x) => x.id === p.id && x.pid === ME_ID); if (!t) deny(); if (t.status === 'approved') deny('لا يمكن تعديل تدريب معتمد — تواصل مع مشرفك'); Object.assign(t, row); }
+        else DB.training.push(Object.assign({ id: Math.max(0, ...DB.training.map((t) => t.id)) + 1, pid: ME_ID, certificate: null, impact_rating: null, impact_note: '', impact_by: null }, row));
+        save(); return { ok: true }; },
+      trn_delete({ p_id }) { const t = DB.training.find((x) => x.id === p_id); if (!t || !((t.pid === ME_ID && t.status !== 'approved') || MYROLE() === 'admin')) deny('لا يمكن حذف تدريب معتمد');
+        DB.training = DB.training.filter((x) => x.id !== p_id); save(); return { ok: true }; },
+      trn_review({ p_id, p_action, p_note, p_cert }) { const t = DB.training.find((x) => x.id === p_id); if (!t) deny('غير موجود');
+        if (!canApprove(t.pid)) deny('اعتماد التدريب لمشرف المعلم (أو مدير مرحلته إن لم يكن له مشرف)');
+        if (p_action === 'return') { if (!String(p_note || '').trim()) deny('اكتب سبب الإعادة للمعلم'); if (t.cert_no) deny('صدرت شهادة لهذا التدريب ولا يمكن إعادته');
+          Object.assign(t, { status: 'returned', review_by: ME_ID, review_at: iso(now()), review_note: p_note.trim() }); save(); return { ok: true }; }
+        if (!(Number(t.hours) > 0)) deny('حدّد عدد ساعات التدريب قبل الاعتماد');
+        Object.assign(t, { status: 'approved', review_by: ME_ID, review_at: iso(now()), review_note: (p_note || '').trim() || null });
+        if (p_cert) trnIssue(t); save(); return { ok: true, cert_no: t.cert_no || null }; },
+      trn_cert_issue({ p_id }) { const t = DB.training.find((x) => x.id === p_id); if (!t || !canApprove(t.pid)) deny(); if (t.status !== 'approved') deny('اعتمد التدريب أولًا');
+        trnIssue(t); save(); return { ok: true, cert_no: t.cert_no }; },
+      trn_cert({ p_id }) { const t = DB.training.find((x) => x.id === p_id); if (!t || !t.cert_no) deny('لا توجد شهادة صادرة لهذا التدريب');
+        if (!(t.pid === ME_ID || isSuper() || canApprove(t.pid))) deny(); const S = (k) => (DB.app_settings.find((x) => x.key === k) || {}).value || '';
+        return { cert_no: t.cert_no, issued_at: t.cert_issued_at, name: name(t.pid), job: (P(t.pid) || {}).job_title || null, title: t.title, provider: t.provider, presenter: t.presenter, mode: t.mode,
+          start: t.start, end: t.end, hours: t.hours, approved_by: t.review_by ? name(t.review_by) : null, school: S('school_name'),
+          edu_title: S('cert_edu_title') || 'مدير التعليم', edu_name: S('cert_edu_name'), exec_title: S('cert_exec_title') || 'المدير التنفيذي', exec_name: S('cert_exec_name') }; },
+      trn_verify({ p_no }) { const t = DB.training.find((x) => x.cert_no && x.cert_no === String(p_no || '').trim().toUpperCase() && x.status === 'approved');
+        return t ? { valid: true, name: name(t.pid), title: t.title, hours: t.hours, issued_at: t.cert_issued_at, start: t.start, end: t.end } : { valid: false }; },
       lp_review({ p_id, p_decision, p_note }) { const l = lpOf(p_id); if (l.status !== 'submitted' || !canApprove(l.teacher_id)) deny('اعتماد التحضير للمشرف التربوي فقط');
         if (p_decision === 'return' && !String(p_note || '').trim()) deny('اكتب ملاحظاتك للمعلم عند الإعادة');
         Object.assign(l, { status: p_decision === 'approve' ? 'approved' : 'returned', reviewed_by: ME_ID, reviewed_at: iso(now()), review_note: String(p_note || '').trim() || null }); save(); return { ok: true }; },

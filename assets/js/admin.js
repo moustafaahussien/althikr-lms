@@ -977,6 +977,12 @@
         <label class="f">اسم المدرسة<input id="sn" value="${esc(get('school_name') || '')}"></label>
         <label class="f">نطاقات البريد المسموحة (افصل بفاصلة)<input id="dm" dir="ltr" value="${esc((get('allowed_domains') || []).join(', '))}"></label>
       </div>
+      <div class="card glass" style="margin:16px 0;padding:14px"><b>🎓 الأسماء على شهادات التدريب</b>
+        <div class="form-grid" style="margin-top:8px">
+          <label class="f">المسمّى الأول<input id="ceT" value="${esc(get('cert_edu_title') || 'مدير التعليم')}"></label><label class="f">الاسم<input id="ceN" value="${esc(get('cert_edu_name') || '')}"></label>
+          <label class="f">المسمّى الثاني<input id="cxT" value="${esc(get('cert_exec_title') || 'المدير التنفيذي')}"></label><label class="f">الاسم<input id="cxN" value="${esc(get('cert_exec_name') || '')}"></label></div>
+        <p class="hint" style="margin:6px 0 0">تظهر على كل شهادة تدريب يصدرها المشرف من «الخدمات ← التدريب»، ومعها اسم مقدّم الدورة من بيانات التدريب.</p>
+      </div>
       <div class="card glass" style="margin:16px 0;padding:14px">
         <label style="display:flex;gap:10px;align-items:center;font-weight:800;font-size:1.02rem">
           <input type="checkbox" id="stLogin" ${get('student_login_enabled') === true ? 'checked' : ''}> السماح للطلاب بالدخول إلى المنصة</label>
@@ -1013,7 +1019,9 @@
           if (!await confirmBox(paOn ? 'فتح بوابة أولياء الأمور؟ سيتمكن كل ولي أمر مربوط بابنه من الدخول فورًا.' : 'إغلاق بوابة أولياء الأمور؟', paOn ? 'نعم، افتح' : 'نعم، أغلق', !paOn)) return;
         }
         await run(sb.from('app_settings').upsert([{ key: 'school_name', value: val(pane, '#sn') }, { key: 'allowed_domains', value: domains },
-                                                  { key: 'student_login_enabled', value: stOn }, { key: 'parent_login_enabled', value: paOn }]));
+                                                  { key: 'student_login_enabled', value: stOn }, { key: 'parent_login_enabled', value: paOn },
+                                                  { key: 'cert_edu_title', value: val(pane, '#ceT') }, { key: 'cert_edu_name', value: val(pane, '#ceN') },
+                                                  { key: 'cert_exec_title', value: val(pane, '#cxT') }, { key: 'cert_exec_name', value: val(pane, '#cxN') }]));
         rows.splice(0, rows.length, ...(await run(sb.from('app_settings').select('*'))));
         toast('تم حفظ الإعدادات');
       } catch (er) { toast(errMsg(er), 'err'); }

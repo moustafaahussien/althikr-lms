@@ -258,43 +258,85 @@
   async function loadTrn() {
     const el = $('#tab-trn');
     el.innerHTML = `<div class="toolbar glass" style="padding:10px"><div class="subtabs" id="tTabs" style="margin:0"><button data-b="mine" class="on">سجلي التدريبي</button>
-      ${SUPER ? '<button data-b="all">سجلات المعلمين</button><button data-b="sum">ملخص الساعات</button>' : ''}</div><span class="grow"></span>
+      ${SUPER ? '<button data-b="review">✅ بانتظار اعتمادي <span id="tRvN" hidden style="background:#e4a842;color:#3d2600;border-radius:99px;padding:0 7px;font-size:.75rem;font-weight:700"></span></button><button data-b="all">سجلات المعلمين</button><button data-b="sum">ملخص الساعات</button>' : ''}</div><span class="grow"></span>
       <label class="hint">من <input type="date" id="tFrom"></label><label class="hint">إلى <input type="date" id="tTo"></label>
       <button class="btn primary" id="tNew">➕ إضافة تدريب</button></div><div id="tBody"></div>`;
     $('#tTabs').onclick = (e) => { const b = e.target.closest('button'); if (!b) return; TBOX = b.dataset.b; $$('#tTabs button').forEach((x) => x.classList.toggle('on', x === b)); paintTrn(); };
     $('#tFrom').onchange = $('#tTo').onchange = paintTrn;
     $('#tNew').onclick = () => trnForm(); paintTrn();
+    if (SUPER) trnBadge();
   }
+  async function trnBadge() {
+    const { data } = await sb.rpc('trn_list', { p_pid: null, p_from: null, p_to: null });
+    const n = ((data && data.rows) || []).filter((t) => t.can_review && t.status === 'pending').length;
+    const b = $('#tRvN'); if (b) { b.textContent = n; b.hidden = !n; }
+  }
+  const TST = { pending: ['⏳ بانتظار الاعتماد', 'pink'], approved: ['✅ معتمد', 'teal'], returned: ['↩ مُعاد للتعديل', 'gray'] };
+  const stChip = (t) => (t.status && TST[t.status] ? `<span class="chip ${TST[t.status][1]}">${TST[t.status][0]}</span>` : '—')
+    + (t.status === 'returned' && t.review_note ? `<div class="hint">«${esc(t.review_note)}»</div>` : '')
+    + (t.review_by && t.status !== 'pending' ? `<div class="hint">${esc(t.review_by)}</div>` : '')
+    + (t.cert_no ? `<div><a href="certificate.html?id=${t.id}" target="_blank" rel="noopener">🎓 شهادة المنصة</a></div>` : '');
   let TRN = [];
   async function paintTrn() {
     const { data, error } = await sb.rpc('trn_list', { p_pid: TBOX === 'mine' ? me.id : null, p_from: $('#tFrom').value || null, p_to: $('#tTo').value || null });
     if (error) { $('#tBody').innerHTML = `<div class="notice err">${esc(errMsg(error))}</div>`; return; }
     TRN = data.rows || [];
+    if (TBOX === 'review') TRN = TRN.filter((t) => t.can_review && t.status === 'pending');
     if (TBOX === 'sum') {
-      const by = {}; TRN.forEach((t) => { const k = t.pid; by[k] = by[k] || { name: t.name, n: 0, h: 0, imp: [], cert: 0 }; by[k].n++; by[k].h += Number(t.hours) || 0; if (t.impact_rating) by[k].imp.push(t.impact_rating); if (t.certificate) by[k].cert++; });
+      const by = {}; TRN.forEach((t) => { const k = t.pid; by[k] = by[k] || { name: t.name, n: 0, h: 0, ah: 0, imp: [], cert: 0 }; by[k].n++; by[k].h += Number(t.hours) || 0; if (t.status === 'approved') by[k].ah += Number(t.hours) || 0; if (t.impact_rating) by[k].imp.push(t.impact_rating); if (t.certificate || t.cert_no) by[k].cert++; });
       const L = Object.values(by).sort((a, b) => b.h - a.h);
-      $('#tBody').innerHTML = L.length ? `<div class="table-wrap" data-title="ملخص ساعات التدريب" style="max-height:none"><table><thead><tr><th>#</th><th>المعلم</th><th>عدد البرامج</th><th>إجمالي الساعات</th><th>بشهادات</th><th>متوسط أثر التدريب</th></tr></thead><tbody>
-        ${L.map((r, i) => `<tr><td>${i + 1}</td><td><b>${esc(r.name)}</b></td><td>${r.n}</td><td><b>${r.h}</b></td><td>${r.cert}</td><td>${r.imp.length ? (r.imp.reduce((a, b) => a + b, 0) / r.imp.length).toFixed(1) + ' / 5' : '—'}</td></tr>`).join('')}
+      $('#tBody').innerHTML = L.length ? `<div class="table-wrap" data-title="ملخص ساعات التدريب" style="max-height:none"><table><thead><tr><th>#</th><th>المعلم</th><th>عدد البرامج</th><th>إجمالي الساعات</th><th>الساعات المعتمدة</th><th>بشهادات</th><th>متوسط أثر التدريب</th></tr></thead><tbody>
+        ${L.map((r, i) => `<tr><td>${i + 1}</td><td><b>${esc(r.name)}</b></td><td>${r.n}</td><td><b>${r.h}</b></td><td>${r.ah}</td><td>${r.cert}</td><td>${r.imp.length ? (r.imp.reduce((a, b) => a + b, 0) / r.imp.length).toFixed(1) + ' / 5' : '—'}</td></tr>`).join('')}
         </tbody></table></div><p class="hint">الإجمالي: ${TRN.reduce((a, t) => a + (Number(t.hours) || 0), 0)} ساعة تدريبية لـ ${L.length} موظف.</p>` : '<div class="empty">لا توجد سجلات تدريب في هذه الفترة</div>';
       return;
     }
     const tot = TRN.reduce((a, t) => a + (Number(t.hours) || 0), 0);
-    $('#tBody').innerHTML = TRN.length ? `<p class="hint">${TRN.length} برنامج — ${tot} ساعة</p><div class="table-wrap" data-title="${TBOX === 'mine' ? 'سجلي التدريبي' : 'سجلات تدريب المعلمين'}" style="max-height:none"><table><thead><tr>${TBOX === 'all' ? '<th>الموظف</th>' : ''}<th>البرنامج</th><th>الجهة</th><th>النوع</th><th>التاريخ</th><th>الساعات</th><th>الشهادة</th><th>تقييمي</th><th>أثر التدريب (المشرف)</th><th class="actions"></th></tr></thead><tbody>
-      ${TRN.map((t) => `<tr>${TBOX === 'all' ? `<td><b>${esc(t.name)}</b></td>` : ''}<td><b>${esc(t.title)}</b></td><td>${esc(t.provider || '')}</td><td>${esc(t.mode || '')}</td>
-        <td>${esc(t.start || '')}${t.end && t.end !== t.start ? ' → ' + esc(t.end) : ''}</td><td>${t.hours}</td>
+    $('#tBody').innerHTML = TRN.length ? `<p class="hint">${TRN.length} برنامج — ${tot} ساعة</p><div class="table-wrap" data-title="${TBOX === 'mine' ? 'سجلي التدريبي' : TBOX === 'review' ? 'تدريبات بانتظار اعتمادي' : 'سجلات تدريب المعلمين'}" style="max-height:none"><table><thead><tr>${TBOX !== 'mine' ? '<th>الموظف</th>' : ''}<th>البرنامج</th><th>الجهة / مقدّم الدورة</th><th>النوع</th><th>التاريخ</th><th>الساعات</th><th>الاعتماد</th><th>المرفق</th><th>تقييمي</th><th>أثر التدريب (المشرف)</th><th class="actions"></th></tr></thead><tbody>
+      ${TRN.map((t) => `<tr>${TBOX !== 'mine' ? `<td><b>${esc(t.name)}</b></td>` : ''}<td><b>${esc(t.title)}</b></td><td>${esc(t.provider || '')}${t.presenter ? `<div class="hint">👤 ${esc(t.presenter)}</div>` : ''}</td><td>${esc(t.mode || '')}</td>
+        <td>${esc(t.start || '')}${t.end && t.end !== t.start ? ' → ' + esc(t.end) : ''}</td><td>${t.hours}</td><td>${stChip(t)}</td>
         <td>${t.certificate ? `<a href="#" data-cert="${t.id}">📎 الشهادة</a>` : '—'}</td><td>${stars(t.self_rating)}</td>
         <td>${stars(t.impact_rating)}${t.impact_by ? `<div class="hint">${esc(t.impact_by)}</div>` : ''}</td>
-        <td class="actions">${t.mine ? `<button class="btn sm" data-ed="${t.id}">تعديل</button>` : ''}${!t.mine && SUPER ? `<button class="btn sm" data-imp="${t.id}">تقييم الأثر</button>` : ''}</td></tr>`).join('')}</tbody></table></div>`
-      : '<div class="empty">لا توجد سجلات تدريب' + (TBOX === 'mine' ? ' — أضف دوراتك وورشك بساعاتها وشهاداتها' : '') + '</div>';
+        <td class="actions">${t.mine && t.status !== 'approved' ? `<button class="btn sm" data-ed="${t.id}">تعديل</button>` : ''}${t.can_review && t.status === 'pending' ? `<button class="btn sm primary" data-rv="${t.id}">✅ اعتماد / إعادة</button>` : ''}${t.can_review && t.status === 'approved' && !t.cert_no ? `<button class="btn sm" data-iss="${t.id}">🎓 إصدار شهادة</button>` : ''}${!t.mine && SUPER ? `<button class="btn sm" data-imp="${t.id}">تقييم الأثر</button>` : ''}</td></tr>`).join('')}</tbody></table></div>`
+      : '<div class="empty">' + (TBOX === 'review' ? 'لا توجد تدريبات بانتظار اعتمادك ✓' : 'لا توجد سجلات تدريب' + (TBOX === 'mine' ? ' — أضف دوراتك وورشك بساعاتها وشهاداتها' : '')) + '</div>';
     $$('[data-cert]', $('#tBody')).forEach((a) => { a.onclick = (e) => { e.preventDefault(); openFile(TRN.find((t) => t.id === Number(a.dataset.cert)).certificate); }; });
     $$('[data-ed]', $('#tBody')).forEach((b) => { b.onclick = () => trnForm(TRN.find((t) => t.id === Number(b.dataset.ed))); });
     $$('[data-imp]', $('#tBody')).forEach((b) => { b.onclick = () => trnImpact(TRN.find((t) => t.id === Number(b.dataset.imp))); });
+    $$('[data-rv]', $('#tBody')).forEach((b) => { b.onclick = () => trnReview(TRN.find((t) => t.id === Number(b.dataset.rv))); });
+    $$('[data-iss]', $('#tBody')).forEach((b) => { b.onclick = async () => { const t = TRN.find((x) => x.id === Number(b.dataset.iss));
+      if (!(await confirmBox(`إصدار شهادة تدريب لـ ${t.name} عن «${t.title}» (${t.hours} ساعة)؟`, '🎓 إصدار الشهادة', false))) return;
+      const { data: r, error: e } = await sb.rpc('trn_cert_issue', { p_id: t.id }); if (e) { toast(errMsg(e), 'err'); return; }
+      toast('صدرت الشهادة ✓ ' + (r.cert_no || '')); paintTrn(); }; });
+  }
+  // اعتماد التدريب (مشرف المعلم، أو مدير مرحلته إن لم يكن له مشرف) مع خيار إصدار الشهادة
+  function trnReview(t) {
+    const body = document.createElement('div');
+    body.innerHTML = `<p><b>${esc(t.name)}</b> — «${esc(t.title)}»</p>
+      <div class="form-grid"><div><span class="hint">الجهة</span><div>${esc(t.provider || '—')}</div></div><div><span class="hint">مقدّم الدورة</span><div>${esc(t.presenter || '—')}</div></div>
+        <div><span class="hint">النوع</span><div>${esc(t.mode || '—')}</div></div><div><span class="hint">التاريخ</span><div>${esc(t.start || '—')}${t.end && t.end !== t.start ? ' → ' + esc(t.end) : ''}</div></div>
+        <div><span class="hint">الساعات</span><div><b>${t.hours}</b></div></div><div><span class="hint">مرفق المعلم</span><div>${t.certificate ? '<a href="#" id="rvF">📎 فتح</a>' : '—'}</div></div></div>
+      ${t.self_note ? `<p class="hint">ما ذكره عن التطبيق: «${esc(t.self_note)}»</p>` : ''}
+      <label class="f" style="margin-top:8px">ملاحظة للمعلم (مطلوبة عند الإعادة)<textarea id="rvN" rows="2"></textarea></label>
+      <label style="display:flex;gap:8px;align-items:center;margin-top:10px;font-weight:700"><input type="checkbox" id="rvC"> 🎓 إصدار شهادة تدريب من المنصة للمعلم</label>
+      <p class="hint" style="margin:4px 0 0">الشهادة تحمل شعار المدرسة واسم مقدّم الدورة ومدير التعليم والمدير التنفيذي. يمكن الاعتماد بدون شهادة وإصدارها لاحقًا.</p>
+      ${!t.presenter ? '<div class="notice warn" style="margin-top:8px">لم يُذكر مقدّم الدورة — سيظهر مكانه فارغًا في الشهادة.</div>' : ''}`;
+    if (t.certificate) $('#rvF', body).onclick = (e) => { e.preventDefault(); openFile(t.certificate); };
+    const go = (action) => async () => {
+      const note = $('#rvN', body).value.trim();
+      if (action === 'return' && !note) { toast('اكتب سبب الإعادة للمعلم', 'err'); return false; }
+      const cert = action === 'approve' && $('#rvC', body).checked;
+      const { data: r, error } = await sb.rpc('trn_review', { p_id: t.id, p_action: action, p_note: note || null, p_cert: cert });
+      if (error) { toast(errMsg(error), 'err'); return false; }
+      toast(action === 'return' ? 'أُعيد التدريب للمعلم ✓' : cert ? `اعتُمد وصدرت الشهادة ✓ ${r && r.cert_no || ''}` : 'اعتُمد التدريب ✓');
+      paintTrn(); trnBadge(); return true; };
+    modal({ title: '✅ اعتماد تدريب', wide: true, body, actions: [{ label: 'إلغاء', cls: 'ghost', value: false }, { label: '↩ إعادة للمعلم', cls: 'danger', onClick: go('return') }, { label: '✅ اعتماد', cls: 'primary', onClick: go('approve') }] });
   }
   function trnForm(t) {
     t = t || {}; let file = null;
     const body = document.createElement('div');
     body.innerHTML = `<div class="form-grid"><label class="f" style="grid-column:1/-1">اسم البرنامج التدريبي *<input id="xT" value="${esc(t.title || '')}"></label>
-      <label class="f">الجهة المقدّمة<input id="xP" value="${esc(t.provider || '')}"></label>
+      ${t.status === 'returned' && t.review_note ? `<div class="notice warn" style="grid-column:1/-1">↩ أعاده ${esc(t.review_by || 'المعتمِد')}: «${esc(t.review_note)}» — عدّل ثم احفظ ليرجع للاعتماد</div>` : ''}
+      <label class="f">الجهة المنفّذة<input id="xP" value="${esc(t.provider || '')}"></label>
+      <label class="f">مقدّم الدورة (المدرب)<input id="xPr" value="${esc(t.presenter || '')}" placeholder="يظهر على الشهادة"></label>
       <label class="f">النوع<select id="xM">${['', 'حضوري', 'عن بعد', 'داخلي (المدرسة)', 'خارجي', 'مؤتمر / ملتقى', 'رخصة / شهادة مهنية'].map((m) => `<option ${m === (t.mode || '') ? 'selected' : ''}>${m}</option>`).join('')}</select></label>
       <label class="f">من تاريخ<input type="date" id="xS" value="${esc(t.start || '')}"></label><label class="f">إلى تاريخ<input type="date" id="xE" value="${esc(t.end || '')}"></label>
       <label class="f">عدد الساعات *<input type="number" min="0" step="0.5" id="xH" value="${t.hours ?? ''}"></label>
@@ -308,10 +350,10 @@
     acts.push({ label: '💾 حفظ', cls: 'primary', onClick: async () => {
       if (!$('#xT', body).value.trim()) { toast('اكتب اسم البرنامج', 'err'); return false; }
       try { const cert = file ? (await upload([file]))[0] : null;
-        const { error } = await sb.rpc('trn_save', { p: { id: t.id || null, title: $('#xT', body).value, provider: $('#xP', body).value, mode: $('#xM', body).value,
+        const { error } = await sb.rpc('trn_save', { p: { id: t.id || null, title: $('#xT', body).value, provider: $('#xP', body).value, presenter: $('#xPr', body).value, mode: $('#xM', body).value,
           start_date: $('#xS', body).value, end_date: $('#xE', body).value, hours: $('#xH', body).value, certificate: cert, self_rating: $('#xR', body).value, self_note: $('#xN', body).value } });
         if (error) throw error; } catch (e) { toast(errMsg(e), 'err'); return false; }
-      toast('تم الحفظ ✓'); paintTrn(); return true; } });
+      toast(t.id ? 'تم الحفظ ✓' : 'تم الحفظ ✓ — بانتظار اعتماد مشرفك'); paintTrn(); return true; } });
     modal({ title: t.id ? 'تعديل سجل تدريب' : '🎓 إضافة تدريب', wide: true, body, actions: acts });
   }
   function trnImpact(t) {

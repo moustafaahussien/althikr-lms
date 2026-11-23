@@ -1377,7 +1377,7 @@ function evMax(ev){ return isDasc(ev)?4:5; }
 function evAvg(ev){ return evTotal(ev)/evItemsOf(ev).length; }
 const EV_SCALE=["","لا يوجد دليل","دليل ضعيف","يوجد دليل إلى حد ما","يوجد دليل","يوجد دليل قوي"];
 // الفئة الوصفية حسب الدرجة من 100 (عدّل الحدود هنا إن لزم)
-const EV_BANDS=[[90,"استثنائي","#2fa36b"],[80,"متميز","#509BB9"],[70,"متقدم","#e9b51c"],[60,"قابل للتطوير","#ef8a3a"],[0,"غير مرضٍ","#d64545"]];
+const EV_BANDS=[[90,"استثنائي","#007B51"],[80,"متميز","#00A657"],[70,"متقدم","#FFD54C"],[60,"قابل للتطوير","#F7941D"],[0,"غير مرضٍ","#d64545"]];
 const TPL_DEFAULT={
   good:["افتتاحية جاذبة ربطت الدرس بواقع الطلاب: [...]","توظيف استراتيجية [...] أدى إلى مشاركة فاعلة من أغلب الطلاب.","تنويع الأنشطة لتلبية الفروق الفردية بين المتعلمين.","تقديم تغذية راجعة فورية وبنّاءة للطلاب أثناء العمل.","إدارة صفية متميزة وانتقال سلس بين الأنشطة.","توظيف أدوات رقمية ([...]) بشكل هادف يخدم أهداف الدرس."],
   rec:["صياغة أهداف سلوكية ذكية (SMART) وعرضها ومناقشتها مع الطلاب في بداية الحصة.","تفعيل التعلم التعاوني بتوزيع أدوار واضحة داخل المجموعات.","توظيف مفاتيح المفكرين / عادات العقل في نشاط [...].","إتاحة فرص أكبر للطلاب لتقييم أعمالهم ذاتيًا ومن الأقران وفق معايير واضحة.","مراعاة الفروق الفردية بتقديم مهام متدرجة الصعوبة.","إدارة وقت الحصة بتخصيص وقت كافٍ للغلق والتقويم الختامي."]
@@ -1578,13 +1578,13 @@ function printEval(ev){
   const nl=s=>esc(s||"").replace(/\n/g,"<br>");
   const legend=EV_BANDS.slice().reverse().map(b=>`<span class="lg"><i style="background:${b[2]}"></i>${b[1]}</span>`).join(" ");
   const html=`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><link rel="stylesheet" href="${new URL('../assets/css/brand.css', location.href).href}"><title>استمارة ملاحظة – ${esc(ev.teacher)} – ${esc(ev.date)}</title>
-<style>@page{size:A4;margin:12mm}body{font-family:"Poppins","GE Dinar One",Tahoma,sans-serif;font-size:12px;color:#000;margin:0}
+<style>@page{size:A4;margin:12mm}body{font-family:"Poppins","GE Dinar One",Tahoma,sans-serif;font-size:12px;color:#434345;margin:0}
 .top{display:flex;justify-content:space-between;align-items:center}.top div{font-weight:700;line-height:1.6}.top img{height:70px}
-h2{text-align:center;margin:6px 0 8px;font-size:17px}table{width:100%;border-collapse:collapse;margin-bottom:8px}td,th{border:1px solid #8aaed6;padding:4px 5px;vertical-align:middle}
-th{background:#eef4fb}.c{text-align:center;width:22px;font-size:14px}.dm{font-weight:700;text-align:center;width:110px;background:#F9FBFA}.it{line-height:1.5}
+h2{text-align:center;margin:8px auto 10px;font-size:16px;background:#33B673;color:#fff;border-radius:99px;padding:5px 24px;width:fit-content;box-shadow:12px 0 0 #FFD54C}table{width:100%;border-collapse:collapse;margin-bottom:8px}td,th{border:1px solid #cfdcd5;padding:4px 5px;vertical-align:middle}
+th{background:#007B51;color:#fff;font-weight:600}.c{text-align:center;width:22px;font-size:14px}.dm{font-weight:700;text-align:center;width:110px;background:#E8F4EF;color:#007B51}.it{line-height:1.5}
 .lg{display:inline-flex;align-items:center;gap:3px;margin:0 4px;font-size:11px}.lg i{width:9px;height:9px;border-radius:50%;display:inline-block}
 .sel{font-weight:700;font-size:13px}.box{min-height:90px;vertical-align:top}.scale{font-size:11px;text-align:center;margin:4px 0}.ref{text-align:center;font-size:11px}
-.foot{text-align:center;font-weight:700;margin-top:10px}.brk{page-break-inside:avoid}</style></head><body>
+.foot{text-align:center;font-weight:700;margin-top:10px;color:#007B51}.top{padding-bottom:6px;border-bottom:2px solid #FFD54C;margin-bottom:8px}.brandfoot{display:flex;justify-content:space-between;align-items:flex-end;margin-top:10px;font-size:9.5px;color:#6b7470;direction:ltr}.brandfoot img{width:70px;height:50px}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}.brk{page-break-inside:avoid}</style></head><body>
 <div class="top"><div>وزارة التعليم<br>الإدارة العامة للتعليم بمحافظة جدة<br>مكتب التعليم الخاص</div><img src="${PAGE_URL}school-logo.png" alt=""><div>مدارس دار الذكر الأهلية للبنين<br>مكتب الإشراف والتطوير التربوي</div></div>
 <h2>استمارة ملاحظة بيئة التعلم (حصة صفية)</h2>
 <table><tr><th>اسم المعلم</th><th>الفصل</th><th>المادة</th><th>موضوع الدرس</th><th>رقم الزيارة</th><th>نوع الزيارة</th><th>تاريخ الزيارة</th><th>اسم المُقيِّم</th></tr>
@@ -1596,8 +1596,8 @@ th{background:#eef4fb}.c{text-align:center;width:22px;font-size:14px}.dm{font-we
 <div class="ref">*Reference: Effective Learning Environments Observation Tool® (eleot® 2.0)</div>
 <table class="brk" style="margin-top:8px"><tr><th colspan="2">ملاحظات المُقيِّم</th></tr><tr><th>ممارسات جيدة</th><th>توصيات لتجويد التعلم</th></tr>
 <tr><td class="box" style="width:50%" data-raw>${nl(ev.good)}</td><td class="box" data-raw>${nl(ev.rec)}</td></tr>
-<tr><th colspan="2" style="background:#d6ecc8">تأملات المعلم</th></tr><tr><td colspan="2" class="box" data-raw>${nl(ev.refl)}</td></tr></table>
-<div class="foot">إدارة الإشراف والتطوير التربوي</div>
+<tr><th colspan="2" style="background:#FFD54C;color:#434345">تأملات المعلم</th></tr><tr><td colspan="2" class="box" data-raw>${nl(ev.refl)}</td></tr></table>
+<div class="foot">إدارة الإشراف والتطوير التربوي</div><div class="brandfoot"><img src="${new URL('../assets/img/brand/deco-corner.svg', location.href).href}" alt=""><span>www.althikr.edu.sa</span></div>
 <script>window.onload=()=>setTimeout(()=>window.print(),400)<\/script></body></html>`;
   const w=window.open("","_blank");
   if(!w){ toast("اسمح بالنوافذ المنبثقة لهذه الصفحة للطباعة"); return; }
@@ -1664,11 +1664,11 @@ function printDasc(ev){
   const nl=s=>esc(s||"").replace(/\n/g,"<br>");
   const sup=(ev.support||[]).concat(ev.supportOther?["Other: "+ev.supportOther]:[]);
   const html=`<!doctype html><html lang="en" dir="ltr"><head><meta charset="utf-8"><link rel="stylesheet" href="${new URL('../assets/css/brand.css', location.href).href}"><title>DASC Observation – ${esc(ev.teacher)} – ${esc(ev.date)}</title>
-<style>@page{size:A4;margin:12mm}body{font-family:"Poppins","GE Dinar One",Arial,sans-serif;font-size:11.5px;color:#000;margin:0}
+<style>@page{size:A4;margin:12mm}body{font-family:"Poppins","GE Dinar One",Arial,sans-serif;font-size:11.5px;color:#434345;margin:0}
 .top{display:flex;justify-content:space-between;align-items:center}.top div{font-weight:700;line-height:1.6}.top img{height:64px}
-h2{text-align:center;margin:6px 0 8px;font-size:16px}h3{font-size:13px;margin:10px 0 4px}table{width:100%;border-collapse:collapse;margin-bottom:8px}td,th{border:1px solid #8aaed6;padding:4px 5px;vertical-align:middle}
-th{background:#eef4fb}.c{text-align:center;width:40px;font-size:13px}.dm{font-weight:700;text-align:center;width:120px;background:#F9FBFA}.it{line-height:1.45}
-.sel{font-weight:700;font-size:13px}.box{min-height:60px;vertical-align:top}.brk{page-break-inside:avoid}.foot{text-align:center;font-weight:700;margin-top:10px}</style></head><body>
+h2{text-align:center;margin:8px auto 10px;font-size:15px;background:#33B673;color:#fff;border-radius:99px;padding:5px 24px;width:fit-content;box-shadow:-12px 0 0 #FFD54C}h3{font-size:13px;margin:10px 0 4px;color:#007B51}table{width:100%;border-collapse:collapse;margin-bottom:8px}td,th{border:1px solid #cfdcd5;padding:4px 5px;vertical-align:middle}
+th{background:#007B51;color:#fff;font-weight:600}.c{text-align:center;width:40px;font-size:13px}.dm{font-weight:700;text-align:center;width:120px;background:#E8F4EF;color:#007B51}.it{line-height:1.45}
+.sel{font-weight:700;font-size:13px}.box{min-height:60px;vertical-align:top}.brk{page-break-inside:avoid}.foot{text-align:center;font-weight:700;margin-top:10px;color:#007B51}.top{padding-bottom:6px;border-bottom:2px solid #FFD54C;margin-bottom:8px}.brandfoot{display:flex;justify-content:space-between;align-items:flex-end;margin-top:10px;font-size:9.5px;color:#6b7470;direction:ltr}.brandfoot img{width:70px;height:50px}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}</style></head><body>
 <div class="top"><div>Dar Al-Thikr Schools<br>DASC</div><img src="${PAGE_URL}school-logo.png" alt=""><div style="text-align:right">مدارس دار الذكر الأهلية<br>مكتب الإشراف والتطوير التربوي</div></div>
 <h2>DASC – Classroom Learning Environment Observation | 2026–2027</h2>
 <table><tr><th>Teacher</th><th>Class</th><th>Subject</th><th>Lesson topic</th><th>Visit No.</th><th>Visit type</th><th>Date</th><th>Observer</th></tr>
@@ -1681,7 +1681,7 @@ th{background:#eef4fb}.c{text-align:center;width:40px;font-size:13px}.dm{font-we
 <tr><th style="text-align:left">5. Recommended Coaching / Professional Learning Support</th><td class="box">${sup.length?sup.map(esc).join("<br>"):""}</td></tr>
 <tr><th style="text-align:left">6. Observer Notes / Follow-Up Evidence</th><td class="box">${nl(ev.notes)}</td></tr>
 <tr><th style="text-align:left">Observer Confirmation</th><td>${ev.confirm?"☑ YES — ":"☐ "}I confirm that the ratings and comments above are based on evidence observed during this classroom visit.</td></tr></table></div>
-<div class="foot">إدارة الإشراف والتطوير التربوي</div>
+<div class="foot">إدارة الإشراف والتطوير التربوي</div><div class="brandfoot"><img src="${new URL('../assets/img/brand/deco-corner.svg', location.href).href}" alt=""><span>www.althikr.edu.sa</span></div>
 <script>window.onload=()=>setTimeout(()=>window.print(),400)<\/script></body></html>`;
   const w=window.open("","_blank");
   if(!w){ toast("اسمح بالنوافذ المنبثقة لهذه الصفحة للطباعة"); return; }

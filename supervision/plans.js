@@ -131,13 +131,13 @@ function planText(ev) {
 }
 function printDoc(title, bodyHtml, ltr) {
   const html = `<!doctype html><html lang="${ltr ? "en" : "ar"}" dir="${ltr ? "ltr" : "rtl"}"><head><meta charset="utf-8"><link rel="stylesheet" href="${new URL('../assets/css/brand.css', location.href).href}"><title>${esc(title)}</title>
-<style>@page{size:A4;margin:12mm}body{font-family:"Poppins","GE Dinar One",Tahoma,sans-serif;font-size:12.5px;color:#000;margin:0}
+<style>@page{size:A4;margin:12mm}body{font-family:"Poppins","GE Dinar One",Tahoma,sans-serif;font-size:12.5px;color:#434345;margin:0}
 .top{display:flex;justify-content:space-between;align-items:center}.top div{font-weight:700;line-height:1.6}.top img{height:64px}
-h2{text-align:center;margin:8px 0;font-size:17px}table{width:100%;border-collapse:collapse;margin-bottom:8px}td,th{border:1px solid #8aaed6;padding:5px 6px;vertical-align:top;text-align:start}
-th{background:#eef4fb}.g{font-weight:700;margin:10px 0 4px;padding:4px 8px;border-radius:6px}.g.w{background:#fde8e8}.g.a{background:#fff4d6}
-ul{margin:2px 0;padding-inline-start:18px}.sig{display:flex;justify-content:space-between;margin-top:26px}.sig div{width:45%;border-top:1px solid #000;padding-top:4px;text-align:center}.brk{page-break-inside:avoid}</style></head><body>
+h2{text-align:center;margin:8px auto 10px;font-size:16px;background:#33B673;color:#fff;border-radius:99px;padding:5px 24px;width:fit-content;box-shadow:12px 0 0 #FFD54C}table{width:100%;border-collapse:collapse;margin-bottom:8px}td,th{border:1px solid #cfdcd5;padding:5px 6px;vertical-align:top;text-align:start}
+th{background:#007B51;color:#fff;font-weight:600}.g{font-weight:700;margin:10px 0 4px;padding:4px 8px;border-radius:6px}.g.w{background:#fde8e8}.g.a{background:#FEF1E1}.g{color:#434345}.top{padding-bottom:6px;border-bottom:2px solid #FFD54C;margin-bottom:8px}.brandfoot{display:flex;justify-content:space-between;align-items:flex-end;margin-top:10px;font-size:9.5px;color:#6b7470;direction:ltr}.brandfoot img{width:70px;height:50px}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+ul{margin:2px 0;padding-inline-start:18px}.sig{display:flex;justify-content:space-between;margin-top:26px}.sig div{width:45%;border-top:2px solid #FFD54C;padding-top:4px;text-align:center}.brk{page-break-inside:avoid}</style></head><body>
 <div class="top"><div>${ltr ? "Ministry of Education<br>Jeddah Education Administration<br>Private Education Office" : "وزارة التعليم<br>الإدارة العامة للتعليم بمحافظة جدة<br>مكتب التعليم الخاص"}</div><img src="${PAGE_URL}school-logo.png" alt=""><div>${ltr ? "Dar Al-Thikr Private Schools<br>Educational Supervision & Development" : "مدارس دار الذكر الأهلية<br>مكتب الإشراف والتطوير التربوي"}</div></div>
-${bodyHtml}<script>window.onload=()=>setTimeout(()=>window.print(),400)<\/script></body></html>`;
+${bodyHtml}<div class="brandfoot"><img src="${new URL('../assets/img/brand/deco-corner.svg', location.href).href}" alt=""><span>www.althikr.edu.sa</span></div><script>window.onload=()=>setTimeout(()=>window.print(),400)<\/script></body></html>`;
   const w = window.open("", "_blank"); if (!w) { toast("اسمح بالنوافذ المنبثقة لهذه الصفحة للطباعة"); return; }
   w.document.open(); w.document.write(html); w.document.close();
 }

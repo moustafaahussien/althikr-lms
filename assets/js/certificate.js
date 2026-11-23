@@ -16,12 +16,13 @@
 
   // ---- التحقق العام برقم الشهادة ----
   if (Q.get('no')) {
-    const { data, error } = await sb.rpc('trn_verify', { p_no: Q.get('no') });
+    let { data, error } = await sb.rpc('trn_verify', { p_no: Q.get('no') });
+    if (!error && !(data && data.valid)) ({ data, error } = await sb.rpc('cert_verify', { p_no: Q.get('no') }));   // شهادات قسم الإصدار (sql/46)
     if (error) return fail(errMsg(error));
     app.innerHTML = `<div class="ver card glass" style="padding:22px;text-align:center"><img src="assets/img/brand/logo-v.svg" alt="" style="height:110px">
-      <h2 style="margin:8px 0">التحقق من شهادة تدريب</h2><p class="hint" dir="ltr">${esc(Q.get('no'))}</p>
+      <h2 style="margin:8px 0">التحقق من شهادة</h2><p class="hint" dir="ltr">${esc(Q.get('no'))}</p>
       ${data && data.valid ? `<div class="notice ok" style="text-align:right">✅ شهادة صحيحة صادرة من ${esc(C.SCHOOL_NAME || 'مدارس دار الذكر')}<br>
-        <b>${esc(data.name)}</b> — ${esc(data.title)}<br>${esc(hrs(data.hours))}${data.start ? ' — ' + esc(greg(data.start)) : ''}<br><span class="hint">تاريخ الإصدار: ${esc(greg(data.issued_at))}</span></div>`
+        <b>${esc(data.name)}</b> — ${esc(data.title)}<br>${data.hours ? esc(hrs(data.hours)) : ''}${data.start ? ' — ' + esc(greg(data.start)) : ''}${data.hours || data.start ? '<br>' : ''}<span class="hint">تاريخ الإصدار: ${esc(greg(data.issued_at))}</span></div>`
         : '<div class="notice err">❌ لا توجد شهادة صادرة بهذا الرقم</div>'}</div>`;
     return;
   }

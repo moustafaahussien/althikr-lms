@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <!-- سياسة أمان: المواقع المسموح للصفحة تحميل الأكواد منها والاتصال بها -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.sheetjs.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://zpbhzhpvpvehowxvlsgp.supabase.co https://drive.google.com https://*.googleusercontent.com; connect-src 'self' https://zpbhzhpvpvehowxvlsgp.supabase.co wss://zpbhzhpvpvehowxvlsgp.supabase.co; frame-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>إصدار الشهادات — منصة دار الذكر التعليمية</title>
+  <link rel="stylesheet" href="assets/css/brand.css?v=202611231330">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <meta name="theme-color" content="#007B51">
+  <link rel="manifest" href="supervision/manifest.json?v=2">
+    <link rel="stylesheet" href="assets/css/app.css?v=202611231330">
+  <link rel="stylesheet" href="assets/css/topbar.css?v=202611231330">
+  <link rel="stylesheet" href="assets/css/cert.css?v=202611231530">
+  <style>
+    .cw { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 14px; align-items: start; }
+    @media (max-width: 1000px) { .cw { grid-template-columns: 1fr; } }
+    .sec { padding: 14px; margin-bottom: 12px; } .sec h3 { margin: 0 0 10px; color: var(--brand); font-size: 1.02rem; }
+    .tpls { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+    .tpls button, .rt button { font: inherit; border: 1px solid var(--line); background: #fff; border-radius: 99px; padding: 4px 12px; cursor: pointer; font-size: .86rem; }
+    .tpls button.on, .rt button.on { background: var(--brand); color: #fff; border-color: var(--brand); }
+    .rt { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+    textarea#body { min-height: 170px; line-height: 1.8; }
+    .vars { display: flex; gap: 5px; flex-wrap: wrap; margin: 6px 0; } .vars button { font: inherit; font-size: .78rem; border: 1px dashed var(--brand-line); background: var(--dt-mint); color: var(--brand); border-radius: 8px; padding: 1px 8px; cursor: pointer; }
+    .sigs { display: grid; grid-template-columns: 1fr 1fr auto; gap: 6px; align-items: end; } .sigs .f { margin: 0; }
+    .rl { max-height: 300px; overflow: auto; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+    .rl div { display: flex; gap: 8px; align-items: center; padding: 5px 10px; border-bottom: 1px solid #f0f3f1; font-size: .9rem; } .rl div:last-child { border: 0; }
+    .rl div .grow { flex: 1; } .rl small { color: var(--muted); } .rl button { border: 0; background: none; cursor: pointer; color: #a3244a; font-size: 1rem; }
+    .pick { max-height: 260px; overflow: auto; border: 1px solid var(--line); border-radius: 12px; background: #fff; margin-top: 8px; }
+    .pick label { display: flex; gap: 8px; align-items: center; padding: 4px 10px; border-bottom: 1px solid #f0f3f1; font-size: .9rem; cursor: pointer; }
+    .prev { position: sticky; top: 10px; } .pv { overflow: hidden; border-radius: 10px; box-shadow: 0 6px 24px rgba(0,60,40,.12); background: #fff; }
+    .pv .dcert { transform-origin: top right; }
+    .drop { display: block; border: 2px dashed var(--brand-line); border-radius: 14px; padding: 16px; text-align: center; cursor: pointer; background: #fff; }
+    .bl { display: grid; gap: 8px; } .bl .it { display: flex; gap: 10px; align-items: center; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+  </style>
+</head>
+<body>
+  <header id="topbar"></header>
+  <main class="page" id="main">
+    <section class="hero glass">
+      <h1>🎓 إصدار الشهادات</h1>
+      <p>شهادات شكر وتقدير وتفوق وحضور ومشاركة للطلاب والمعلمين بهوية المدرسة. اكتب نص الشهادة كما تريد، واختر المستلمين من المنصة أو ارفع ملف Excel أو Word بالأسماء، ثم اطبع الكل بضغطة واحدة. لكل شهادة رقم تحقق.</p>
+    </section>
+    <nav class="tabs glass" id="tabs"><button data-tab="new" class="on">✏️ إصدار جديد</button><button data-tab="log">🗂️ سجل الشهادات</button></nav>
+    <div id="view"><div class="empty">جارٍ التحميل…</div></div>
+  </main>
+  <footer class="credit">إعداد وتصميم: مصطفى حسين</footer>
+
+  <script src="assets/vendor/supabase-js-2.119.2.js"></script>
+  <script src="assets/js/config.js?v=202611231530"></script>
+  <script src="assets/js/academic-calendar.js?v=202611231330"></script>
+  <script src="assets/js/core.js?v=202611231530"></script>
+  <script src="assets/js/cert-render.js?v=202611231530"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
+  <script src="assets/js/certificates.js?v=202611231530"></script>
+</body>
+</html>

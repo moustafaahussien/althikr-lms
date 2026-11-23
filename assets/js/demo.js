@@ -1121,6 +1121,22 @@
           students: stuIn([p_class]).sort((a, b) => name(a.profile_id).localeCompare(name(b.profile_id), 'ar')).map((s) => ({ id: s.profile_id, name: name(s.profile_id), no: s.student_number, guardian: s.guardian_name, phone: s.guardian_phone,
             absent: cnt(s.profile_id, 'absent'), late: cnt(s.profile_id, 'late'), pf: M().pf.filter((i) => i.student_id === s.profile_id && i.status === 'approved').length })) }; }
       ,
+      // ===== قسم إصدار الشهادات (sql/46) =====
+      cert_defaults() { if (!['admin', 'leadership', 'principal', 'supervisor', 'staff'].includes(MYROLE())) deny('إصدار الشهادات للإداريين فقط');
+        const S = (k) => (DB.app_settings.find((x) => x.key === k) || {}).value || '';
+        return { school: S('school_name') || 'مدارس دار الذكر', sigs: [{ t: S('cert_edu_title') || 'مدير التعليم', n: S('cert_edu_name') }, { t: S('cert_exec_title') || 'المدير التنفيذي', n: S('cert_exec_name') }], me: name(ME_ID) }; },
+      cert_staff({ p_q }) { RPC.cert_defaults(); const q = String(p_q || '').trim();
+        return DB.profiles.filter((x) => !['student', 'parent'].includes(x.role) && x.active !== false && (!q || window.LMS.has(x.full_name + ' ' + (x.job_title || ''), q)))
+          .sort((a, b) => a.full_name.localeCompare(b.full_name, 'ar')).slice(0, 300).map((x) => ({ id: x.id, name: x.full_name, job: x.job_title, role: x.role })); },
+      cert_issue({ p }) { RPC.cert_defaults(); if (!String(p.title || '').trim()) deny('اكتب عنوان الشهادة'); if (!(p.items || []).length) deny('أضف أسماء المستلمين');
+        DB.certs = DB.certs || []; const b = 'b' + Date.now(), yr = new Date().getFullYear(), nums = [];
+        p.items.forEach((it) => { if (!String(it.name || '').trim()) return; const no = `DTC-${yr}-${String(DB.certs.length + 1).padStart(5, '0')}`;
+          DB.certs.push({ batch: b, no, name: it.name.trim(), title: p.title, kind: p.kind, data: it.data || {}, at: iso(now()), by: ME_ID }); nums.push(no); });
+        save(); return { batch: b, count: nums.length, numbers: nums }; },
+      cert_batches() { RPC.cert_defaults(); const by = {}; (DB.certs || []).forEach((c) => { const o = by[c.batch] = by[c.batch] || { batch: c.batch, title: c.title, kind: c.kind, count: 0, at: c.at, by: name(c.by), first: c.name }; o.count++; });
+        return Object.values(by).sort((a, b) => (a.at < b.at ? 1 : -1)); },
+      cert_batch({ p_batch }) { RPC.cert_defaults(); return (DB.certs || []).filter((c) => c.batch === p_batch).map((c) => ({ no: c.no, name: c.name, title: c.title, kind: c.kind, data: c.data, at: c.at })); },
+      cert_verify({ p_no }) { const c = (DB.certs || []).find((x) => x.no === String(p_no || '').trim().toUpperCase()); return c ? { valid: true, name: c.name, title: c.title, issued_at: c.at } : { valid: false }; },
       // ===== دليل الطلاب (sql/44) — للإداريين فقط =====
       sd_list({ p_q, p_stage, p_grade, p_class, p_flag, p_limit, p_offset }) {
         const R = MYROLE(); if (!['admin', 'leadership', 'principal', 'supervisor', 'staff'].includes(R)) deny('دليل الطلاب للإداريين فقط');

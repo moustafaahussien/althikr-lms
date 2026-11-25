@@ -64,6 +64,10 @@ alter table public.ex_attempts enable row level security;
 revoke all on public.qb_questions, public.ex_exams, public.ex_attempts from anon, authenticated;
 
 -- ---------- بنك الأسئلة ----------
+-- أعمدة أُضيفت لاحقًا في sql/41 وتستخدمها دوال هذا الملف — هنا حتى يعمل التثبيت من الصفر بالترتيب
+alter table public.ex_exams add column if not exists period text check (period in ('p1','p2','mid','final'));
+alter table public.qb_questions add column if not exists image text;
+
 create or replace function private.qb_can_use(p_subject int) returns boolean
 language sql stable security definer set search_path = public as $$
   select public.me_role() in ('admin','leadership','principal','supervisor')

@@ -40,6 +40,9 @@ alter table public.gb_scores enable row level security;
 revoke all on public.gb_items, public.gb_scores from anon, authenticated;
 
 -- من يرى سجل (فصل × مادة): معلمها، ومن يتابع معلمها
+-- أعمدة أُضيفت لاحقًا في sql/41 وتستخدمها دوال هذا الملف — هنا حتى يعمل التثبيت من الصفر بالترتيب
+alter table public.gb_items add column if not exists period text check (period in ('p1','p2','mid','final'));
+
 create or replace function private.gb_can_view(p_class int, p_subject int) returns boolean
 language sql stable security definer set search_path = public as $$
   select exists (select 1 from teaching_assignments ta where ta.class_id = p_class and ta.subject_id = p_subject

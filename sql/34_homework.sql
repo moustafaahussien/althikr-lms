@@ -47,6 +47,9 @@ alter table public.hw_submissions enable row level security;
 revoke all on public.hw_assignments, public.hw_submissions from anon, authenticated;
 
 -- روابط آمنة فقط (http/https) وبحد أقصى 10
+-- أعمدة أُضيفت لاحقًا في sql/41 وتستخدمها دوال هذا الملف — هنا حتى يعمل التثبيت من الصفر بالترتيب
+alter table public.hw_assignments add column if not exists period text check (period in ('p1','p2','mid','final'));
+
 create or replace function private.hw_clean_links(p jsonb) returns jsonb
 language sql immutable as $$
   select coalesce(jsonb_agg(jsonb_build_object('url', left(btrim(x->>'url'), 1000), 'title', left(coalesce(nullif(btrim(x->>'title'), ''), btrim(x->>'url')), 200))), '[]'::jsonb)

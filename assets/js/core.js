@@ -194,6 +194,21 @@
     return ctx;
   }
 
+  /* ---------- الوحدات التجريبية (لوحة الإدارة ← الإعدادات) ----------
+     الوحدة التجريبية تفتح للأدوار المحددة لها في beta_access، وإن لم تُحدَّد فلأدوارها الافتراضية في config.js.
+     مدير النظام يفتح كل الوحدات دائمًا (إلا وهو يعرض المنصة بواجهة المشرف). */
+  function betaAllowed(m, ctx) {
+    if (typeof m === 'string') m = (C.MODULES || []).find((x) => x.key === m);
+    if (!m || !m.beta || !ctx || !ctx.profile) return true;
+    const role = ctx.profile.role;
+    if (role === 'admin') return true;
+    const set = ctx.beta && ctx.beta[m.key];
+    if (Array.isArray(set)) return set.includes(role);
+    return !m.roles || !m.roles.length || m.roles.includes(role);
+  }
+  // الوحدات التي تخص الصفحة الحالية (حسب رابطها) — services.html تجمع أكثر من وحدة
+  function pageModules(page) { return (C.MODULES || []).filter((m) => m.url && !/^https?:/i.test(m.url) && m.url.split('#')[0] === page); }
+
   async function requireAuth(roles = []) {
     if (!sb) { location.href = BASE + 'index.html'; return new Promise(() => {}); }
     const { data: { session } } = await sb.auth.getSession();
@@ -203,6 +218,11 @@
     if (!ctx || !ctx.registered) { location.href = BASE + 'index.html'; return new Promise(() => {}); }
     applyView(ctx);
     if (roles.length && !roles.includes(ctx.profile.role)) { location.href = BASE + 'home.html'; return new Promise(() => {}); }
+    const pm = pageModules(pageKey());
+    if (pm.length && pm.every((m) => m.beta) && !pm.some((m) => betaAllowed(m, ctx))) {
+      try { sessionStorage.setItem('lms_flash', 'هذه الوحدة تجريبية وغير متاحة لحسابك حاليًا.'); } catch (_) {}
+      location.href = BASE + 'home.html'; return new Promise(() => {});
+    }
     renderTopbar(ctx);
     return ctx;
   }
@@ -249,13 +269,13 @@
       ['online/', '🎥 التعليم عن بعد', true],
       ['messages.html', '✉️ الرسائل <span class="nbadge" id="navMsg" hidden></span>', !LIM],
       ['services.html', '🗂️ الخدمات', !LIM],
-      ['attendance.html', '🗓️ الحضور والغياب', STAFF],
+      ['attendance.html', '🗓️ الحضور والغياب', STAFF && betaAllowed('attendance', ctx)],
       ['supervision/', '🧭 مكتب الإشراف', MGR || R === 'supervisor']].filter((l) => l[2]);
     const more = [['admin.html', '⚙️ لوحة الإدارة', R === 'admin'],
       ['settings.html', '🏫 إعدادات المدرسة', MGR],
-      ['teaching-load.html', '📊 نصاب الحصص', MGR || R === 'supervisor'],
+      ['teaching-load.html', '📊 نصاب الحصص', (MGR || R === 'supervisor') && betaAllowed('load', ctx)],
       ['staff-directory.html', '📇 دليل الموظفين', STAFF],
-      ['guardians.html', '👪 أولياء الأمور', MGR]].filter((l) => l[2] && !LIM);
+      ['guardians.html', '👪 أولياء الأمور', MGR && betaAllowed('guardians', ctx)]].filter((l) => l[2] && !LIM);
     const curMore = more.find((l) => l[0] === here);
     const navA = ([href, label]) => `<a href="${BASE + href}" class="${here === href ? 'on' : ''}"${here === href ? ' aria-current="page"' : ''}>${label}</a>`;
     const roleTxt = LIM ? 'طالب' : ctx.viewAs ? (p.job_title || ROLE_LABELS.supervisor) : ctx.canSwitch ? ROLE_LABELS[p.role] : (p.job_title || ROLE_LABELS[p.role]);
@@ -501,5 +521,5 @@
   const has = (text, q) => norm(text).includes(norm(q));
   window.LMS = { sb, C, configured, ROLE_LABELS, esc, $, $$, toast, modal, confirmBox, errMsg, norm, has, linkMeet,
                  fetchAll, signInWithGoogle, signOut, getContext, cached, clearCache, requireAuth, downloadCSV, rememberNext, takeNext,
-                 getView, setView, canSwitch, applyView, mountTopbar, BASE, hijri, dateLine, printHTML, printTable, exportTable, tableRows, ymd, cal, clsText, isGroupCls, DEMO };
+                 getView, setView, canSwitch, applyView, mountTopbar, betaAllowed, BASE, hijri, dateLine, printHTML, printTable, exportTable, tableRows, ymd, cal, clsText, isGroupCls, DEMO };
 })();

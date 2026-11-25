@@ -40,6 +40,10 @@
 
   // ---------- التبويبات ----------
   if (!STAFF) $$('.staff-only').forEach((b) => b.remove());
+  // الوحدات التجريبية غير المتاحة لهذا الحساب تُخفى تبويباتها
+  const TABMOD = { duty: 'duty', req: 'requests', cmp: 'complaints', trn: 'training' };
+  Object.entries(TABMOD).forEach(([t, k]) => { if (!LMS.betaAllowed(k, ctx)) { const b = $(`#tabs [data-tab="${t}"]`); if (b) b.remove(); } });
+  if (!$('#tabs button')) { $('#tabs').insertAdjacentHTML('afterend', '<div class="notice info">لا توجد خدمات متاحة لحسابك حاليًا.</div>'); return; }
   const loaded = {};
   const LOAD = { duty: loadDuty, req: loadReq, cmp: loadCmp, trn: loadTrn };
   function show(tab) {

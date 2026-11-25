@@ -965,6 +965,9 @@
   /* ===================================================================
      الإعدادات
      =================================================================== */
+  const BETA_MODS = (LMS.C.MODULES || []).filter((m) => m.beta);
+  const BETA_ROLES = ['leadership', 'principal', 'supervisor', 'teacher', 'staff', 'student', 'parent'];
+  const betaRoles = (m, saved) => Array.isArray(saved && saved[m.key]) ? saved[m.key] : (!m.roles || !m.roles.length ? BETA_ROLES : m.roles.filter((r) => r !== 'admin'));
   async function settingsTab(pane) {
     const rows = await run(sb.from('app_settings').select('*'));
     const get = (k) => rows.find((r) => r.key === k)?.value;
@@ -982,6 +985,22 @@
       </div>
       <div class="card glass" style="margin:16px 0;padding:14px">
         <label style="display:flex;gap:10px;align-items:center;font-weight:800;font-size:1.02rem">
+          <input type="checkbox" id="allLogin" ${get('all_login_enabled') !== false ? 'checked' : ''}> السماح لكل المستخدمين بالدخول إلى المنصة</label>
+        <p class="hint" style="margin:6px 0 0">عند الإيقاف تُغلق المنصة أمام الجميع (وضع الصيانة) — الموظفون والمعلمون والطلاب وأولياء الأمور — ويرون رسالة «المنصة مغلقة مؤقتًا». <b>مدير النظام يدخل دائمًا.</b></p>
+      </div>
+      <div class="card glass" style="margin:16px 0;padding:14px">
+        <label style="display:flex;gap:10px;align-items:center;font-weight:800;font-size:1.02rem">
+          <input type="checkbox" id="tchLogin" ${get('teacher_login_enabled') !== false ? 'checked' : ''}> السماح للمعلمين بالدخول إلى المنصة</label>
+        <p class="hint" style="margin:6px 0 0">عند الإيقاف يُمنع كل حساب دوره «معلم» من الدخول ويرى رسالة «دخول المعلمين غير متاح حاليًا». المشرفون والإدارة والموظفون غير متأثرين.</p>
+      </div>
+      <div class="card glass" style="margin:16px 0;padding:14px"><b>🧪 الوحدات التجريبية — من يفتحها؟</b>
+        <p class="hint" style="margin:6px 0 10px">علّم الأدوار المسموح لها بفتح كل وحدة تجريبية (تظهر عليها شارة «تجريبي»). الوحدة التي لا يُعلَّم لها أي دور تُخفى عن الجميع عدا مدير النظام. مدير النظام يفتح كل الوحدات دائمًا.</p>
+        <div class="table-wrap no-tools"><table id="betaTbl"><thead><tr><th>الوحدة</th>${BETA_ROLES.map((r) => `<th style="text-align:center">${esc(ROLE_LABELS[r] || r)}</th>`).join('')}</tr></thead>
+        <tbody>${BETA_MODS.map((m) => `<tr><td>${m.icon} ${esc(m.title)}</td>${BETA_ROLES.map((r) => `<td style="text-align:center"><input type="checkbox" data-bm="${m.key}" data-br="${r}" ${betaRoles(m, get('beta_access')).includes(r) ? 'checked' : ''}></td>`).join('')}</tr>`).join('')}</tbody></table></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn sm" id="betaAll">الكل للجميع (الأدوار الافتراضية)</button><button class="btn sm" id="betaNone">إخفاء الكل عدا مدير النظام</button></div>
+      </div>
+      <div class="card glass" style="margin:16px 0;padding:14px">
+        <label style="display:flex;gap:10px;align-items:center;font-weight:800;font-size:1.02rem">
           <input type="checkbox" id="stLogin" ${get('student_login_enabled') === true ? 'checked' : ''}> السماح للطلاب بالدخول إلى المنصة</label>
         <p class="hint" style="margin:6px 0 0">بريد كل طالب = رقم هويته@${esc(LMS.C.SCHOOL_DOMAIN)} ويُضبط تلقائيًا من نظام التسجيل. عند الإيقاف تبقى بيانات الطلاب محفوظة، لكن أي طالب يحاول الدخول يرى رسالة «دخول الطلاب غير متاح حاليًا». المعلمون والإدارة غير متأثرين.</p>
       </div>
@@ -993,6 +1012,8 @@
       </div>
       <p class="hint">⚠️ أي حساب خارج هذه النطاقات لن يرى أي بيانات حتى لو كان مسجّلًا. لا تحذف نطاق المدرسة وإلا ستفقد الدخول أنت أيضًا.</p>
       <button class="btn primary" id="sv">حفظ الإعدادات</button></div>`;
+    $('#betaAll', pane).onclick = () => BETA_MODS.forEach((m) => BETA_ROLES.forEach((r) => { const c = $(`[data-bm="${m.key}"][data-br="${r}"]`, pane); c.checked = !m.roles || !m.roles.length || m.roles.includes(r); }));
+    $('#betaNone', pane).onclick = () => $$('[data-bm]', pane).forEach((c) => { c.checked = false; });
     $('#paSync', pane).onclick = async () => {
       try {
         const pre = await run(sb.rpc('parents_sync', { p_apply: false }));
@@ -1011,6 +1032,10 @@
         if (stOn !== (get('student_login_enabled') === true)) {
           if (!await confirmBox(stOn ? 'فتح دخول الطلاب؟ سيتمكن كل طالب نشط من الدخول ببريده المدرسي فورًا.' : 'إيقاف دخول الطلاب؟ سيُمنع كل الطلاب من الدخول فورًا.', stOn ? 'نعم، افتح الدخول' : 'نعم، أوقف', !stOn)) return;
         }
+        const allOn = $('#allLogin', pane).checked, tchOn = $('#tchLogin', pane).checked;
+        if (allOn !== (get('all_login_enabled') !== false) && !await confirmBox(allOn ? 'فتح المنصة لكل المستخدمين؟' : 'إغلاق المنصة أمام كل المستخدمين (عدا مدير النظام)؟ سيُمنع الجميع من الدخول فورًا.', allOn ? 'نعم، افتح' : 'نعم، أغلق', !allOn)) return;
+        if (tchOn !== (get('teacher_login_enabled') !== false) && !await confirmBox(tchOn ? 'فتح دخول المعلمين؟' : 'إيقاف دخول المعلمين؟ سيُمنع كل المعلمين من الدخول فورًا.', tchOn ? 'نعم، افتح' : 'نعم، أوقف', !tchOn)) return;
+        const beta = {}; BETA_MODS.forEach((m) => { beta[m.key] = BETA_ROLES.filter((r) => $(`[data-bm="${m.key}"][data-br="${r}"]`, pane).checked); });
         const paOn = $('#paLogin', pane).checked;
         if (paOn !== (get('parent_login_enabled') === true)) {
           if (!await confirmBox(paOn ? 'فتح بوابة أولياء الأمور؟ سيتمكن كل ولي أمر مربوط بابنه من الدخول فورًا.' : 'إغلاق بوابة أولياء الأمور؟', paOn ? 'نعم، افتح' : 'نعم، أغلق', !paOn)) return;
@@ -1018,7 +1043,10 @@
         await run(sb.from('app_settings').upsert([{ key: 'school_name', value: val(pane, '#sn') }, { key: 'allowed_domains', value: domains },
                                                   { key: 'student_login_enabled', value: stOn }, { key: 'parent_login_enabled', value: paOn },
                                                   { key: 'cert_edu_title', value: val(pane, '#ceT') }, { key: 'cert_edu_name', value: val(pane, '#ceN') },
-                                                  { key: 'cert_exec_title', value: val(pane, '#cxT') }, { key: 'cert_exec_name', value: val(pane, '#cxN') }]));
+                                                  { key: 'cert_exec_title', value: val(pane, '#cxT') }, { key: 'cert_exec_name', value: val(pane, '#cxN') },
+                                                  { key: 'all_login_enabled', value: allOn }, { key: 'teacher_login_enabled', value: tchOn }]));
+        await run(sb.rpc('beta_access_save', { p: beta }));
+        LMS.clearCache();
         rows.splice(0, rows.length, ...(await run(sb.from('app_settings').select('*'))));
         toast('تم حفظ الإعدادات');
       } catch (er) { toast(errMsg(er), 'err'); }

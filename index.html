@@ -10,7 +10,7 @@
   <link rel="icon" type="image/png" href="favicon.png">
   <meta name="theme-color" content="#007B51">
   <link rel="manifest" href="supervision/manifest.json?v=2">
-  <link rel="stylesheet" href="assets/css/app.css?v=202611231330">
+  <link rel="stylesheet" href="assets/css/app.css?v=202611251400">
 </head>
 <body>
   <div class="login-wrap">
@@ -24,8 +24,8 @@
   <footer class="credit" style="position:fixed;bottom:0;inset-inline:0">إعداد وتصميم: مصطفى حسين · <a href="privacy.html">سياسة الخصوصية</a></footer>
 
   <script src="assets/vendor/supabase-js-2.119.2.js"></script>
-  <script src="assets/js/config.js?v=202611231620"></script>
-  <script src="assets/js/core.js?v=202611231620"></script>
+  <script src="assets/js/config.js?v=202611251400"></script>
+  <script src="assets/js/core.js?v=202611251400"></script>
   <script>
   (async function () {
     const { sb, C, configured, esc, $, signInWithGoogle, signOut, getContext, errMsg, rememberNext, takeNext } = LMS;
@@ -95,7 +95,11 @@
       if (ctx && ctx.students_closed && /^parent\.html/.test(nxt)) { location.replace('parent.html'); return; }
 
       const email = (ctx && ctx.email) || session.user.email || '';
-      const msg = ctx && ctx.students_closed
+      const msg = ctx && ctx.all_closed
+        ? `المنصة مغلقة مؤقتًا للصيانة أو التحديث، وستعود قريبًا بإذن الله.`
+        : ctx && ctx.teachers_closed
+        ? `دخول المعلمين إلى المنصة غير متاح حاليًا، وسيُعلَن عند فتحه.`
+        : ctx && ctx.students_closed
         ? `دخول الطلاب إلى المنصة غير متاح حاليًا، وسيُعلَن عند فتحه.`
         : ctx && ctx.parents_closed
         ? `بوابة أولياء الأمور غير متاحة حاليًا، وستُعلن المدرسة عند فتحها.`
@@ -103,7 +107,7 @@
         ? `الحساب <b dir="ltr">${esc(email)}</b> ليس حسابًا مدرسيًا. استخدم بريدك على <b dir="ltr">@${esc(C.SCHOOL_DOMAIN)}</b>.`
         : `الحساب <b dir="ltr">${esc(email)}</b> غير مسجّل في المنصة أو موقوف. ولي الأمر: ادخل بنفس البريد المسجّل لدى المدرسة لابنك. وإلا تواصل مع إدارة المدرسة.`;
       area.innerHTML = `<div class="notice err">${msg}</div>
-        ${ctx && ctx.students_closed ? '<a class="btn primary gbtn" href="parent.html" style="margin-bottom:8px">👪 دخول ولي الأمر (برمزه السري)</a>' : ''}
+        ${ctx && ctx.students_closed && !ctx.all_closed ? '<a class="btn primary gbtn" href="parent.html" style="margin-bottom:8px">👪 دخول ولي الأمر (برمزه السري)</a>' : ''}
         <button class="btn gbtn" id="other">الدخول بحساب آخر</button>`;
       $('#other').onclick = async () => { await sb.auth.signOut(); showLogin(); };
     } catch (e) {

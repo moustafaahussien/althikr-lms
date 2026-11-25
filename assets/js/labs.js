@@ -11,14 +11,21 @@
   if (['student', 'parent'].includes(ctx.profile.role)) { view.innerHTML = '<div class="notice">🔒 ليس لديك صلاحيات الدخول — المختبرات لمنسوبي المدرسة.</div>'; return; }
   const call = async (fn, args) => { const { data, error } = await sb.rpc(fn, args || {}); if (error) throw error; return data; };
 
-  const CODE = new URLSearchParams(location.search).get('lab') || 'science';
-  const modKey = CODE === 'stem' ? 'stemlab' : 'scilab';
+  const QS = new URLSearchParams(location.search);
+  let LABS = []; try { LABS = await call('lab_list'); } catch (_) {}
+  const TYPE = QS.get('type') === 'facility' || (LABS.find((l) => l.code === QS.get('lab')) || {}).kind === 'facility' ? 'facility' : 'lab';
+  const CODE = QS.get('lab') || (TYPE === 'facility' ? ((LABS.find((l) => l.kind === 'facility') || {}).code || '') : 'science');
+  const FAC = TYPE === 'facility';
+  const W = FAC ? { tech: 'مسؤول المرفق', techS: 'المسؤول', techP: 'المسؤولين', sup: 'مشرف المرفق', place: 'المرفق', ic: '🧑‍💼' }
+                : { tech: 'محضّر المختبر', techS: 'المحضّر', techP: 'المحضّرين', sup: 'مشرف المعمل', place: 'المعمل', ic: '🧑‍🔬' };
+  const modKey = FAC ? 'facilities' : CODE === 'stem' ? 'stemlab' : 'scilab';
+  if (FAC && !CODE) { view.innerHTML = '<div class="empty">لم تُضف مرافق بعد — يضيفها مدير النظام.</div>'; if (ctx.profile.role === 'admin') setTimeout(() => facForm({}), 300); }
   if (!LMS.betaAllowed(modKey, ctx)) { view.innerHTML = '<div class="notice">🔒 ليس لديك صلاحيات الدخول لهذه الوحدة (وحدة تجريبية).</div>'; return; }
 
   const PERIODS = 8, DAYS = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'];
   const CAT = { tool: 'أداة', device: 'جهاز', material: 'مادة', chemical: 'مادة كيميائية', consumable: 'مستهلك', safety: 'أدوات سلامة', other: 'أخرى' };
   const COND = { good: 'سليم', maintenance: 'يحتاج صيانة', damaged: 'تالف' };
-  const STL = { pending: 'بانتظار التجهيز', prepared: 'تم التجهيز ✓', done: 'تمت الحصة', rejected: 'اعتذر المحضّر' };
+  const STL = { pending: 'بانتظار التجهيز', prepared: 'تم التجهيز ✓', done: 'تمت الحصة', rejected: `اعتذر ${W.techS}` };
   const ymd = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   const TODAY = ymd(new Date());
   const num = (n) => (Math.round(Number(n) * 100) / 100).toLocaleString('en-US');
@@ -35,13 +42,17 @@
     document.title = D.lab.name + ' — منصة دار الذكر التعليمية';
     $('#hP').textContent = D.my_role
       ? 'احجز الحصص، وجهّز الطلبات، وتابع المخزون والتنبيهات من هنا.'
-      : 'احجز حصتك في المعمل واكتب التجهيزات المطلوبة واختر ما تحتاجه من المخزون، فيجهزها محضّر المختبر قبل الحصة ويصلك إشعار.';
-    const ROLE = { admin: 'مدير النظام', supervisor: 'مشرف المعمل', tech: 'محضّر المختبر' };
+      : FAC ? `احجز ${D.lab.name} للحصة أو النشاط واكتب ما تحتاجه من تجهيزات، فيجهزها ${W.tech} ويصلك إشعار.` : 'احجز حصتك في المعمل واكتب التجهيزات المطلوبة واختر ما تحتاجه من المخزون، فيجهزها محضّر المختبر قبل الحصة ويصلك إشعار.';
+    const ROLE = { admin: 'مدير النظام', supervisor: W.sup, tech: W.tech };
     $('#labChips').innerHTML = (D.my_role ? `<span class="chip">${ROLE[D.my_role]}</span>` : '') +
-      D.staff.map((s) => `<span class="chip gray">${s.role === 'tech' ? '🧑‍🔬 المحضّر' : '👤 المشرف'}: ${esc(s.name)}</span>`).join('');
+      D.staff.map((s) => `<span class="chip gray">${s.role === 'tech' ? W.ic + ' ' + W.techS : '👤 المشرف'}: ${esc(s.name)}</span>`).join('')
+    const sib = LABS.filter((l) => (l.kind || 'lab') === TYPE); document.getElementById('facSw')?.remove();
+    if (FAC && sib.length > 1) $('#labChips').insertAdjacentHTML('beforebegin', `<div class="toolbar" id="facSw" style="margin:8px 0;flex-wrap:wrap">${sib.map((l) =>
+      `<a class="btn sm ${l.code === CODE ? 'primary' : ''}" href="labs.html?type=facility&lab=${esc(l.code)}">${l.icon} ${esc(l.name)}${l.alerts ? ' ⚠️' : ''}</a>`).join('')}</div>`);
     const tabs = [['book', '📅 الحجز'], ['mine', '🗒️ حجوزاتي']];
     if (D.my_role) tabs.push(['prep', '🧰 التجهيز'], ['inv', '📦 المخزون'], ['alerts', `⚠️ التنبيهات${D.alerts.length ? ' (' + D.alerts.length + ')' : ''}`], ['staff', '👥 الطاقم']);
-    else tabs.push(['inv', '📦 محتويات المعمل']);
+    else tabs.push(['inv', `📦 محتويات ${W.place}`]);
+    if (FAC && ctx.profile.role === 'admin') tabs.push(['fac', '🏛️ المرافق']);
     if (!TAB || !tabs.some((t) => t[0] === TAB)) TAB = location.hash.slice(1) && tabs.some((t) => t[0] === location.hash.slice(1)) ? location.hash.slice(1) : (D.my_role && D.alerts.length ? 'alerts' : 'book');
     $('#tabs').innerHTML = tabs.map(([k, l]) => `<button data-t="${k}" class="${k === TAB ? 'on' : ''}">${l}</button>`).join('');
     paint();
@@ -51,7 +62,7 @@
   const reload = async () => { try { await load(); } catch (e) { toast(errMsg(e), 'err'); } };
 
   function paint() {
-    ({ book: paintWeek, mine: paintMine, prep: paintPrep, inv: paintInv, alerts: paintAlerts, staff: paintStaff })[TAB]();
+    ({ book: paintWeek, mine: paintMine, prep: paintPrep, inv: paintInv, alerts: paintAlerts, staff: paintStaff, fac: paintFac })[TAB]();
   }
 
   // ============================ الحجز: جدول الأسبوع ============================
@@ -72,7 +83,7 @@
         <b>${dlabel(days[0])} — ${dlabel(days[4])}</b><button class="btn sm" id="nxt">الأسبوع التالي ←</button><button class="btn sm" id="tdy">هذا الأسبوع</button>
         <span class="grow"></span><button class="btn primary sm" id="newBk">＋ حجز جديد</button></div>
       <div class="glass card" style="overflow:auto"><div class="grid-wk" style="grid-template-columns:44px repeat(5,1fr)">${g}</div></div>
-      <p class="hint">اضغط على خانة فارغة لحجزها، أو على حجزك لتعديله أو إلغائه. يصل للمحضّر إشعار بكل حجز، ويصلك إشعار عند تجهيز المعمل.</p>`;
+      <p class="hint">اضغط على خانة فارغة لحجزها، أو على حجزك لتعديله أو إلغائه. يصل لـ${W.techS} إشعار بكل حجز، ويصلك إشعار عند تجهيز ${W.place}ل.</p>`;
     $('#prv').onclick = () => { WEEK.setDate(WEEK.getDate() - 7); reload(); };
     $('#nxt').onclick = () => { WEEK.setDate(WEEK.getDate() + 7); reload(); };
     $('#tdy').onclick = () => { WEEK = new Date(); WEEK.setHours(12, 0, 0, 0); if (WEEK.getDay() >= 5) WEEK.setDate(WEEK.getDate() + (7 - WEEK.getDay())); WEEK.setDate(WEEK.getDate() - WEEK.getDay()); reload(); };
@@ -95,7 +106,7 @@
       <p>المعلم: <b>${esc(b.teacher)}</b> · <span class="st ${b.status}">${STL[b.status]}</span></p>
       ${b.needs ? `<div><b>التجهيزات المطلوبة:</b><div class="pre">${esc(b.needs)}</div></div>` : ''}
       ${b.items && b.items.length ? `<p><b>من المخزون:</b> ${itemsText(b.items)}</p>` : ''}
-      ${b.tech_note ? `<p><b>ملاحظة المحضّر:</b> ${esc(b.tech_note)}</p>` : ''}`,
+      ${b.tech_note ? `<p><b>ملاحظة ${W.techS}:</b> ${esc(b.tech_note)}</p>` : ''}`,
       actions: [{ label: 'إغلاق', value: null, cls: 'ghost' }].concat(canEdit ? [
         { label: 'إلغاء الحجز', cls: 'danger', onClick: async () => { if (!await confirmBox('إلغاء هذا الحجز؟', 'نعم، ألغِ')) return false; await call('lab_book_cancel', { p_id: b.id }); toast('أُلغي الحجز'); reload(); return true; } },
         { label: 'تعديل', cls: 'primary', onClick: () => { setTimeout(() => bookForm(b), 50); return true; } }] : []) });
@@ -112,8 +123,8 @@
         <label class="f">المادة<input id="bS" value="${esc(b.subject || '')}" placeholder="علوم، فيزياء، كيمياء…"></label>
       </div>
       <label class="f">عنوان الحصة أو التجربة *<input id="bT" value="${esc(b.title || '')}" placeholder="مثال: تفاعل الأحماض مع الفلزات"></label>
-      <label class="f">التجهيزات المطلوبة (اكتب كل ما يحتاجه المحضّر)<textarea id="bN" rows="4" placeholder="الأدوات، المواد، الأعداد، طريقة توزيع المجموعات، أي ملاحظة للسلامة…">${esc(b.needs || '')}</textarea></label>
-      <div class="f"><span>اختر من مخزون المعمل (اختياري) — اكتب الكمية لكل ما تحتاجه</span>
+      <label class="f">التجهيزات المطلوبة (اكتب كل ما يحتاجه ${W.techS})<textarea id="bN" rows="4" placeholder="الأدوات، المواد، الأعداد، طريقة توزيع المجموعات، أي ملاحظة للسلامة…">${esc(b.needs || '')}</textarea></label>
+      <div class="f"><span>اختر من مخزون ${W.place} (اختياري) — اكتب الكمية لكل ما تحتاجه</span>
         <input id="bQ" type="search" placeholder="ابحث في المخزون…" style="margin:6px 0">
         <div class="picker" id="bI">${its.length ? its.map((i) => `<label data-n="${esc(LMS.norm(i.name))}"><input type="number" min="0" step="any" data-it="${i.id}" value="${sel[i.id] || ''}" placeholder="0">
           <span>${esc(i.name)} <small class="hint">(${esc(CAT[i.category] || '')} — المتوفر ${num(i.qty)} ${esc(i.unit)})</small></span></label>`).join('') : '<div class="hint">لم يُسجَّل مخزون للمعمل بعد — اكتب احتياجك في التجهيزات.</div>'}</div></div>`,
@@ -121,7 +132,7 @@
         const items = $$('[data-it]', w).filter((x) => Number(x.value) > 0).map((x) => ({ id: +x.dataset.it, qty: Number(x.value) }));
         const r = await call('lab_book_save', { p: { id: b.id || null, lab: CODE, day: $('#bD', w).value, period: +$('#bP', w).value, class: $('#bC', w).value,
           subject: $('#bS', w).value, title: $('#bT', w).value, needs: $('#bN', w).value, items } });
-        toast(b.id ? 'تم حفظ التعديل' : 'تم الحجز ✓ — وصل إشعار للمحضّر'); reload(); return !!r; } }] });
+        toast(b.id ? 'تم حفظ التعديل' : `تم الحجز ✓ — وصل إشعار لـ${W.techS}`); reload(); return !!r; } }] });
     setTimeout(() => { const q = document.getElementById('bQ'); if (q) q.oninput = () => { const v = LMS.norm(q.value); $$('#bI label').forEach((l) => { l.style.display = !v || l.dataset.n.includes(v) ? '' : 'none'; }); }; }, 50);
   }
 
@@ -130,7 +141,7 @@
     const L = D.bookings.filter((b) => b.mine).sort((a, b) => (b.day + b.period).localeCompare(a.day + a.period));
     view.innerHTML = L.length ? L.map((b) => `<div class="glass bkcard"><b>${esc(b.title)}</b> <span class="st ${b.status}">${STL[b.status]}</span>
         <div class="hint">${dlabel(b.day)} — الحصة ${b.period}${b.class ? ' — ' + esc(b.class) : ''}</div>
-        ${b.tech_note ? `<div class="hint">ملاحظة المحضّر: ${esc(b.tech_note)}</div>` : ''}
+        ${b.tech_note ? `<div class="hint">ملاحظة ${W.techS}: ${esc(b.tech_note)}</div>` : ''}
         <div class="acts"><button class="btn sm" data-open="${b.id}">التفاصيل</button></div></div>`).join('')
       : '<div class="empty">لا توجد لك حجوزات في الفترة المعروضة. احجز من تبويب «📅 الحجز».</div>';
     view.onclick = (e) => { const o = e.target.closest('[data-open]'); if (o) showBooking(D.bookings.find((b) => b.id === +o.dataset.open)); };
@@ -269,7 +280,7 @@
   function paintAlerts() {
     view.innerHTML = D.alerts.length ? `<div class="glass card">${D.alerts.map((a) => `<div class="al sev${a.sev}">${a.sev === 2 ? '⛔' : '⚠️'} <b>${esc(a.name)}</b> — ${esc(a.msg)}
         <span class="grow"></span><button class="btn sm" data-goto="${a.id}">تعديل</button></div>`).join('')}</div>
-      <p class="hint">تصل هذه التنبيهات أيضًا في «الرسائل» للمحضّر ومشرف المعمل عند ظهورها، وفي ملخص يومي (الأحد–الخميس). تختفي تلقائيًا بعد التوريد أو تغيير الحالة أو الصلاحية.</p>`
+      <p class="hint">تصل هذه التنبيهات أيضًا في «الرسائل» لـ${W.tech} و${W.sup} عند ظهورها، وفي ملخص يومي (الأحد–الخميس). تختفي تلقائيًا بعد التوريد أو تغيير الحالة أو الصلاحية.</p>`
       : '<div class="empty">✅ لا توجد تنبيهات — المخزون سليم.</div>';
     view.onclick = (e) => { const b = e.target.closest('[data-goto]'); if (b) itemForm(D.items.find((i) => i.id === +b.dataset.goto)); };
   }
@@ -278,12 +289,12 @@
   async function paintStaff() {
     const canEdit = ['admin', 'supervisor'].includes(D.my_role), adm = D.my_role === 'admin';
     view.innerHTML = `<div class="glass card"><h3 style="margin-top:0">طاقم ${esc(D.lab.name)}</h3>
-      ${D.staff.length ? D.staff.map((s) => `<div class="gd" style="display:flex;gap:8px;align-items:center;margin-bottom:6px">${s.role === 'tech' ? '🧑‍🔬 محضّر المختبر' : '👤 مشرف المعمل'}: <b>${esc(s.name)}</b>
+      ${D.staff.length ? D.staff.map((s) => `<div class="gd" style="display:flex;gap:8px;align-items:center;margin-bottom:6px">${s.role === 'tech' ? W.ic + ' ' + W.tech : '👤 ' + W.sup}: <b>${esc(s.name)}</b>
         ${canEdit && (s.role === 'tech' || adm) ? `<button class="btn sm ghost" data-rm="${s.profile_id}|${s.role}">✕ إزالة</button>` : ''}</div>`).join('') : '<div class="hint">لم يُحدَّد طاقم بعد.</div>'}
       ${canEdit ? `<hr><div class="form-grid"><label class="f">الموظف<select id="sP"><option value="">— اختر —</option></select></label>
-        <label class="f">الدور<select id="sR"><option value="tech">محضّر المختبر</option>${adm ? '<option value="supervisor">مشرف المعمل</option>' : ''}</select></label></div>
+        <label class="f">الدور<select id="sR"><option value="tech">${W.tech}</option>${adm ? `<option value="supervisor">${W.sup}</option>` : ''}</select></label></div>
         <button class="btn primary sm" id="sAdd">إضافة</button>
-        <p class="hint">المحضّر: يرى الحجوزات ويجهّزها ويدير المخزون وتصله التنبيهات. المشرف: كل ذلك + حذف الأصناف وتعيين المحضّرين.</p>` : ''}</div>`;
+        <p class="hint">${W.techS}: يرى الحجوزات ويجهّزها ويدير المخزون وتصله التنبيهات. المشرف: كل ذلك + حذف الأصناف وتعيين ${W.techP}.</p>` : ''}</div>`;
     if (canEdit) {
       const { data } = await sb.from('profiles').select('id,full_name,job_title').not('role', 'in', '(student,parent)').eq('active', true).order('full_name');
       $('#sP').innerHTML = '<option value="">— اختر —</option>' + (data || []).map((p) => `<option value="${p.id}">${esc(p.full_name)}${p.job_title ? ' — ' + esc(p.job_title) : ''}</option>`).join('');
@@ -291,9 +302,28 @@
         try { await call('lab_staff_set', { p_lab: CODE, p_profile: pid, p_role: $('#sR').value, p_on: true }); toast('أُضيف'); reload(); } catch (e) { toast(errMsg(e), 'err'); } };
     }
     view.onclick = async (e) => { const b = e.target.closest('[data-rm]'); if (!b) return; const [pid, role] = b.dataset.rm.split('|');
-      if (!await confirmBox('إزالة من طاقم المعمل؟', 'إزالة')) return;
+      if (!await confirmBox(`إزالة من طاقم ${W.place}؟`, 'إزالة')) return;
       try { await call('lab_staff_set', { p_lab: CODE, p_profile: pid, p_role: role, p_on: false }); reload(); } catch (er) { toast(errMsg(er), 'err'); } };
   }
 
+  // ============================ إدارة المرافق (مدير النظام) ============================
+  function paintFac() {
+    const L = LABS.filter((l) => l.kind === 'facility');
+    view.innerHTML = `<div class="glass card"><div class="toolbar" style="margin-bottom:8px"><h3 class="grow" style="margin:0">مرافق المدرسة القابلة للحجز</h3><button class="btn primary sm" id="fAdd">＋ مرفق جديد</button></div>
+      ${L.map((l) => `<div class="toolbar" style="padding:6px 0;border-bottom:1px solid var(--line)"><span class="grow">${l.icon} <b>${esc(l.name)}</b></span><button class="btn sm" data-fe="${esc(l.code)}">✏️ تعديل</button></div>`).join('')}
+      <p class="hint">بعد إضافة المرفق حدّد مسؤوله من تبويب «👥 الطاقم» داخل المرفق. الإيقاف يخفي المرفق ويحفظ حجوزاته السابقة.</p></div>`;
+    $('#fAdd').onclick = () => facForm({});
+    view.onclick = (e) => { const b = e.target.closest('[data-fe]'); if (b) facForm(LABS.find((l) => l.code === b.dataset.fe)); };
+  }
+  function facForm(l) {
+    modal({ title: l.code ? 'تعديل مرفق' : 'مرفق جديد', body: `<div class="form-grid"><label class="f">اسم المرفق *<input id="fn" value="${esc(l.name || '')}" placeholder="مثال: مركز مصادر التعلم"></label>
+      <label class="f">أيقونة<input id="fi" value="${esc(l.icon || '🏫')}" maxlength="4"></label><label class="f">الترتيب<input id="fs" type="number" value="${l.sort ?? ''}"></label></div>
+      ${l.code ? '<label class="chk"><input type="checkbox" id="fa" checked> المرفق متاح للحجز</label>' : ''}`,
+      actions: [{ label: 'إلغاء', value: null, cls: 'ghost' }, { label: 'حفظ', cls: 'primary', onClick: async (w) => {
+        const r = await call('lab_upsert', { p: { code: l.code || null, name: $('#fn', w).value, icon: $('#fi', w).value, sort: $('#fs', w).value, kind: 'facility', active: l.code ? $('#fa', w).checked : true } });
+        toast('تم الحفظ'); location.href = 'labs.html?type=facility&lab=' + encodeURIComponent(r.code) + '#fac'; return true; } }] });
+  }
+
+  if (FAC && !CODE) return;
   try { await load(); } catch (e) { view.innerHTML = `<div class="notice err">${esc(errMsg(e))}</div>`; }
 })();

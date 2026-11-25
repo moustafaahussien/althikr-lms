@@ -27,9 +27,9 @@
   } catch (e) { $('#list').innerHTML = `<div class="notice err">${esc(errMsg(e))}</div>`; return; }
 
   // أدوار المنسوبين في برامج الموهبة — تُقرأ من منصة الموهبة (المصدر الوحيد) وتظهر على بطاقاتهم
-  if (window.TALENT && !LMS.DEMO) TALENT.staffMap().then((M) => { ALL.forEach((p) => { p.talent = M.get(p.id) || null; }); render(); }).catch(() => {});
+  if (window.TALENT && !LMS.DEMO) TALENT.staffMap().then((M) => { ALL.forEach((p) => { p.talent = M.get(String(p.email || '').toLowerCase()) || null; }); render(); }).catch(() => {});
   $('#list').addEventListener('click', (e) => { const b = e.target.closest('[data-tl]'); if (!b) return;
-    const p = ALL.find((x) => String(x.id) === b.dataset.tl); if (!p || !p.talent) return;
+    const p = ALL.find((x) => String(x.email || x.no) === b.dataset.tl); if (!p || !p.talent) return;
     LMS.modal({ title: `🌟 ${p.name} — برامج الموهبة`, wide: true, body: TALENT.staffDetails(p.talent, p.name), actions: [{ label: 'إغلاق', value: null }] }); });
   const groups = [...new Set(ALL.map((p) => p.grp))].sort((a, b) => rank(a) - rank(b));
   $('#grps').innerHTML = [`<button data-g="" class="on">الكل (${ALL.length})</button>`]
@@ -61,7 +61,7 @@
         <div><b class="nm">${esc(p.name)}</b><div class="tt">${esc(p.title || '')}</div></div></div>
       <div class="meta">${teach}${stg}</div>
       ${p.manager ? `<div class="mgr">المدير المباشر: ${esc(p.manager)}</div>` : ''}
-      ${p.talent ? `<button class="tl-chip" data-tl="${esc(p.id)}" title="أدواره في برامج الموهبة">🌟 ${esc(window.TALENT.staffSummary(p.talent))}</button>` : ''}
+      ${p.talent ? `<button class="tl-chip" data-tl="${esc(p.email || p.no)}" title="أدواره في برامج الموهبة">🌟 ${esc(window.TALENT.staffSummary(p.talent))}</button>` : ''}
       <div class="links">${contact(p)}</div>
     </div>`;
   }
@@ -72,7 +72,7 @@
     if ($('#view').value === 'table') {
       $('#list').innerHTML = `<div class="table-wrap" style="max-height:none;margin-top:12px"><table>
         <thead><tr><th>الاسم</th><th>المسمى الوظيفي</th><th>القسم</th><th>المواد</th><th>المدير المباشر</th><th>الجوال</th><th>البريد</th></tr></thead>
-        <tbody>${L.map((p) => `<tr><td><b>${esc(p.name)}</b>${p.talent ? ` <button class="tl-chip inline" data-tl="${esc(p.id)}" title="${esc(window.TALENT.staffSummary(p.talent))}">🌟 الموهبة</button>` : ''}</td><td>${esc(p.title || '')}</td><td>${esc(p.grp || '')}</td><td>${esc(p.subj)}</td>
+        <tbody>${L.map((p) => `<tr><td><b>${esc(p.name)}</b>${p.talent ? ` <button class="tl-chip inline" data-tl="${esc(p.email || p.no)}" title="${esc(window.TALENT.staffSummary(p.talent))}">🌟 الموهبة</button>` : ''}</td><td>${esc(p.title || '')}</td><td>${esc(p.grp || '')}</td><td>${esc(p.subj)}</td>
           <td>${esc(p.manager || '')}</td><td>${p.mobile ? `<a href="tel:${esc(p.mobile)}" class="ltr">${esc(telFmt(p.mobile))}</a>` : ''}</td>
           <td>${p.email ? `<a href="mailto:${esc(p.email)}" class="ltr">${esc(p.email)}</a>` : ''}</td></tr>`).join('')}</tbody></table></div>`;
       return;

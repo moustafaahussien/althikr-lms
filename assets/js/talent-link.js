@@ -65,7 +65,7 @@
     const { data, error } = await LMS.sb.rpc('staff_resolve', { p_names: [...new Set(L.map((x) => x.name))] });
     if (error) throw error;
     const m = new Map();
-    L.forEach((x) => { const id = (data || {})[x.name]; if (!id) return;
+    L.forEach((x) => { const id = String((data || {})[x.name] || '').toLowerCase(); if (!id) return;
       const t = m.get(id) || { roles: [], sessions: [], records: 0 };
       t.roles.push(...x.roles); t.sessions.push(...x.sessions); t.records += x.records || 0; m.set(id, t); });
     return m;

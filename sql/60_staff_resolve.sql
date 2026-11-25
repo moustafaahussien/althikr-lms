@@ -1,4 +1,4 @@
--- 60: ربط أسماء المنسوبين في منصة الموهبة (قد تكون ثنائية أو مختصرة) بحساباتهم في المنصة
+-- 60: (يعيد البريد) ربط أسماء المنسوبين في منصة الموهبة (قد تكون ثنائية أو مختصرة) بحساباتهم في المنصة
 --   الترتيب: الاسم الكامل ← الأسماء البديلة (staff_aliases من جداول الحصص) ← الأول+العائلة إن تفرّد ← بداية الاسم (3 أسماء فأكثر) إن تفرّدت
 create or replace function public.staff_resolve(p_names text[]) returns jsonb
 language plpgsql stable security definer set search_path = public as $$
@@ -22,7 +22,7 @@ begin
        where p.active and p.role not in ('student','parent') and (public.norm(p.full_name) || ' ') like k || ' %';
       if c <> 1 then pid := null; end if;
     end if;
-    if pid is not null then out := out || jsonb_build_object(n, pid); end if;
+    if pid is not null then out := out || jsonb_build_object(n, (select lower(email) from profiles where id = pid)); end if;
   end loop;
   return out;
 end $$;

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <!-- سياسة أمان: المواقع المسموح للصفحة تحميل الأكواد منها والاتصال بها -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://zpbhzhpvpvehowxvlsgp.supabase.co https://drive.google.com https://*.googleusercontent.com; connect-src 'self' https://zpbhzhpvpvehowxvlsgp.supabase.co wss://zpbhzhpvpvehowxvlsgp.supabase.co; frame-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>مدارس التفكير — منصة دار الذكر التعليمية</title>
+  <link rel="stylesheet" href="assets/css/brand.css?v=202611231330">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <meta name="theme-color" content="#007B51">
+  <link rel="manifest" href="supervision/manifest.json?v=2">
+    <link rel="stylesheet" href="assets/css/app.css?v=202611251400">
+  <link rel="stylesheet" href="assets/css/topbar.css?v=202611231330">
+  <style>
+    .tools { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
+    .tool { display: flex; flex-direction: column; gap: 6px; padding: 18px; text-decoration: none; color: inherit; border-radius: 16px; transition: transform .15s, box-shadow .15s; position: relative; }
+    .tool:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(0,0,0,.08); }
+    .tool .n { font-size: .8rem; font-weight: 800; color: var(--brand); }
+    .tool .ic { font-size: 2rem; }
+    .tool b { font-size: 1.08rem; }
+    .tool small { color: var(--muted); line-height: 1.7; }
+    .tool .ext { position: absolute; top: 10px; left: 12px; color: var(--muted); }
+    .group-h { margin: 22px 0 10px; display: flex; align-items: center; gap: 8px; }
+    .course-box { padding: 20px; }
+    .partners { display: flex; gap: 18px; align-items: center; justify-content: center; margin-top: 18px; opacity: .9; }
+    .partners img { height: 46px; }
+  </style>
+</head>
+<body>
+  <header id="topbar"></header>
+  <main class="page" id="main">
+    <section class="hero glass">
+      <h1>🧠 مدارس التفكير</h1>
+      <p>الدورة التدريبية للمعلمين والأدوات التعليمية التفاعلية لمدارس التفكير — بالتعاون مع Rethinkers.</p>
+    </section>
+
+    <h2 class="group-h">🎓 الدورة التدريبية للمعلمين</h2>
+    <div class="glass course-box" id="course">
+      <div class="notice">سيُضاف محتوى الدورة التدريبية هنا قريبًا.</div>
+    </div>
+
+    <h2 class="group-h">🧰 الأدوات التعليمية</h2>
+    <div class="tools">
+      <a class="tool glass" href="thinking/keys/" target="_blank" rel="noopener"><span class="ext">↗</span><span class="n">01</span><span class="ic">🗝️</span><b>مفاتيح التفكير</b>
+        <small>استكشف الأدوات والأساليب المبتكرة التي تفتح آفاق العقل لتوليد الأفكار الاستثنائية والحلول الإبداعية.</small></a>
+      <a class="tool glass" href="thinking/lenses/" target="_blank" rel="noopener"><span class="ext">↗</span><span class="n">02</span><span class="ic">🔍</span><b>عدسات التفكير</b>
+        <small>منظور متجدد يتسنى لك من خلاله رؤية التحديات والموضوعات من زوايا ومناظير متعددة لعمق الفهم.</small></a>
+      <a class="tool glass" href="thinking/habits/" target="_blank" rel="noopener"><span class="ext">↗</span><span class="n">03</span><span class="ic">💡</span><b>عادات العقل</b>
+        <small>أنماط سلوكية وسيكولوجية ذكية تُمكّنك من مواجهة المشكلات المعقدة والتعامل مع التحديات بمرونة.</small></a>
+    </div>
+    <h2 class="group-h">04 · 👶 فلسفة الطفل</h2>
+    <p class="hint" style="margin-top:-4px">أدوات وتطبيقات تفاعلية مُخصصة لتنمية مهارات التساؤل والتحليل والتحاور الفلسفي والتأملي لدى الأطفال.</p>
+    <div class="tools">
+      <a class="tool glass" href="thinking/question-wheel/" target="_blank" rel="noopener"><span class="ext">↗</span><span class="ic">🎡</span><b>عجلة الأسئلة</b>
+        <small>عجلة تفاعلية لتوليد الأسئلة الفلسفية وإدارة الحوار مع الطلاب.</small></a>
+      <a class="tool glass" href="https://sparkly-wisp-354958.netlify.app/pyramid" target="_blank" rel="noopener"><span class="ext">↗</span><span class="ic">🔺</span><b>هرم أندرسون</b>
+        <small>مستويات التفكير في هرم أندرسون لبناء الأسئلة والأنشطة.</small></a>
+    </div>
+    <div class="partners"><img src="thinking/logo-left.png" alt="Rethinkers"><img src="thinking/21csu.png" alt="وحدة مهارات القرن 21"></div>
+  </main>
+  <footer class="credit">وحدة مهارات القرن 21 — مدارس دار الذكر · بالتعاون مع Rethinkers</footer>
+
+  <script src="assets/vendor/supabase-js-2.119.2.js"></script>
+  <script src="assets/js/config.js?v=202611251530"></script>
+  <script src="assets/js/academic-calendar.js?v=202611231330"></script>
+  <script src="assets/js/core.js?v=202611251500"></script>
+  <script>
+    (async function () {
+      const ctx = await LMS.requireAuth();
+      if (['student', 'parent'].includes(ctx.profile.role)) document.getElementById('main').innerHTML = '<div class="notice">هذا القسم لمنسوبي المدرسة.</div>';
+    })();
+  </script>
+</body>
+</html>

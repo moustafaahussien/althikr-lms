@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <!-- سياسة أمان: المواقع المسموح للصفحة تحميل الأكواد منها والاتصال بها -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://zpbhzhpvpvehowxvlsgp.supabase.co https://drive.google.com https://*.googleusercontent.com; connect-src 'self' https://zpbhzhpvpvehowxvlsgp.supabase.co wss://zpbhzhpvpvehowxvlsgp.supabase.co; frame-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>سجل السلوك — منصة دار الذكر التعليمية</title>
+  <link rel="stylesheet" href="assets/css/brand.css?v=202611231330">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <meta name="theme-color" content="#007B51">
+  <link rel="manifest" href="supervision/manifest.json?v=2">
+    <link rel="stylesheet" href="assets/css/app.css?v=202611251800">
+  <link rel="stylesheet" href="assets/css/topbar.css?v=202611231330">
+  <style>
+    .bh-grid { display: grid; grid-template-columns: minmax(280px, 1fr) minmax(300px, 1.2fr); gap: 14px; align-items: start; }
+    @media (max-width: 860px) { .bh-grid { grid-template-columns: 1fr; } }
+    .bh-roster { max-height: 460px; overflow: auto; border: 1px solid var(--line); border-radius: 10px; padding: 4px; }
+    .bh-st { display: flex; gap: 8px; align-items: center; padding: 7px 6px; border-bottom: 1px solid #f1f3f2; cursor: pointer; text-decoration: none; color: inherit; }
+    .bh-st:hover { background: #F5F8F6; }
+    .bh-b { display: inline-block; font-size: .74rem; font-weight: 700; padding: 0 8px; border-radius: 99px; white-space: nowrap; }
+    .bh-b.pos { background: #fff6d8; color: #8a6400; } .bh-b.neg { background: #fdecea; color: #b3261e; }
+    .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; margin-bottom: 10px; }
+    .seg button { border: 0; background: #fff; padding: 7px 16px; font: inherit; font-weight: 700; cursor: pointer; }
+    .seg button.on { background: var(--brand); color: #fff; }
+    .bh-chips { display: flex; flex-wrap: wrap; gap: 6px; max-height: 330px; overflow: auto; }
+    .bh-cat { width: 100%; font-size: .78rem; font-weight: 800; color: var(--muted); margin-top: 6px; }
+    .bh-chip { border: 1px solid var(--line); background: #fff; border-radius: 99px; padding: 6px 12px; font: inherit; font-size: .88rem; cursor: pointer; }
+    .bh-chip.positive:hover, .bh-chip.positive.on { background: #e6f6ee; border-color: #007B51; color: #00603f; }
+    .bh-chip.negative:hover, .bh-chip.negative.on { background: #fdecea; border-color: #c0392b; color: #9b2c22; }
+    .bh-chip.ghost { border-style: dashed; color: var(--muted); }
+    .bh-chip small { opacity: .7; }
+    .bh-note { padding: 12px 14px; margin-bottom: 8px; display: flex; gap: 10px; justify-content: space-between; align-items: flex-start; border-inline-start: 4px solid #ccc; }
+    .bh-note.positive { border-inline-start-color: #e0b000; } .bh-note.negative { border-inline-start-color: #c0392b; }
+    .bh-note .acts { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+    .pre { white-space: pre-wrap; background: #F5F8F6; border-radius: 8px; padding: 6px 8px; margin-top: 4px; font-size: .88rem; }
+    .kpi4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    @media (max-width: 640px) { .kpi4 { grid-template-columns: repeat(2, 1fr); } }
+    .kpi4 .card-box { padding: 12px; text-align: center; } .kpi4 .card-box b { font-size: 1.5rem; display: block; }
+    .chk { display: flex; gap: 8px; align-items: center; margin: 6px 0; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <header id="topbar"></header>
+  <main class="page" id="main">
+    <section class="hero glass">
+      <h1>🌟 سجل السلوك والمواظبة</h1>
+      <p>سجّل ملاحظة إيجابية أو سلبية لطالب أو لعدة طلاب بضغطة من القوالب الجاهزة — تصل لولي الأمر في بوابته، وتُحال المخالفات للموجّه الطلابي.</p>
+    </section>
+    <nav class="tabs glass" id="tabs"></nav>
+    <div id="view"><div class="empty">جارٍ التحميل…</div></div>
+  </main>
+  <footer class="credit">إعداد وتصميم: مصطفى حسين</footer>
+
+  <script src="assets/vendor/supabase-js-2.119.2.js"></script>
+  <script src="assets/js/config.js?v=202611251930"></script>
+  <script src="assets/js/academic-calendar.js?v=202611231330"></script>
+  <script src="assets/js/core.js?v=202611251800"></script>
+  <script src="assets/js/behavior.js?v=202611251930"></script>
+</body>
+</html>

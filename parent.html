@@ -29,7 +29,7 @@
     .timer { font-size: .82rem; color: var(--muted); }
   </style>
   <script src="assets/vendor/supabase-js-2.119.2.js"></script>
-  <script src="assets/js/config.js?v=202611251600"></script>
+  <script src="assets/js/config.js?v=202611251930"></script>
   <script src="assets/js/core.js?v=202611251800"></script>
 </head>
 <body>
@@ -155,11 +155,24 @@
       ${(a.recent || []).length ? `<details style="margin-top:10px"><summary class="hint" style="cursor:pointer">سجل الغياب والتأخر</summary><div class="table-wrap no-tools" style="margin-top:6px"><table>
         <thead><tr><th>التاريخ</th><th>هجري</th><th>الحصة</th><th>الحالة</th><th>ملاحظة</th></tr></thead><tbody>${a.recent.map((r) => `<tr><td>${esc(r.d)}</td><td>${esc(LMS.hijri(r.d))}</td>
         <td>${r.p ? r.p : 'يومي'}</td><td>${STL[r.s] || r.s}</td><td>${esc(r.n || '')}</td></tr>`).join('')}</tbody></table></div></details>` : ''}
+      ${behavior(c.behavior)}
       <h3 style="margin:14px 0 8px;font-size:1rem">المعلمون</h3>
       ${(c.teachers || []).length ? `<div class="grid modules">${c.teachers.sort((x, y) => (x.subject || '').localeCompare(y.subject || '', 'ar')).map((t) => `
         <div class="module glass"><span class="ic">📚</span><b>${esc(t.subject)}</b><small>${esc(t.name)}</small></div>`).join('')}</div>`
         : '<div class="hint">لم تُسند مواد لهذا الصف بعد.</div>'}
     </div>`;
+  }
+  function behavior(b) {
+    if (!b || !(b.notes || []).length) return '';
+    const pos = b.notes.filter((n) => n.kind === 'positive').length, neg = b.notes.length - pos;
+    return `<h3 style="margin:14px 0 8px;font-size:1rem">🌟 السلوك والمواظبة <span class="hint">(آخر 90 يومًا)</span></h3>
+      <div class="kpi4"><div class="card-box"><b style="color:#b8860b">⭐ ${b.points || 0}</b><div class="hint">نقاط التميز</div></div>
+        <div class="card-box"><b style="color:var(--accent)">${pos}</b><div class="hint">ملاحظة إيجابية</div></div>
+        <div class="card-box"><b style="color:#c0392b">${neg}</b><div class="hint">ملاحظة تحتاج متابعتكم</div></div></div>
+      <details style="margin-top:8px" ${neg ? 'open' : ''}><summary class="hint" style="cursor:pointer">تفاصيل الملاحظات</summary>
+      ${b.notes.map((n) => `<div style="border-inline-start:4px solid ${n.kind === 'positive' ? '#e0b000' : '#c0392b'};padding:6px 10px;margin:6px 0;background:#fafbfa;border-radius:8px">
+        ${n.kind === 'positive' ? '⭐' : '⚠️'} <b>${esc(n.text)}</b>${n.kind === 'positive' && n.points ? ` <span class="hint">+${n.points}</span>` : ''}
+        ${n.details ? `<div class="hint">${esc(n.details)}</div>` : ''}<div class="hint">${esc(n.date)} (${esc(LMS.hijri(n.date))}) — ${esc(n.by || '')}</div></div>`).join('')}</details>`;
   }
   function changePin() {
     LMS.modal({ title: 'تغيير الرمز السري', body: `

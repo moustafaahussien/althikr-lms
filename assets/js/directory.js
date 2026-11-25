@@ -27,7 +27,7 @@
   } catch (e) { $('#list').innerHTML = `<div class="notice err">${esc(errMsg(e))}</div>`; return; }
 
   // أدوار المنسوبين في برامج الموهبة — تُقرأ من منصة الموهبة (المصدر الوحيد) وتظهر على بطاقاتهم
-  if (window.TALENT && !LMS.DEMO) TALENT.staffAll().then((L) => { ALL.forEach((p) => { p.talent = TALENT.staffFor(L, p); }); render(); }).catch(() => {});
+  if (window.TALENT && !LMS.DEMO) TALENT.staffAll().then((L) => { ALL.forEach((p) => { p.talent = TALENT.staffFor(L, p, ALL); }); render(); }).catch(() => {});
   $('#list').addEventListener('click', (e) => { const b = e.target.closest('[data-tl]'); if (!b) return;
     const p = ALL.find((x) => String(x.id || x.no || x.name) === b.dataset.tl); if (!p || !p.talent) return;
     LMS.modal({ title: `🌟 ${p.name} — برامج الموهبة`, wide: true, body: TALENT.staffDetails(p.talent, p.name), actions: [{ label: 'إغلاق', value: null }] }); });

@@ -59,9 +59,12 @@
     if (!staffCache) staffCache = post({ action: 'lmsStaffAll' }).then((d) => d.staff || []).catch((e) => { staffCache = null; throw e; });
     return staffCache;
   }
-  function staffFor(list, p) {
+  // الاسم الثنائي في منصة الموهبة (الأول + العائلة) يُطابق موظفًا واحدًا فقط وإلا يُهمل
+  const short = (a, full) => { const aw = nameKey(a).split(' '), bw = nameKey(full).split(' '); return aw.length === 2 && bw.length >= 2 && aw[0] === bw[0] && aw[1] === bw[bw.length - 1]; };
+  function staffFor(list, p, all) {
     const em = String(p.email || '').toLowerCase();
-    const hits = list.filter((s) => (em && s.email && s.email === em) || nameMatch(s.name, p.name));
+    const hits = list.filter((s) => (em && s.email && s.email === em) || nameMatch(s.name, p.name)
+      || (short(s.name, p.name) && (all || []).filter((q) => short(s.name, q.name)).length === 1));
     if (!hits.length) return null;
     const roles = [].concat(...hits.map((h) => h.roles)), sessions = [].concat(...hits.map((h) => h.sessions)), records = hits.reduce((a, h) => a + (h.records || 0), 0);
     return { roles, sessions, records };

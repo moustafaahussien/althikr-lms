@@ -59,15 +59,16 @@
     if (!staffCache) staffCache = post({ action: 'lmsStaffAll' }).then((d) => d.staff || []).catch((e) => { staffCache = null; throw e; });
     return staffCache;
   }
-  // الاسم الثنائي في منصة الموهبة (الأول + العائلة) يُطابق موظفًا واحدًا فقط وإلا يُهمل
-  const short = (a, full) => { const aw = nameKey(a).split(' '), bw = nameKey(full).split(' '); return aw.length === 2 && bw.length >= 2 && aw[0] === bw[0] && aw[1] === bw[bw.length - 1]; };
-  function staffFor(list, p, all) {
-    const em = String(p.email || '').toLowerCase();
-    const hits = list.filter((s) => (em && s.email && s.email === em) || nameMatch(s.name, p.name)
-      || (short(s.name, p.name) && (all || []).filter((q) => short(s.name, q.name)).length === 1));
-    if (!hits.length) return null;
-    const roles = [].concat(...hits.map((h) => h.roles)), sessions = [].concat(...hits.map((h) => h.sessions)), records = hits.reduce((a, h) => a + (h.records || 0), 0);
-    return { roles, sessions, records };
+  // ربط أسماء منصة الموهبة بحسابات المنسوبين (الاسم الكامل، الأسماء البديلة، الأول+العائلة إن تفرّد) — sql/60
+  async function staffMap() {
+    const L = await staffAll();
+    const { data, error } = await LMS.sb.rpc('staff_resolve', { p_names: [...new Set(L.map((x) => x.name))] });
+    if (error) throw error;
+    const m = new Map();
+    L.forEach((x) => { const id = (data || {})[x.name]; if (!id) return;
+      const t = m.get(id) || { roles: [], sessions: [], records: 0 };
+      t.roles.push(...x.roles); t.sessions.push(...x.sessions); t.records += x.records || 0; m.set(id, t); });
+    return m;
   }
   function staffSummary(t) {
     const progs = [...new Set(t.roles.map((r) => r.prog).concat(t.sessions.map((s) => s.prog)))].filter(Boolean);
@@ -82,5 +83,5 @@
         ${t.sessions.map((s) => `<tr><td>${esc(PROG[s.prog] || s.prog)}</td><td>${esc(s.year)}</td><td><b>${s.done}</b></td><td>${s.planned}</td></tr>`).join('')}</tbody></table></div>` : ''}
       ${t.records ? `<p>📋 عبّأ <b>${t.records}</b> نموذجًا من نماذج السجل التام لتطور الموهبة.</p>` : ''}`;
   }
-  window.TALENT = { renderStudent, staffAll, staffFor, staffSummary, staffDetails, PROG, COMP };
+  window.TALENT = { renderStudent, staffAll, staffMap, staffSummary, staffDetails, PROG, COMP };
 })();

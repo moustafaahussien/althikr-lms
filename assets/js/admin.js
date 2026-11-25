@@ -869,10 +869,84 @@
   /* ===================================================================
      الأعوام والفصول الدراسية
      =================================================================== */
+  /* ---------- ترحيل الطلاب للعام الجديد (sql/61) ---------- */
+  async function promoSetup(pane, reload) {
+    const rpc = async (fn, a) => { const { data, error } = await sb.rpc(fn, a || {}); if (error) throw error; return data; };
+    let plan; try { plan = await rpc('promo_plan', { p: {} }); } catch (e) { $('#promoLast', pane).innerHTML = `<div class="notice err">${esc(errMsg(e))}</div>`; return; }
+    const L = plan.last_run;
+    if (L) $('#promoLast', pane).innerHTML = `<div class="hint" style="margin-top:8px">آخر ترحيل: ${new Date(L.at).toLocaleString('ar-SA-u-ca-gregory-nu-latn', { dateStyle: 'medium', timeStyle: 'short' })}
+      (${esc(L.from || '')} ← ${esc(L.to || '')}) ${L.undone ? '— <b>تم التراجع عنه</b>' : `<button class="btn sm ghost" id="promoUndo">↩ تراجع عن هذا الترحيل</button>`}</div>`;
+    if ($('#promoUndo', pane)) $('#promoUndo', pane).onclick = async () => {
+      if (!await confirmBox('التراجع عن آخر ترحيل؟ سيعود كل طالب لصفه وفصله السابق، وتعود حسابات الخريجين كما كانت، ويعود العام الدراسي السابق هو الحالي.', 'نعم، تراجع')) return;
+      try { const r = await rpc('promo_undo', { p_run: L.id }); toast(`تم التراجع — أُعيد ${r.restored} طالب`); await changed('years'); reload(); } catch (e) { toast(errMsg(e), 'err'); }
+    };
+    $('#promo', pane).onclick = () => promoWizard(plan, rpc, reload);
+  }
+  function promoWizard(plan0, rpc, reload) {
+    const cy = plan0.current_year || '';
+    const m = cy.match(/(\d{4})/); const ny = m ? cy.replace(m[1], String(+m[1] + 1)) : '';
+    const ex = new Map();
+    modal({ title: '🎓 ترحيل الطلاب للعام الدراسي الجديد', wide: true, body: `
+      <div class="notice warn" style="margin-bottom:10px">هذه العملية تغيّر صف <b>كل طلاب المدرسة</b> مرة واحدة. استخدمها <b>بعد انتهاء العام الدراسي واعتماد النتائج</b> فقط. ستظهر لك معاينة كاملة قبل التنفيذ، ويمكن التراجع بعدها.</div>
+      <div class="form-grid"><label class="f">العام الدراسي الحالي<input value="${esc(cy)}" disabled></label>
+        <label class="f">العام الدراسي الجديد<input id="ny" value="${esc(ny)}" placeholder="1449هـ"></label>
+        <label class="f">الفصل الدراسي الأول في العام الجديد<input id="nt" value="الفصل الدراسي الأول"></label></div>
+      <label class="chk"><input type="checkbox" id="kc" checked> نقل الطالب لفصل بنفس الاسم في الصف الجديد إن وُجد (مثال: ٣/أ ← ٤/أ)، وإلا يبقى بلا فصل حتى توزّعه</label>
+      <label class="chk"><input type="checkbox" id="dg" checked> إيقاف حسابات الخريجين (طلاب الثالث الثانوي، والسادس بنات، وGrade 12) — تبقى بياناتهم محفوظة</label>
+      <div class="f" style="margin-top:8px"><span>طلاب باقون للإعادة (لا يُرحَّلون) — اختياري</span>
+        <input id="q" type="search" placeholder="ابحث باسم الطالب أو رقمه لإضافته…" style="width:100%"><div id="res" class="promo-res"></div><div id="exl" class="hint">لا يوجد.</div></div>
+      <div id="pv"></div>`,
+      actions: [{ label: 'إلغاء', value: null, cls: 'ghost' }, { label: '👁️ معاينة', onClick: async (w) => { await preview(w); return false; } },
+        { label: 'متابعة للتأكيد ←', cls: 'primary', onClick: async (w) => { const pl = await preview(w); if (!pl) return false; setTimeout(() => confirmStep(w.__opts, pl), 50); return true; } }] });
+    setTimeout(() => {
+      const w = document.querySelector('.modal-wrap:last-child'); let tm;
+      const paintEx = () => { $('#exl', w).innerHTML = ex.size ? [...ex].map(([id, n]) => `<span class="chip">${esc(n)} <a href="#" data-x="${id}">✕</a></span>`).join(' ') : 'لا يوجد.'; $('#pv', w).innerHTML = ''; };
+      $('#q', w).oninput = (e) => { clearTimeout(tm); const q = e.target.value.trim(); if (q.length < 2) { $('#res', w).innerHTML = ''; return; }
+        tm = setTimeout(async () => { const R2 = await rpc('pf_find', { p_q: q }).catch(() => []);
+          $('#res', w).innerHTML = R2.map((x) => `<a href="#" data-p="${x.id}" data-n="${esc(x.name)} (${esc(x.class || '')})">${esc(x.name)} <span class="hint">${esc(x.class || '')}</span></a>`).join('') || '<div class="hint">لا نتائج.</div>'; }, 300); };
+      w.addEventListener('click', (e) => { const p = e.target.closest('[data-p]'); if (p) { e.preventDefault(); ex.set(p.dataset.p, p.dataset.n); $('#res', w).innerHTML = ''; $('#q', w).value = ''; paintEx(); }
+        const x = e.target.closest('[data-x]'); if (x) { e.preventDefault(); ex.delete(x.dataset.x); paintEx(); } });
+      ['#kc', '#dg', '#ny'].forEach((id) => { $(id, w).onchange = () => { $('#pv', w).innerHTML = ''; }; });
+    }, 50);
+    async function preview(w) {
+      const opts = { exclude: [...ex.keys()], keep_class: $('#kc', w).checked, deactivate_graduates: $('#dg', w).checked, new_year: $('#ny', w).value.trim(), new_term: $('#nt', w).value.trim() };
+      if (!opts.new_year) { toast('اكتب اسم العام الدراسي الجديد', 'warn'); return null; }
+      if (opts.new_year === cy) { toast('العام الجديد يجب أن يختلف عن الحالي', 'warn'); return null; }
+      const pl = await rpc('promo_plan', { p: opts }); w.__opts = opts;
+      $('#pv', w).innerHTML = `<h3 style="margin:14px 0 6px">المعاينة</h3>
+        ${pl.last_run && !pl.last_run.undone ? `<div class="notice warn">آخر ترحيل تم في ${new Date(pl.last_run.at).toLocaleDateString('ar-SA-u-ca-gregory-nu-latn')} (${esc(pl.last_run.from || '')} ← ${esc(pl.last_run.to || '')}) — تأكد أنك لا تكرر الترحيل.</div>` : ''}
+        <div class="promo-kpi"><div><b>${pl.promoted}</b><span>يُرحَّل للصف الأعلى</span></div><div><b>${pl.graduates}</b><span>يتخرّج 🎓</span></div><div><b>${pl.kept}</b><span>باقٍ للإعادة</span></div><div><b>${pl.total}</b><span>إجمالي الطلاب</span></div></div>
+        <div class="table-wrap no-tools" style="max-height:320px"><table><thead><tr><th>من</th><th>إلى</th><th>عدد الطلاب</th><th>باقون</th></tr></thead><tbody>
+        ${pl.rows.map((r) => `<tr><td>${esc(r.from)}</td><td>${r.to.includes('تخرّج') ? `<b>${esc(r.to)}</b>` : esc(r.to)}</td><td><b>${r.n}</b></td><td>${r.kept || ''}</td></tr>`).join('')}</tbody></table></div>`;
+      return pl;
+    }
+    function confirmStep(opts, pl) {
+      modal({ title: '⚠️ تأكيد ترحيل الطلاب', body: `
+        <div class="notice err" style="line-height:1.9">أنت على وشك:<br>• نقل <b>${pl.promoted}</b> طالبًا إلى الصف الأعلى<br>• تخريج <b>${pl.graduates}</b> طالبًا${opts.deactivate_graduates ? ' وإيقاف حساباتهم' : ''}<br>
+          • بدء العام الدراسي <b>${esc(opts.new_year)}</b> (${esc(opts.new_term)}) وجعله الحالي${pl.kept ? `<br>• إبقاء <b>${pl.kept}</b> طالبًا في صفوفهم` : ''}<br>
+          ${opts.keep_class ? '• الطالب يُنقل لفصل بنفس الاسم إن وُجد، والباقي بلا فصل حتى توزّعهم' : '• كل الطلاب سيكونون <b>بلا فصل</b> حتى توزّعهم من جديد'}</div>
+        <p>يمكنك التراجع لاحقًا من نفس الصفحة («↩ تراجع عن هذا الترحيل»).</p>
+        <label class="f">للتأكيد اكتب كلمة <b>ترحيل</b><input id="cf" autocomplete="off"></label>`,
+        actions: [{ label: 'إلغاء', value: null, cls: 'ghost' }, { label: '🎓 تنفيذ الترحيل', cls: 'danger', onClick: async (w) => {
+          if ($('#cf', w).value.trim() !== 'ترحيل') { toast('اكتب كلمة «ترحيل» للتأكيد', 'warn'); return false; }
+          const r = await rpc('promo_run', { p: Object.assign({ confirm: 'ترحيل' }, opts) });
+          await changed('years'); LMS.clearCache && LMS.clearCache();
+          modal({ title: '✅ تم ترحيل الطلاب', body: `<p>رُحّل <b>${r.promoted}</b> طالبًا، وتخرّج <b>${r.graduates}</b>${r.kept ? `، وبقي <b>${r.kept}</b> للإعادة` : ''}. العام الحالي الآن: <b>${esc(r.new_year || '')}</b>.</p>
+            <p>${r.with_class} طالبًا نُقلوا لفصول بنفس الاسم، و<b>${r.without_class}</b> بلا فصل.</p>
+            ${r.without_class ? '<div class="notice">الخطوة التالية: وزّع الطلاب على فصولهم من <b>لوحة الإدارة ← الاستيراد ← توزيع الطلاب على الفصول</b> (ملف Excel فيه الهوية والفصل)، أو من تبويب «الفصول».</div>' : ''}`,
+            actions: [{ label: 'تم', value: null, cls: 'primary' }] });
+          reload(); return true; } }] });
+    }
+  }
+
   async function yearsTab(pane) {
     const years = await run(sb.from('academic_years').select('*').order('id'));
     const terms = await run(sb.from('terms').select('*').order('id'));
-    pane.innerHTML = `<div class="toolbar"><span class="grow hint">العام والفصل «الحالي» يظهران للمستخدمين، وستُربط بهما الواجبات والاختبارات في المراحل القادمة.</span>
+    pane.innerHTML = `<div class="card glass promo-card" style="margin-bottom:14px"><div class="toolbar" style="margin:0;flex-wrap:wrap">
+        <div class="grow"><b style="font-size:1.05rem">🎓 ترحيل الطلاب للعام الدراسي الجديد</b>
+          <div class="hint">في نهاية العام: ينقل كل طالب للصف الأعلى (السادس الابتدائي ← الأول المتوسط، الثالث المتوسط ← الأول الثانوي)، ويُخرّج طلاب آخر صف، ويبدأ العام الجديد — مع معاينة قبل التنفيذ وإمكانية التراجع.</div></div>
+        <button class="btn primary" id="promo">🎓 ترحيل الطلاب…</button></div><div id="promoLast"></div></div>
+      <div class="toolbar"><span class="grow hint">العام والفصل «الحالي» يظهران للمستخدمين، وستُربط بهما الواجبات والاختبارات في المراحل القادمة.</span>
       <button class="btn primary" id="addY">+ عام دراسي</button></div>
       ${years.map((y) => `<div class="card glass" style="margin-bottom:12px">
         <div class="toolbar"><h3 class="grow" style="margin:0">${esc(y.name)} ${y.is_current ? '<span class="chip teal">الحالي</span>' : ''}</h3>
@@ -885,6 +959,7 @@
           <button class="icon-btn" title="حذف" data-tdel="${t.id}">✕</button></span>`).join('') || '<span class="hint">لا توجد فصول دراسية</span>'}</div>
       </div>`).join('') || '<div class="card glass empty">لا توجد أعوام</div>'}`;
     const reload = async () => { loaded.years = false; await openTab('years', true); };
+    promoSetup(pane, reload);
     $('#addY', pane).onclick = async () => {
       const ok = await modal({ title: 'عام دراسي جديد', body: `<div class="form-grid">
         <label class="f">الاسم<input id="n" placeholder="1449هـ"></label>

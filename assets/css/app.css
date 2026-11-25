@@ -253,3 +253,10 @@ button.att-box { font: inherit; text-align: inherit; cursor: pointer; border: 1p
 .tl-chip { display: block; width: 100%; text-align: start; margin-top: 6px; border: 1px dashed #e0c36a; background: #fffbea; color: #7a5a00; border-radius: 10px; padding: 4px 8px; font: inherit; font-size: .8rem; cursor: pointer; }
 .tl-chip:hover { background: #fff3c4; }
 .tl-chip.inline { display: inline-block; width: auto; margin: 0 4px; padding: 0 6px; }
+
+/* ترحيل الطلاب */
+.promo-card { border: 1px solid #cfe9dc; background: #f3fbf7; padding: 14px; }
+.promo-res { max-height: 200px; overflow: auto; } .promo-res a { display: block; padding: 6px; border-bottom: 1px solid #f1f3f2; text-decoration: none; color: inherit; } .promo-res a:hover { background: #F5F8F6; }
+.promo-kpi { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 8px 0; } .promo-kpi div { background: #F5F8F6; border-radius: 10px; padding: 8px; text-align: center; }
+.promo-kpi b { display: block; font-size: 1.4rem; color: var(--brand); } .promo-kpi span { font-size: .8rem; color: var(--muted); }
+.chk { display: flex; gap: 8px; align-items: center; margin: 6px 0; cursor: pointer; }

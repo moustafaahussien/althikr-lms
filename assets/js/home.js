@@ -75,7 +75,7 @@
   // الجاهزة أولًا؛ و«قريبًا» في قسم مطوي آخر الصفحة (لا تظهر للمشرف والطالب وولي الأمر)
   const mods = (C.MODULES || []).filter((m) => (m.beta ? LMS.betaAllowed(m, ctx) : (!m.roles || !m.roles.length || m.roles.includes(role))));
   try { const fl = sessionStorage.getItem('lms_flash'); if (fl) { sessionStorage.removeItem('lms_flash'); LMS.toast(fl, 'err'); } } catch (_) {}
-  const ready = mods.filter((m) => m.url), soon = mods.filter((m) => !m.url);
+  const ready = mods.filter((m) => m.url && !m.beta).concat(mods.filter((m) => m.url && m.beta)), soon = mods.filter((m) => !m.url);
   const ext = (u) => /^https?:/i.test(u);
   $('#modules').innerHTML = ready.map((m) =>
     `<a class="module glass" href="${esc(m.url)}" ${ext(m.url) ? 'target="_blank" rel="noopener" title="يفتح في نافذة جديدة"' : ''}>${ext(m.url) ? '<span class="ext" aria-label="منصة خارجية — نافذة جديدة">↗</span>' : ''}${m.beta ? '<span class="beta-badge" title="وحدة تجريبية — قد تتغير">تجريبي</span>' : ''}<span class="ic">${m.icon}</span><b>${esc(m.title)}</b><small>${esc(m.desc || '')}</small></a>`).join('');

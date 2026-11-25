@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <!-- سياسة أمان: المواقع المسموح للصفحة تحميل الأكواد منها والاتصال بها -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.sheetjs.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://zpbhzhpvpvehowxvlsgp.supabase.co https://drive.google.com https://*.googleusercontent.com; connect-src 'self' https://zpbhzhpvpvehowxvlsgp.supabase.co wss://zpbhzhpvpvehowxvlsgp.supabase.co; frame-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>المختبرات — منصة دار الذكر التعليمية</title>
+  <link rel="stylesheet" href="assets/css/brand.css?v=202611231330">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <meta name="theme-color" content="#007B51">
+  <link rel="manifest" href="supervision/manifest.json?v=2">
+    <link rel="stylesheet" href="assets/css/app.css?v=202611251400">
+  <link rel="stylesheet" href="assets/css/topbar.css?v=202611231330">
+  <style>
+    .wk { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .grid-wk { display: grid; gap: 4px; min-width: 760px; }
+    .grid-wk .h { font-weight: 700; text-align: center; padding: 6px 2px; font-size: .86rem; background: #F5F8F6; border-radius: 8px; }
+    .grid-wk .h.today { background: var(--brand); color: #fff; }
+    .grid-wk .pn { font-weight: 700; display: grid; place-items: center; color: var(--muted); font-size: .86rem; }
+    .cell { min-height: 58px; border: 1px dashed var(--line); border-radius: 10px; padding: 5px 6px; font-size: .78rem; background: #fff; text-align: right; font-family: inherit; cursor: default; }
+    .cell.free { cursor: pointer; color: var(--muted); display: grid; place-items: center; }
+    .cell.free:hover { border-color: var(--brand); color: var(--brand); background: #F2FAF6; }
+    .cell.past { background: #fafafa; cursor: default; }
+    .cell.bk { border-style: solid; cursor: pointer; }
+    .cell.bk b { display: block; font-size: .8rem; line-height: 1.35; } .cell.bk small { color: var(--muted); display: block; }
+    .cell.mine { border-color: #2a4f9a; background: #f3f6fd; }
+    .st { display: inline-block; font-size: .72rem; font-weight: 700; padding: 0 7px; border-radius: 99px; }
+    .st.pending { background: #fff4d6; color: #8a5a00; } .st.prepared { background: #e6f6ee; color: #007B51; } .st.done { background: #eef0f3; color: #556; } .st.rejected { background: #fdecea; color: #b3261e; }
+    .al { display: flex; gap: 8px; align-items: center; padding: 8px 10px; border-radius: 10px; margin-bottom: 6px; background: #fff8e6; border: 1px solid #f3d39a; }
+    .al.sev2 { background: #fdecea; border-color: #f0c4be; }
+    tr.row-alert td { background: #fffaf0; } tr.row-bad td { background: #fdf3f2; }
+    .chip-s { display: inline-block; font-size: .72rem; padding: 0 7px; border-radius: 99px; margin-inline-start: 4px; font-weight: 700; }
+    .chip-s.low { background: #fff4d6; color: #8a5a00; } .chip-s.out, .chip-s.expired, .chip-s.damaged { background: #fdecea; color: #b3261e; } .chip-s.expiring, .chip-s.maintenance { background: #fff0e0; color: #a4550a; }
+    .picker { max-height: 260px; overflow: auto; border: 1px solid var(--line); border-radius: 10px; padding: 6px; }
+    .picker label { display: flex; gap: 8px; align-items: center; padding: 4px 2px; border-bottom: 1px solid #f1f3f2; }
+    .picker input[type=number] { width: 80px; }
+    .bkcard { padding: 12px 14px; margin-bottom: 8px; }
+    .bkcard .acts { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+    .pre { white-space: pre-wrap; background: #F5F8F6; border-radius: 8px; padding: 6px 8px; margin-top: 4px; font-size: .88rem; }
+  </style>
+</head>
+<body>
+  <header id="topbar"></header>
+  <main class="page" id="main">
+    <section class="hero glass">
+      <h1 id="hT">🔬 المختبرات</h1>
+      <p id="hP">احجز حصتك في المعمل واكتب التجهيزات المطلوبة ليجهزها محضّر المختبر قبل الحصة.</p>
+      <div class="chips" id="labChips"></div>
+    </section>
+    <nav class="tabs glass" id="tabs"></nav>
+    <div id="view"><div class="empty">جارٍ التحميل…</div></div>
+  </main>
+  <footer class="credit">إعداد وتصميم: مصطفى حسين</footer>
+
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
+  <script src="assets/vendor/supabase-js-2.119.2.js"></script>
+  <script src="assets/js/config.js?v=202611251500"></script>
+  <script src="assets/js/academic-calendar.js?v=202611231330"></script>
+  <script src="assets/js/core.js?v=202611251500"></script>
+  <script src="assets/js/labs.js?v=202611251500"></script>
+</body>
+</html>

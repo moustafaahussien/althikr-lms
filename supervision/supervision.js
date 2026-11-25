@@ -750,7 +750,9 @@ async function startWithCode(code){
 }
 async function initCloud(){
   if(!SB){ ssoState("تعذّر تحميل منصة المدرسة. أعد تحميل الصفحة."); return; }
-  ssoState("جارٍ الدخول بحساب المدرسة…");
+  // مكتب الإشراف صفحة من المنصة: لا تظهر شاشة دخول — نعرض نسخة هذا الجهاز فورًا ونتحقق في الخلفية
+  if(CODE){ try{ TT=LS.get(ttKey())||null; const local=LS.get(localKey()); if(local){ lastStamp=Number(local.stamp)||0; applyData(local); } applyTitle(); applyAdmin(); restoreTab(); }catch(e){} }
+  setSync("جارٍ الدخول بحساب المدرسة…");
   // الشريط العلوي الموحّد (ويحوّل لصفحة الدخول إن لم تكن هناك جلسة)
   try{ await LMS.mountTopbar("supervision/"); const lo=document.getElementById("lmsLogout"); if(lo) lo.onclick=()=>document.getElementById("logoutBtn").onclick(); }catch(e){}
   let tok=null; try{ tok=await lmsToken(); }catch(e){}

@@ -236,3 +236,8 @@ button.att-box { font: inherit; text-align: inherit; cursor: pointer; border: 1p
 .module.locked { opacity: .62; filter: grayscale(.55); cursor: not-allowed; }
 .module.locked:hover { opacity: .8; transform: none; }
 .module.locked .lock { position: absolute; top: 10px; inset-inline-start: 12px; font-size: .95rem; }
+
+/* «مهامي» في الرئيسية */
+.my-tasks { padding: 12px 14px; } .my-tasks .mt-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.my-tasks .mt-list a { background: #F5F8F6; border: 1px solid var(--line); border-radius: 99px; padding: 4px 12px; text-decoration: none; color: inherit; font-size: .9rem; }
+.my-tasks .mt-list a:hover { border-color: var(--brand); }

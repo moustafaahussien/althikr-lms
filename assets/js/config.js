@@ -31,6 +31,7 @@ window.LMS_CONFIG = {
     { key: 'gifted',      title: 'الكشف عن الموهوبين',   icon: '🧩', url: 'https://moustafaahussien.github.io/matrices-test/', roles: ['admin','leadership','principal','supervisor','teacher'], desc: 'اختبارات رافن وتورانس' },
 
     // —— الوحدات التجريبية (تظهر في آخر الصفحة بشارة «تجريبي») ——
+    { key: 'calendar',    title: 'تقويم المدرسة',        icon: '📅', url: 'calendar.html', roles: [], desc: 'التقويم الدراسي وأحداث المدرسة واختباراتها، وحجوزاتك ومواعيد المسابقات في مكان واحد', beta: true },
     { key: 'attendance',  title: 'الحضور والغياب',      icon: '🗓️', url: 'attendance.html', roles: ['admin','leadership','principal','supervisor','teacher','staff'], desc: 'تسجيل الحضور اليومي وتقارير الغياب والتأخر' , beta: true },
     { key: 'lessons',     title: 'تحضير الدروس',        icon: '📘', url: 'lessons.html', roles: ['admin','leadership','principal','supervisor','teacher'], desc: 'خطط الدروس بالقوالب واعتماد المشرف' , beta: true },
     { key: 'course',      title: 'صفحات المواد',        icon: '🗂️', url: 'course.html', roles: [],  desc: 'المحتوى الأسبوعي والإعلانات لكل فصل' , beta: true },
@@ -41,11 +42,13 @@ window.LMS_CONFIG = {
     { key: 'library',     title: 'مكتبة معلمي دار الذكر', icon: '📚', url: 'library.html', roles: ['admin','leadership','principal','supervisor','teacher'], desc: 'واجبات واختبارات ومحتوى يشاركه المعلمون' , beta: true },
     { key: 'classes',     title: 'الفصول والطلاب',       icon: '🏫', url: 'classes.html', roles: ['admin','leadership','principal','supervisor'], desc: 'فصول نطاقك وطلابها وحضورهم اليوم' , beta: true },
     { key: 'behavior',    title: 'سجل السلوك والمواظبة', icon: '🌟', url: 'behavior.html', roles: ['admin','leadership','principal','supervisor','teacher','staff'], desc: 'ملاحظات إيجابية وسلبية بقوالب جاهزة، نقاط التميز، وإحالة المخالفات للموجّه الطلابي — وتظهر لولي الأمر', beta: true },
+    { key: 'skills',      title: 'جواز مهارات القرن 21', icon: '🎫', url: 'skills.html', roles: ['admin','leadership','principal','supervisor','teacher','student'], desc: 'مشاركة الطالب في برامج الوحدة الستة ومستواه فيها — جواز يُطبع وإحصاءات للتقرير', beta: true },
     { key: 'talentlms',   title: 'الموهبة والمسابقات',   icon: '🏆', url: 'talent.html', roles: ['admin','leadership','principal','supervisor','teacher'], desc: 'المسابقات ومواعيدها، ترشيح الطلاب ومتابعتهم حتى النتيجة، قاعدة الموهوبين ومؤشرات الأداء', beta: true },
     { key: 'portfolio',   title: 'ملف إنجاز الطالب',     icon: '🎒', url: 'portfolio.html', roles: [],  desc: 'مشاريع الطالب ومسابقاته وإنجازاته' , beta: true },
     { key: 'scilab',      title: 'إدارة مختبرات العلوم', icon: '🔬', url: 'labs.html?lab=science', roles: ['admin','leadership','principal','supervisor','teacher','staff'], desc: 'حجز حصة في مختبر العلوم مع التجهيزات المطلوبة، ومخزون المختبر وتنبيهات النفاد والصلاحية والتلف', beta: true },
     { key: 'stemlab',     title: 'معمل STEM',            icon: '🤖', url: 'labs.html?lab=stem', roles: ['admin','leadership','principal','supervisor','teacher','staff'], desc: 'حجز حصة في معمل STEM وتجهيزاتها، ومخزون المعمل وأدواته وتنبيهاته', beta: true },
     { key: 'facilities',  title: 'حجز المرافق',          icon: '🏛️', url: 'labs.html?type=facility', roles: ['admin','leadership','principal','supervisor','teacher','staff'], desc: 'حجز مركز مصادر التعلم والمسرح والصالة الرياضية وقاعة الاجتماعات ومعمل الحاسب', beta: true },
+    { key: 'initiatives', title: 'بنك المبادرات',        icon: '💡', url: 'initiatives.html', roles: ['admin','leadership','principal','supervisor','teacher','staff'], desc: 'اقتراح المبادرات واعتمادها وتوثيق أثرها وأدلتها — وبنك مبادرات المدرسة للجميع', beta: true },
     { key: 'duty',        title: 'جدول المناوبة',        icon: '🛡️', url: 'services.html#duty', roles: ['admin','leadership','principal','supervisor','teacher','staff'], desc: 'المناوبة الأسبوعية ومناوبتك اليوم' , beta: true },
     { key: 'requests',    title: 'المعاملات الإلكترونية', icon: '📨', url: 'services.html#req', roles: ['admin','leadership','principal','supervisor','teacher','staff'], desc: 'استئذان، إجازة، صيانة، مستلزمات… بسير اعتماد' , beta: true },
     { key: 'complaints',  title: 'الشكاوى الأكاديمية',    icon: '📣', url: 'services.html#cmp', roles: [], desc: 'تسجيل الشكوى ومتابعتها حتى الحل' , beta: true },

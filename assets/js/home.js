@@ -65,6 +65,11 @@
   if (STAFF) HT.then((ht) => ht ? { data: ht.duty } : sb.rpc('duty_today')).then(({ data }) => { if (!data || !data.length) return;
     $('#dutyToday').innerHTML = (`<div class="notice" style="margin-bottom:14px">🛡️ <b>مناوبتك اليوم:</b> ${data.map((d) => `${esc(d.slot)} — ${esc(d.place)}${d.note ? ' (' + esc(d.note) + ')' : ''}`).join(' · ')} <a href="services.html#duty">الجدول</a></div>`); }).catch(() => {});
   document.addEventListener('lms:msg', (e) => showAcks(e.detail));
+  // «مهامي»: ما ينتظرني في الوحدات المختلفة (sql/55)
+  if (STAFF) sb.rpc('my_tasks').then(({ data }) => { if (!data || !data.length) return;
+    const box = document.createElement('div'); box.className = 'glass card my-tasks'; box.style.marginBottom = '14px';
+    box.innerHTML = `<b>📋 مهامي</b><div class="mt-list">${data.map((t) => `<a href="${esc(t.link)}">${t.icon} ${esc(t.text)}</a>`).join('')}</div>`;
+    $('#acks').before(box); }).catch(() => {});
   // تنبيهات المختبرات (للمحضّر ومشرف المعمل فقط — sql/50)
   if (STAFF) sb.rpc('lab_my_alerts').then(({ data }) => { if (!data || !data.length) return;
     const box = document.createElement('div'); box.className = 'notice warn'; box.style.marginBottom = '14px';

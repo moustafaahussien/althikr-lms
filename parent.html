@@ -11,7 +11,7 @@
   <meta name="theme-color" content="#007B51">
   <link rel="manifest" href="supervision/manifest.json?v=2">
   <meta name="robots" content="noindex">
-  <link rel="stylesheet" href="assets/css/app.css?v=202611251800">
+  <link rel="stylesheet" href="assets/css/app.css?v=202611252100">
   <style>
     .pp-wrap { max-width: 760px; margin: 0 auto; }
     .pp-box { padding: 22px; margin-bottom: 16px; }
@@ -29,7 +29,7 @@
     .timer { font-size: .82rem; color: var(--muted); }
   </style>
   <script src="assets/vendor/supabase-js-2.119.2.js"></script>
-  <script src="assets/js/config.js?v=202611252000"></script>
+  <script src="assets/js/config.js?v=202611252100"></script>
   <script src="assets/js/core.js?v=202611251800"></script>
 </head>
 <body>
@@ -156,11 +156,18 @@
         <thead><tr><th>التاريخ</th><th>هجري</th><th>الحصة</th><th>الحالة</th><th>ملاحظة</th></tr></thead><tbody>${a.recent.map((r) => `<tr><td>${esc(r.d)}</td><td>${esc(LMS.hijri(r.d))}</td>
         <td>${r.p ? r.p : 'يومي'}</td><td>${STL[r.s] || r.s}</td><td>${esc(r.n || '')}</td></tr>`).join('')}</tbody></table></div></details>` : ''}
       ${behavior(c.behavior)}
+      ${skills(c.skills)}
       <h3 style="margin:14px 0 8px;font-size:1rem">المعلمون</h3>
       ${(c.teachers || []).length ? `<div class="grid modules">${c.teachers.sort((x, y) => (x.subject || '').localeCompare(y.subject || '', 'ar')).map((t) => `
         <div class="module glass"><span class="ic">📚</span><b>${esc(t.subject)}</b><small>${esc(t.name)}</small></div>`).join('')}</div>`
         : '<div class="hint">لم تُسند مواد لهذا الصف بعد.</div>'}
     </div>`;
+  }
+  function skills(k) {
+    if (!k || !(k.records || []).length) return '';
+    const LV = { 1: 'مستكشف', 2: 'ممارس', 3: 'متقن', 4: 'مُلهِم' };
+    return `<h3 style="margin:14px 0 8px;font-size:1rem">🎫 جواز مهارات القرن 21</h3><div class="grid modules">${k.programs.map((p) => `<div class="module glass" style="${p.count ? '' : 'opacity:.5'}">
+      <span class="ic">${p.icon}</span><b>${esc(p.name)}</b><small>${p.count ? `${'★'.repeat(p.level)}${'☆'.repeat(4 - p.level)} ${LV[p.level]} · ${p.count} مشاركة` : 'لم يبدأ بعد'}</small></div>`).join('')}</div>`;
   }
   function behavior(b) {
     if (!b || !(b.notes || []).length) return '';

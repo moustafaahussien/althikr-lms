@@ -124,11 +124,14 @@
       <section class="card glass sec"><h3>🏆 الإنجازات</h3>${tbl(['الإنجاز', 'المستوى', 'النتيجة', 'التاريخ', 'الحالة'], D.portfolio.map((x) => `<tr><td>${esc(x.title)}</td><td>${esc({ class: 'الفصل', school: 'المدرسة', district: 'إدارة التعليم', national: 'وطني', international: 'دولي' }[x.level] || '—')}</td>
           <td>${esc(x.result || '')}</td><td>${d(x.date)}</td><td>${x.status === 'approved' ? '<span class="tag">معتمد</span>' : x.status === 'rejected' ? '<span class="tag bad">مرفوض</span>' : '<span class="tag warn">بانتظار الاعتماد</span>'}</td></tr>`), 'لا توجد إنجازات مسجّلة')}</section>
 
+      <section class="card glass sec" id="talentSec"></section>
+
       <section class="card glass sec"><h3>👩‍🏫 معلمو الطالب</h3>${D.teachers.length ? `<div class="dl">${D.teachers.map((t) => `<div><span>${esc(t.subject)}</span>${esc(t.teacher)}</div>`).join('')}</div>` : '<div class="empty">لا يوجد إسناد لفصل الطالب</div>'}</section>
 
       ${D.complaints.length ? `<section class="card glass sec"><h3>📮 الشكاوى والملاحظات المتعلقة بالطالب</h3>${tbl(['الموضوع', 'التصنيف', 'التاريخ', 'الحالة'], D.complaints.map((c) => `<tr><td>${esc(c.subject)}</td><td>${esc(c.category)}</td><td>${d(c.at)}</td>
           <td><span class="tag ${c.status === 'new' ? 'warn' : ''}">${esc({ new: 'جديدة', in_progress: 'قيد المعالجة', resolved: 'تم الحل', closed: 'مغلقة' }[c.status] || c.status)}</span></td></tr>`), '')}</section>` : ''}
       </div>`;
     $('#pr').onclick = () => LMS.printHTML(`ملف الطالب: ${I.name}`, $('#sheet').innerHTML);
+    if (window.TALENT && !LMS.DEMO) TALENT.renderStudent($('#talentSec'), I.id); else $('#talentSec').remove();
   }
 })();

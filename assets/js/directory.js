@@ -26,6 +26,11 @@
     })).sort((a, b) => rank(a.grp) - rank(b.grp) || senior(a.title) - senior(b.title) || a.name.localeCompare(b.name, 'ar'));
   } catch (e) { $('#list').innerHTML = `<div class="notice err">${esc(errMsg(e))}</div>`; return; }
 
+  // أدوار المنسوبين في برامج الموهبة — تُقرأ من منصة الموهبة (المصدر الوحيد) وتظهر على بطاقاتهم
+  if (window.TALENT && !LMS.DEMO) TALENT.staffAll().then((L) => { ALL.forEach((p) => { p.talent = TALENT.staffFor(L, p); }); render(); }).catch(() => {});
+  $('#list').addEventListener('click', (e) => { const b = e.target.closest('[data-tl]'); if (!b) return;
+    const p = ALL.find((x) => String(x.id || x.no || x.name) === b.dataset.tl); if (!p || !p.talent) return;
+    LMS.modal({ title: `🌟 ${p.name} — برامج الموهبة`, wide: true, body: TALENT.staffDetails(p.talent, p.name), actions: [{ label: 'إغلاق', value: null }] }); });
   const groups = [...new Set(ALL.map((p) => p.grp))].sort((a, b) => rank(a) - rank(b));
   $('#grps').innerHTML = [`<button data-g="" class="on">الكل (${ALL.length})</button>`]
     .concat(groups.map((g) => `<button data-g="${esc(g)}">${esc(g)} (${ALL.filter((p) => p.grp === g).length})</button>`)).join('');
@@ -56,6 +61,7 @@
         <div><b class="nm">${esc(p.name)}</b><div class="tt">${esc(p.title || '')}</div></div></div>
       <div class="meta">${teach}${stg}</div>
       ${p.manager ? `<div class="mgr">المدير المباشر: ${esc(p.manager)}</div>` : ''}
+      ${p.talent ? `<button class="tl-chip" data-tl="${esc(p.id || p.no || p.name)}" title="أدواره في برامج الموهبة">🌟 ${esc(window.TALENT.staffSummary(p.talent))}</button>` : ''}
       <div class="links">${contact(p)}</div>
     </div>`;
   }

@@ -47,7 +47,7 @@
       <div class="legend">${Object.entries(KIND).map(([, k]) => `<span style="--c:${k[2]}">${k[0]} ${k[1]}</span>`).join('')}</div>
       ${MODE === 'month' ? `<div class="glass card" style="overflow:auto;padding:8px"><div class="cal">${grid}</div></div>`
         : `<div class="glass card">${up.length ? up.map((x) => `<div class="li">${chip(x)}<span class="hint">${esc(x.date)}${x.end && x.end !== x.date ? ' ← ' + esc(x.end) : ''} · ${esc(hijri(x.date))}</span></div>`).join('') : '<div class="empty">لا مواعيد قادمة هذا الشهر.</div>'}</div>`}
-      <p class="hint">يجمع التقويم: التقويم الدراسي الرسمي، وأحداث المدرسة التي تخصّك، وحجوزاتك في المختبرات والمرافق، ومواعيد المسابقات${['student', 'parent'].includes(ctx.profile.role) ? '' : '، واختباراتك ومواعيد تسليم واجباتك'}.</p>`;
+      <p class="hint">يجمع التقويم: التقويم الدراسي الرسمي، وأحداث المدرسة التي تخصّك، وحجوزاتك في المختبرات والمرافق${['student', 'parent'].includes(ctx.profile.role) ? '' : '، واختباراتك ومواعيد تسليم واجباتك'}.</p>`;
     $('#prv').onclick = () => { M.setMonth(M.getMonth() - 1); load(); };
     $('#nxt').onclick = () => { M.setMonth(M.getMonth() + 1); load(); };
     $('#tdy').onclick = () => { M = new Date(); M.setDate(1); M.setHours(12, 0, 0, 0); load(); };

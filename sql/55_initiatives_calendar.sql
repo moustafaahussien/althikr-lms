@@ -175,7 +175,7 @@ begin
   return jsonb_build_object('ok', true);
 end $$;
 
--- كل ما يخصني في فترة: أحداث المدرسة + حجوزاتي في المختبرات والمرافق + مواعيد المسابقات + اختباراتي وواجباتي (للمعلم) + مناوبتي
+-- كل ما يخصني في فترة: أحداث المدرسة + حجوزاتي في المختبرات والمرافق + اختباراتي وواجباتي (للمعلم)
 create or replace function public.cal_feed(p_from date, p_to date) returns jsonb
 language plpgsql stable security definer set search_path = public, private as $$
 declare me uuid := public.me_id(); r text := public.me_role()::text; my_stages int[];
@@ -196,10 +196,7 @@ begin
       select jsonb_build_object('src', 'lab', 'kind', 'booking', 'title', l.icon || ' ' || l.name || ': ' || b.title, 'date', b.day, 'period', b.period, 'status', b.status, 'link', 'labs.html?lab=' || l.code)
         from lab_bookings b join labs l on l.id = b.lab_id
        where r not in ('student','parent') and b.teacher_id = me and b.day between p_from and p_to and b.status in ('pending','prepared','done')
-      union all
-      select jsonb_build_object('src', 'comp', 'kind', 'deadline', 'title', '🏆 ' || c.name || ' — ' || d.lbl, 'date', d.dt, 'link', 'talent.html')
-        from tl_competitions c cross join lateral (values (c.reg_deadline, 'آخر تسجيل'), (c.test_date, 'الاختبار'), (c.final_date, 'النهائي')) d(dt, lbl)
-       where r not in ('student','parent') and c.active and d.dt between p_from and p_to
+
       union all
       select jsonb_build_object('src', 'exam', 'kind', 'exam', 'title', '🧪 ' || x.title, 'date', (x.opens_at at time zone 'Asia/Riyadh')::date, 'link', 'exams.html')
         from ex_exams x where x.teacher_id = me and (x.opens_at at time zone 'Asia/Riyadh')::date between p_from and p_to
@@ -232,13 +229,6 @@ begin
   -- حجوزاتي في المختبرات/المرافق اليوم وغدًا
   select count(*) into n from lab_bookings where teacher_id = me and day between current_date and current_date + 1 and status in ('pending','prepared');
   if n > 0 then out := out || jsonb_build_object('icon', '🔬', 'text', n || ' حجز لك في المختبرات/المرافق اليوم أو غدًا', 'link', 'calendar.html'); end if;
-  -- مواعيد مسابقات خلال 7 أيام (لمسؤوليها والمنسق)
-  select count(*) into n from tl_competitions c where c.active and (c.owner_id = me or private.tl_manager())
-     and (c.reg_deadline between current_date and current_date + 7 or c.test_date between current_date and current_date + 7);
-  if n > 0 then out := out || jsonb_build_object('icon', '🏆', 'text', n || ' موعد مسابقة خلال أسبوع', 'link', 'talent.html'); end if;
-  -- ترشيحات جديدة على مسابقاتي
-  select count(*) into n from tl_entries e join tl_competitions c on c.id = e.comp_id where c.owner_id = me and e.status = 'nominated';
-  if n > 0 then out := out || jsonb_build_object('icon', '🌟', 'text', n || ' ترشيح بانتظار المراجعة في مسابقاتك', 'link', 'talent.html'); end if;
   -- أحداث المدرسة اليوم
   select count(*) into n from sc_events e where current_date between e.start_date and coalesce(e.end_date, e.start_date) and (r = 'admin' or r = any (e.audience));
   if n > 0 then out := out || jsonb_build_object('icon', '📅', 'text', n || ' حدث في تقويم المدرسة اليوم', 'link', 'calendar.html'); end if;

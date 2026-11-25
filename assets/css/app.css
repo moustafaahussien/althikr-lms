@@ -246,3 +246,9 @@ button.att-box { font: inherit; text-align: inherit; cursor: pointer; border: 1p
 .push-card { padding: 12px 14px; margin-bottom: 14px; border: 1px solid #cfe9dc; background: #f3fbf7; }
 .push-help { margin-top: 8px; font-size: .88rem; line-height: 1.9; background: #fff; border-radius: 10px; padding: 8px 10px; border: 1px solid var(--line); }
 .push-mini { font-size: .85rem; color: var(--muted); margin: -4px 0 12px; } .push-mini a { color: var(--brand); }
+
+/* بيانات منصة الموهبة في ملف الطالب ودليل الموظفين */
+.tl-h { margin: 14px 0 6px; font-size: .95rem; }
+.tag.win { background: #fff6d8; color: #8a6400; } .tag.fin { background: #e8f1fb; color: #2b5f8f; } .tag.q { background: #e6f6ee; color: #007B51; }
+.tl-chip { display: block; width: 100%; text-align: start; margin-top: 6px; border: 1px dashed #e0c36a; background: #fffbea; color: #7a5a00; border-radius: 10px; padding: 4px 8px; font: inherit; font-size: .8rem; cursor: pointer; }
+.tl-chip:hover { background: #fff3c4; }

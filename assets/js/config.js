@@ -32,7 +32,6 @@ window.LMS_CONFIG = {
     { key: 'messages',    title: 'الرسائل والتعاميم',   icon: '✉️', url: 'messages.html', roles: [], desc: 'البريد الداخلي والتعاميم ومراسلة أولياء الأمور' },
     { key: 'online',      title: 'التعليم عن بعد',       icon: '🎥', url: 'online/', roles: [], desc: 'روابط الحصص والجداول والتقرير اليومي' },
     { key: 'supervision', title: 'مكتب الإشراف التربوي', icon: '🧭', url: 'supervision/', roles: ['admin','leadership','principal','supervisor'], desc: 'جداول الحصص والزيارات وتقييم المعلمين' },
-    { key: 'students',    title: 'دليل الطلاب',          icon: '📇', url: 'students.html', roles: ['admin','leadership','principal','supervisor','staff'], desc: 'بحث عن أي طالب وملفه الكامل: البيانات وأولياء الأمور والحضور والدرجات والواجبات' },
     { key: 'directory',   title: 'دليل الموظفين',        icon: '📇', url: 'staff-directory.html', roles: ['admin','leadership','principal','supervisor','teacher','staff'], desc: 'أسماء المنسوبين ومسمياتهم وطرق التواصل' },
     { key: 'certs',       title: 'إصدار الشهادات',       icon: '🎓', url: 'certificates.html', roles: ['admin','leadership','principal','supervisor','staff'], desc: 'شهادات شكر وتفوق وحضور للطلاب والمعلمين — من المنصة أو ملف Excel / Word بضغطة واحدة' },
     { key: 'thinking',    title: 'مدارس التفكير',        icon: '🧠', url: 'thinking.html', roles: ['admin','leadership','principal','supervisor','teacher','staff'], desc: 'الدورة التدريبية للمعلمين وأدوات التفكير: المفاتيح والعدسات وعادات العقل وفلسفة الطفل' },
@@ -44,6 +43,7 @@ window.LMS_CONFIG = {
     // —— الوحدات التجريبية (تظهر في آخر الصفحة بشارة «تجريبي») ——
     { key: 'calendar',    title: 'تقويم المدرسة',        icon: '📅', url: 'calendar.html', roles: [], desc: 'التقويم الدراسي وأحداث المدرسة واختباراتها، وحجوزاتك ومواعيد المسابقات في مكان واحد', beta: true },
     { key: 'attendance',  title: 'الحضور والغياب',      icon: '🗓️', url: 'attendance.html', roles: ['admin','leadership','principal','supervisor','teacher','staff'], desc: 'تسجيل الحضور اليومي وتقارير الغياب والتأخر' , beta: true },
+    { key: 'students',    title: 'دليل الطلاب',          icon: '📇', url: 'students.html', roles: ['admin','leadership','principal','supervisor','staff'], desc: 'بحث عن أي طالب وملفه الكامل: البيانات وأولياء الأمور والحضور والدرجات والواجبات', beta: true },
     { key: 'lessons',     title: 'تحضير الدروس',        icon: '📘', url: 'lessons.html', roles: ['admin','leadership','principal','supervisor','teacher'], desc: 'خطط الدروس بالقوالب واعتماد المشرف' , beta: true },
     { key: 'course',      title: 'صفحات المواد',        icon: '🗂️', url: 'course.html', roles: [],  desc: 'المحتوى الأسبوعي والإعلانات لكل فصل' , beta: true },
     { key: 'homework',    title: 'الواجبات',            icon: '📝', url: 'homework.html', roles: [],  desc: 'إنشاء الواجبات والتسليم والتصحيح' , beta: true },

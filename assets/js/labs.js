@@ -8,12 +8,12 @@
   const { sb, esc, $, $$, toast, errMsg, requireAuth, modal, confirmBox, hijri } = LMS;
   const ctx = await requireAuth();
   const view = $('#view');
-  if (['student', 'parent'].includes(ctx.profile.role)) { view.innerHTML = '<div class="notice">المختبرات لمنسوبي المدرسة.</div>'; return; }
+  if (['student', 'parent'].includes(ctx.profile.role)) { view.innerHTML = '<div class="notice">🔒 ليس لديك صلاحيات الدخول — المختبرات لمنسوبي المدرسة.</div>'; return; }
   const call = async (fn, args) => { const { data, error } = await sb.rpc(fn, args || {}); if (error) throw error; return data; };
 
   const CODE = new URLSearchParams(location.search).get('lab') || 'science';
   const modKey = CODE === 'stem' ? 'stemlab' : 'scilab';
-  if (!LMS.betaAllowed(modKey, ctx)) { view.innerHTML = '<div class="notice">هذه الوحدة تجريبية وغير متاحة لحسابك حاليًا.</div>'; return; }
+  if (!LMS.betaAllowed(modKey, ctx)) { view.innerHTML = '<div class="notice">🔒 ليس لديك صلاحيات الدخول لهذه الوحدة (وحدة تجريبية).</div>'; return; }
 
   const PERIODS = 8, DAYS = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'];
   const CAT = { tool: 'أداة', device: 'جهاز', material: 'مادة', chemical: 'مادة كيميائية', consumable: 'مستهلك', safety: 'أدوات سلامة', other: 'أخرى' };

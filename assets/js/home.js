@@ -73,12 +73,25 @@
 
   // ---------- الوحدات ----------
   // الجاهزة أولًا؛ و«قريبًا» في قسم مطوي آخر الصفحة (لا تظهر للمشرف والطالب وولي الأمر)
-  const mods = (C.MODULES || []).filter((m) => (m.beta ? LMS.betaAllowed(m, ctx) : (!m.roles || !m.roles.length || m.roles.includes(role))));
+  // كل البطاقات تظهر للجميع ليتعرّف الكل على إمكانات المنصة؛ غير المسموح له يرى البطاقة مقفلة 🔒 وتظهر له رسالة عند الضغط
+  const canOpen = (m) => (m.beta ? LMS.betaAllowed(m, ctx) : (!m.roles || !m.roles.length || m.roles.includes(role)));
+  const allowedRoles = (m) => { const set = m.beta && ctx.beta && ctx.beta[m.key]; const r = Array.isArray(set) ? set : (m.roles || []);
+    return r.length ? r.filter((x) => x !== 'admin') : Object.keys(ROLE_LABELS).filter((x) => x !== 'admin'); };
+  const mods = (C.MODULES || []).filter((m) => m.url || canOpen(m));
   try { const fl = sessionStorage.getItem('lms_flash'); if (fl) { sessionStorage.removeItem('lms_flash'); LMS.toast(fl, 'err'); } } catch (_) {}
   const ready = mods.filter((m) => m.url && !m.beta).concat(mods.filter((m) => m.url && m.beta)), soon = mods.filter((m) => !m.url);
   const ext = (u) => /^https?:/i.test(u);
-  $('#modules').innerHTML = ready.map((m) =>
-    `<a class="module glass" href="${esc(m.url)}" ${ext(m.url) ? 'target="_blank" rel="noopener" title="يفتح في نافذة جديدة"' : ''}>${ext(m.url) ? '<span class="ext" aria-label="منصة خارجية — نافذة جديدة">↗</span>' : ''}${m.beta ? '<span class="beta-badge" title="وحدة تجريبية — قد تتغير">تجريبي</span>' : ''}<span class="ic">${m.icon}</span><b>${esc(m.title)}</b><small>${esc(m.desc || '')}</small></a>`).join('');
+  $('#modules').innerHTML = ready.map((m) => canOpen(m)
+    ? `<a class="module glass" href="${esc(m.url)}" ${ext(m.url) ? 'target="_blank" rel="noopener" title="يفتح في نافذة جديدة"' : ''}>${ext(m.url) ? '<span class="ext" aria-label="منصة خارجية — نافذة جديدة">↗</span>' : ''}${m.beta ? '<span class="beta-badge" title="وحدة تجريبية — قد تتغير">تجريبي</span>' : ''}<span class="ic">${m.icon}</span><b>${esc(m.title)}</b><small>${esc(m.desc || '')}</small></a>`
+    : `<a class="module glass locked" href="#" role="button" data-locked="${esc(m.key)}" title="ليس لديك صلاحيات الدخول"><span class="lock" aria-label="مقفلة">🔒</span>${m.beta ? '<span class="beta-badge">تجريبي</span>' : ''}<span class="ic">${m.icon}</span><b>${esc(m.title)}</b><small>${esc(m.desc || '')}</small></a>`).join('');
+  $('#modules').addEventListener('click', (e) => {
+    const a = e.target.closest('[data-locked]'); if (!a) return; e.preventDefault();
+    const m = (C.MODULES || []).find((x) => x.key === a.dataset.locked); if (!m) return;
+    const who = allowedRoles(m).map((r) => ROLE_LABELS[r]).filter(Boolean);
+    modal({ title: '🔒 ليس لديك صلاحيات الدخول', body: `<p style="font-size:1.05rem">${m.icon} <b>${esc(m.title)}</b></p><p>${esc(m.desc || '')}</p>
+      <p class="hint">هذه الوحدة متاحة حاليًا لـ: <b>${who.length ? esc(who.join('، ')) : 'مدير النظام'}</b>${m.beta ? ' — وهي في المرحلة التجريبية وستُتاح لفئات أكثر تدريجيًا' : ''}.</p>`,
+      actions: [{ label: 'حسنًا', value: null, cls: 'primary' }] });
+  });
   if (soon.length && !['supervisor', 'student', 'parent'].includes(role)) {
     $('#soonBox').innerHTML = `<details class="soon-box"><summary><h2>🛠️ قيد الإنشاء <span class="hint">(${soon.length})</span></h2></summary>
       <div class="grid modules">${soon.map((m) => `<div class="module glass soon"><span class="badge">قريبًا</span><span class="ic">${m.icon}</span><b>${esc(m.title)}</b><small>${esc(m.desc || '')}</small></div>`).join('')}</div></details>`;

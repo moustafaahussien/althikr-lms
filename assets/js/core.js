@@ -217,10 +217,10 @@
     try { ctx = await getContext(); } catch (e) { toast(errMsg(e), 'err'); throw e; }
     if (!ctx || !ctx.registered) { location.href = BASE + 'index.html'; return new Promise(() => {}); }
     applyView(ctx);
-    if (roles.length && !roles.includes(ctx.profile.role)) { location.href = BASE + 'home.html'; return new Promise(() => {}); }
+    if (roles.length && !roles.includes(ctx.profile.role)) { try { sessionStorage.setItem('lms_flash', '🔒 ليس لديك صلاحيات الدخول لهذه الوحدة.'); } catch (_) {} location.href = BASE + 'home.html'; return new Promise(() => {}); }
     const pm = pageModules(pageKey());
     if (pm.length && pm.every((m) => m.beta) && !pm.some((m) => betaAllowed(m, ctx))) {
-      try { sessionStorage.setItem('lms_flash', 'هذه الوحدة تجريبية وغير متاحة لحسابك حاليًا.'); } catch (_) {}
+      try { sessionStorage.setItem('lms_flash', '🔒 ليس لديك صلاحيات الدخول لهذه الوحدة (وحدة تجريبية).'); } catch (_) {}
       location.href = BASE + 'home.html'; return new Promise(() => {});
     }
     renderTopbar(ctx);

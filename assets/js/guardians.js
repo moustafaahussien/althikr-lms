@@ -47,7 +47,7 @@
       const r = await call('gd_issue_code', { p_guardian: gid });
       const kids = (r.children || []).join(' و');
       const msg = `السلام عليكم ${r.name ? r.name : 'ولي أمر الطالب ' + kids}،\n` +
-        `رمز تفعيل دخول ولي الأمر في منصة مدارس دار الذكر${kids ? ' (للطالب: ' + kids + ')' : ''}:\n\n*${r.code}*\n\n` +
+        `رمز تفعيل دخول ولي الأمر في ${LMS.C.PLATFORM_NAME}${kids ? ' (للطالب: ' + kids + ')' : ''}:\n\n*${r.code}*\n\n` +
         `1) افتح: ${SITE}\n2) ادخل بحساب ابنك المدرسي.\n3) اكتب رمز التفعيل ثم اختر رمزك السري (6 أرقام) لتستخدمه بعد ذلك.\n\n` +
         `الرمز صالح 14 يومًا ولمرة واحدة. لا تشارك رمزك السري مع ابنك أو غيره.`;
       const url = `https://wa.me/${r.phone}?text=${encodeURIComponent(msg)}`;

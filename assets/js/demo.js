@@ -1124,7 +1124,7 @@
       // ===== قسم إصدار الشهادات (sql/46) =====
       cert_defaults() { if (!['admin', 'leadership', 'principal', 'supervisor', 'staff'].includes(MYROLE())) deny('إصدار الشهادات للإداريين فقط');
         const S = (k) => (DB.app_settings.find((x) => x.key === k) || {}).value || '';
-        return { school: S('school_name') || 'مدارس دار الذكر', sigs: [{ t: S('cert_edu_title') || 'مدير التعليم', n: S('cert_edu_name') }, { t: S('cert_exec_title') || 'المدير التنفيذي', n: S('cert_exec_name') }], me: name(ME_ID) }; },
+        return { school: S('school_name') || (window.LMS_CONFIG || {}).SCHOOL_NAME || '', sigs: [{ t: S('cert_edu_title') || 'مدير التعليم', n: S('cert_edu_name') }, { t: S('cert_exec_title') || 'المدير التنفيذي', n: S('cert_exec_name') }], me: name(ME_ID) }; },
       cert_staff({ p_q }) { RPC.cert_defaults(); const q = String(p_q || '').trim();
         return DB.profiles.filter((x) => !['student', 'parent'].includes(x.role) && x.active !== false && (!q || window.LMS.has(x.full_name + ' ' + (x.job_title || ''), q)))
           .sort((a, b) => a.full_name.localeCompare(b.full_name, 'ar')).slice(0, 300).map((x) => ({ id: x.id, name: x.full_name, job: x.job_title, role: x.role })); },

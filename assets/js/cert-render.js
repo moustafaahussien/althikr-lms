@@ -27,14 +27,14 @@
     const en = !!c.ltr;
     return `<div class="dcert${en ? ' ltr' : ''}">
       <img class="wm" src="${base}assets/img/brand/icon.svg" alt=""><img class="dk" src="${base}assets/img/brand/deco-corner.svg" alt="">
-      <div class="head"><img class="lg" src="${base}assets/img/brand/logo-h.svg" alt="${esc(c.school || '')}">
+      <div class="head"><img class="lg" src="${base}${(window.LMS_CONFIG || {}).LOGO_H || 'assets/img/brand/logo-h.svg'}" alt="${esc(c.school || '')}">
         <div class="secs"><img src="${base}assets/img/brand/sec-girls.png" alt=""><i></i><img src="${base}assets/img/brand/sec-boys.png" alt=""><i></i><img src="${base}assets/img/brand/sec-american.png" alt=""></div></div>
       ${c.no || c.date ? `<div class="no">${c.no ? `${en ? 'Certificate No.' : 'رقم الشهادة:'} <b dir="ltr">${esc(c.no)}</b>` : ''}${c.no && c.date ? ' — ' : ''}${c.date ? `${en ? 'Date:' : 'التاريخ:'} ${esc(fmtDate(c.date, en))}` : ''}</div>` : ''}
       <div class="in"><h1>${esc(c.title || '')}</h1>${c.en ? `<div class="en">${esc(c.en)}</div>` : ''}<div class="bar2"></div>
         <div class="txt">${bodyHTML(c.body || '', c.name || '')}</div>
         ${sigs.length ? `<div class="sig" style="grid-template-columns:repeat(${sigs.length},1fr)">${sigs.map((s) => `<div><div class="t">${esc(s.t || '')}</div><div class="n">${esc(s.n || '')}</div><div class="ln">${en ? 'Signature' : 'التوقيع'}</div></div>`).join('')}</div>` : ''}
       </div>
-      <div class="foot">www.althikr.edu.sa${c.verify ? ' · ' + (en ? 'Verify: ' : 'للتحقق من الشهادة: ') + esc(c.verify) : ''}</div></div>`;
+      <div class="foot">${esc((window.LMS_CONFIG || {}).SCHOOL_WEBSITE || '')}${c.verify ? ' · ' + (en ? 'Verify: ' : 'للتحقق من الشهادة: ') + esc(c.verify) : ''}</div></div>`;
   }
   window.DCert = { fill, render, esc, fmtDate };
 })();

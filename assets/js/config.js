@@ -12,6 +12,17 @@ window.LMS_CONFIG = {
   PLATFORM_NAME: 'منصة دار الذكر التعليمية',
   SCHOOL_NAME: 'مدارس دار الذكر',
 
+  /* ---------- هوية المدرسة (تتغير لكل مدرسة تستخدم المنصة) ---------- */
+  SCHOOL_SHORT: 'دار الذكر',                                  // يظهر في أسماء مثل «مكتبة معلمي …»
+  SCHOOL_WEBSITE: 'www.althikr.edu.sa',
+  SCHOOL_CONTACT: 'T. +966 12 6590700 · P.O Box 54467 Jeddah 21514',
+  LOGO_H: 'assets/img/brand/logo-h.svg',                      // الشعار الأفقي (الطباعة والشهادات)
+  LOGO_MARK: 'assets/img/logo-mark.png',                      // الشعار المربع (الشريط العلوي)
+
+  /* ---------- هوية المنتج (ثابتة لكل المدارس) ---------- */
+  PRODUCT_NAME: 'Mecha LMS',
+  PRODUCT_BY: 'مصطفى حسين',
+
   /* الوحدات التي تظهر في الصفحة الرئيسية.
      roles: الأدوار التي ترى الوحدة (اتركها [] لتظهر للجميع)
      url:   رابط الوحدة — اتركه '' لتظهر بعلامة «قريبًا». الرابط الداخلي (بدون https) يفتح في نفس الصفحة
@@ -39,7 +50,7 @@ window.LMS_CONFIG = {
     { key: 'exams',       title: 'الاختبارات وبنك الأسئلة', icon: '🧪', url: 'exams.html', roles: [],  desc: 'اختبارات إلكترونية بتصحيح تلقائي' , beta: true },
     { key: 'gradebook',   title: 'سجل الدرجات',         icon: '🏅', url: 'gradebook.html', roles: [],  desc: 'الدرجات مجمّعة تلقائيًا' , beta: true },
     { key: 'analytics',   title: 'التحليل والمقارنة',    icon: '📊', url: 'analytics.html', roles: ['admin','leadership','principal','supervisor','teacher'], desc: 'تحليل الأسئلة ومقارنة الفصول والمعلمين' , beta: true },
-    { key: 'library',     title: 'مكتبة معلمي دار الذكر', icon: '📚', url: 'library.html', roles: ['admin','leadership','principal','supervisor','teacher'], desc: 'واجبات واختبارات ومحتوى يشاركه المعلمون' , beta: true },
+    { key: 'library',     title: 'مكتبة المعلمين',  /* يُكمَّل باسم المدرسة أسفل الملف */ icon: '📚', url: 'library.html', roles: ['admin','leadership','principal','supervisor','teacher'], desc: 'واجبات واختبارات ومحتوى يشاركه المعلمون' , beta: true },
     { key: 'classes',     title: 'الفصول والطلاب',       icon: '🏫', url: 'classes.html', roles: ['admin','leadership','principal','supervisor'], desc: 'فصول نطاقك وطلابها وحضورهم اليوم' , beta: true },
     { key: 'behavior',    title: 'سجل السلوك والمواظبة', icon: '🌟', url: 'behavior.html', roles: ['admin','leadership','principal','supervisor','teacher','staff'], desc: 'ملاحظات إيجابية وسلبية بقوالب جاهزة، نقاط التميز، وإحالة المخالفات للموجّه الطلابي — وتظهر لولي الأمر', beta: true },
     { key: 'portfolio',   title: 'ملف إنجاز الطالب',     icon: '🎒', url: 'portfolio.html', roles: [],  desc: 'مشاريع الطالب ومسابقاته وإنجازاته' , beta: true },
@@ -55,3 +66,6 @@ window.LMS_CONFIG = {
     { key: 'training',    title: 'تدريب المعلمين',        icon: '🎓', url: 'services.html#trn', roles: ['admin','leadership','principal','supervisor','teacher','staff'], desc: 'الساعات والشهادات وتقييم أثر التدريب' , beta: true }
   ]
 };
+
+// أسماء تتبع اسم المدرسة
+(function (C) { const m = (C.MODULES || []).find((x) => x.key === 'library'); if (m && C.SCHOOL_SHORT) m.title = 'مكتبة معلمي ' + C.SCHOOL_SHORT; })(window.LMS_CONFIG);

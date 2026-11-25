@@ -282,7 +282,7 @@
     bar.innerHTML = `
       <a class="skip-link" href="#main">تخطَّ إلى المحتوى</a>
       <div class="hrow">
-        <a class="brand" href="${BASE + (LIM ? 'online/' : 'home.html')}"><span class="logo-tile"><img src="${BASE}assets/img/logo-mark.png" alt="مدارس دار الذكر"></span><span>${esc(C.PLATFORM_NAME)}<small>${esc(C.SCHOOL_NAME)}</small></span></a>
+        <a class="brand" href="${BASE + (LIM ? 'online/' : 'home.html')}"><span class="logo-tile"><img src="${BASE}${C.LOGO_MARK || 'assets/img/logo-mark.png'}" alt="${esc(C.SCHOOL_NAME || '')}"></span><span>${esc(C.PLATFORM_NAME)}<small>${esc(C.SCHOOL_NAME)}</small></span></a>
         <div class="clock">
           <span class="who"><b>${esc(p.full_name)}</b><small>${esc(roleTxt)}</small></span>
           <button class="btn sm hbtn" id="lmsLogout" type="button">خروج</button>
@@ -452,10 +452,10 @@
     const base = location.href.replace(/[^/]*([?#].*)?$/, '').replace(/supervision\/$/, '');
     w.document.write(`<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${esc(title)}</title>
       <link rel="stylesheet" href="${base}assets/css/brand.css"><style>${PRINT_CSS}</style></head><body>
-      <div class="ph"><img class="lg" src="${base}assets/img/brand/logo-h.svg" alt="${esc(C.SCHOOL_NAME || 'مدارس دار الذكر')}">
+      <div class="ph"><img class="lg" src="${base}${C.LOGO_H || 'assets/img/brand/logo-h.svg'}" alt="${esc(C.SCHOOL_NAME || '')}">
         <div class="secs"><img src="${base}assets/img/brand/sec-girls.png" alt=""><i></i><img src="${base}assets/img/brand/sec-boys.png" alt=""><i></i><img src="${base}assets/img/brand/sec-american.png" alt=""></div></div>
       <div class="pt"><h1>${esc(title)}</h1><div class="s">${esc(C.PLATFORM_NAME || '')}</div><div class="d">${esc(dateLine())}</div></div>${html}
-      <div class="pf"><img class="deco" src="${base}assets/img/brand/deco-corner.svg" alt=""><div class="ct">T. +966 12 6590700 · P.O Box 54467 Jeddah 21514 · www.althikr.edu.sa<br>${esc(C.PLATFORM_NAME || '')} — طُبع في ${esc(new Date().toLocaleString('ar-SA-u-ca-gregory-nu-latn'))}</div></div>
+      <div class="pf"><img class="deco" src="${base}assets/img/brand/deco-corner.svg" alt=""><div class="ct">${esc(C.SCHOOL_CONTACT || '')} · ${esc(C.SCHOOL_WEBSITE || '')}<br>${esc(C.PLATFORM_NAME || '')} — طُبع في ${esc(new Date().toLocaleString('ar-SA-u-ca-gregory-nu-latn'))}</div></div>
       <script>document.fonts&&document.fonts.ready.then(()=>setTimeout(()=>print(),250));<\/script></body></html>`);
     w.document.close();
   }
@@ -519,6 +519,17 @@
   const norm = (t) => String(t ?? '').normalize('NFC').replace(/[\u064B-\u0652\u0670\u0640]/g, '')
     .replace(/[أإآٱ]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه').toLowerCase().replace(/\s+/g, ' ').trim();
   const has = (text, q) => norm(text).includes(norm(q));
+  /* ---------- هوية المدرسة والمنتج: اسم المنصة في عنوان الصفحة، وسطر «Mecha LMS» في التذييل ---------- */
+  function applyBrand() {
+    try {
+      const DEF = 'منصة دار الذكر التعليمية';
+      if (C.PLATFORM_NAME && C.PLATFORM_NAME !== DEF && document.title.includes(DEF)) document.title = document.title.replace(DEF, C.PLATFORM_NAME);
+      const f = document.querySelector('footer.credit');
+      if (f && C.PRODUCT_NAME && !f.querySelector('.prod')) f.insertAdjacentHTML('beforeend', ` <span class="prod">· ⚙️ ${esc(C.PRODUCT_NAME)}</span>`);
+    } catch (_) {}
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', applyBrand); else applyBrand();
+
   window.LMS = { sb, C, configured, ROLE_LABELS, esc, $, $$, toast, modal, confirmBox, errMsg, norm, has, linkMeet,
                  fetchAll, signInWithGoogle, signOut, getContext, cached, clearCache, requireAuth, downloadCSV, rememberNext, takeNext,
                  getView, setView, canSwitch, applyView, mountTopbar, betaAllowed, BASE, hijri, dateLine, printHTML, printTable, exportTable, tableRows, ymd, cal, clsText, isGroupCls, DEMO };

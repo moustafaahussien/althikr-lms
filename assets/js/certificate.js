@@ -21,7 +21,7 @@
     if (error) return fail(errMsg(error));
     app.innerHTML = `<div class="ver card glass" style="padding:22px;text-align:center"><img src="assets/img/brand/logo-v.svg" alt="" style="height:110px">
       <h2 style="margin:8px 0">التحقق من شهادة</h2><p class="hint" dir="ltr">${esc(Q.get('no'))}</p>
-      ${data && data.valid ? `<div class="notice ok" style="text-align:right">✅ شهادة صحيحة صادرة من ${esc(C.SCHOOL_NAME || 'مدارس دار الذكر')}<br>
+      ${data && data.valid ? `<div class="notice ok" style="text-align:right">✅ شهادة صحيحة صادرة من ${esc(C.SCHOOL_NAME || '')}<br>
         <b>${esc(data.name)}</b> — ${esc(data.title)}<br>${data.hours ? esc(hrs(data.hours)) : ''}${data.start ? ' — ' + esc(greg(data.start)) : ''}${data.hours || data.start ? '<br>' : ''}<span class="hint">تاريخ الإصدار: ${esc(greg(data.issued_at))}</span></div>`
         : '<div class="notice err">❌ لا توجد شهادة صادرة بهذا الرقم</div>'}</div>`;
     return;
@@ -41,7 +41,7 @@
     <div class="wrap"><div class="cert" id="cert">
       <img class="wm" src="assets/img/brand/icon.svg" alt="">
       <img class="dk bl" src="assets/img/brand/deco-corner.svg" alt="">
-      <div class="head"><img class="lg" src="assets/img/brand/logo-h.svg" alt="${esc(c.school || C.SCHOOL_NAME)}">
+      <div class="head"><img class="lg" src="${C.LOGO_H || 'assets/img/brand/logo-h.svg'}" alt="${esc(c.school || C.SCHOOL_NAME)}">
         <div class="secs"><img src="assets/img/brand/sec-girls.png" alt=""><i></i><img src="assets/img/brand/sec-boys.png" alt=""><i></i><img src="assets/img/brand/sec-american.png" alt=""></div></div>
       <div class="no">رقم الشهادة: <b dir="ltr">${esc(c.cert_no)}</b> — تاريخ الإصدار: ${esc(greg(c.issued_at))} الموافق ${esc(hij(c.issued_at))}</div>
       <div class="in">
@@ -53,7 +53,7 @@
         <div class="meta">${c.provider ? `<span>الجهة المنفّذة: <b>${esc(c.provider)}</b></span>` : ''}${c.approved_by ? `<span>اعتمد التدريب: <b>${esc(c.approved_by)}</b></span>` : ''}</div>
         <div class="sig">${sig('مقدّم الدورة', c.presenter)}${sig(c.edu_title, c.edu_name)}${sig(c.exec_title, c.exec_name)}</div>
       </div>
-      <div class="foot">www.althikr.edu.sa · للتحقق من الشهادة: ${esc(verifyUrl(c.cert_no))}</div>
+      <div class="foot">${esc(C.SCHOOL_WEBSITE || '')} · للتحقق من الشهادة: ${esc(verifyUrl(c.cert_no))}</div>
     </div></div>`;
   document.getElementById('pr').onclick = () => print();
   // تصغير الشهادة لتناسب الشاشة (لا يؤثر على الطباعة)

@@ -70,7 +70,7 @@
     $('#view').onclick = async (e) => {
       const ed = e.target.closest('[data-ed]'), del = e.target.closest('[data-del]');
       const sh = e.target.closest('[data-share]');
-      if (sh) { try { await call('lib_share', { p_kind: 'post', p_id: +sh.dataset.share, p_note: null }); toast('شُورك المحتوى في «مكتبة معلمي دار الذكر» ✓'); } catch (er) { toast(errMsg(er), 'err'); } return; }
+      if (sh) { try { await call('lib_share', { p_kind: 'post', p_id: +sh.dataset.share, p_note: null }); toast(`شُورك المحتوى في «مكتبة معلمي ${LMS.C.SCHOOL_SHORT || 'المدرسة'}» ✓`); } catch (er) { toast(errMsg(er), 'err'); } return; }
       if (ed) edit(P.find((p) => p.id === +ed.dataset.ed), cid, sid);
       if (del) { if (!await confirmBox('حذف هذا المنشور من كل الفصول المنشور لها؟', 'حذف')) return;
         try { await call('cp_delete', { p_id: +del.dataset.del }); toast('تم الحذف'); await refresh(cid, sid); } catch (er) { toast(errMsg(er), 'err'); } }

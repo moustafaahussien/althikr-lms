@@ -39,7 +39,7 @@
     const from = ymd(new Date(WEEK.getTime() - 7 * 864e5)), to = ymd(new Date(WEEK.getTime() + 35 * 864e5));
     D = await call('lab_get', { p_code: CODE, p_from: from, p_to: to });
     $('#hT').textContent = `${D.lab.icon} ${D.lab.name}`;
-    document.title = D.lab.name + ' — منصة دار الذكر التعليمية';
+    document.title = D.lab.name + ' — ' + LMS.C.PLATFORM_NAME;
     $('#hP').textContent = D.my_role
       ? 'احجز الحصص، وجهّز الطلبات، وتابع المخزون والتنبيهات من هنا.'
       : FAC ? `احجز ${D.lab.name} للحصة أو النشاط واكتب ما تحتاجه من تجهيزات، فيجهزها ${W.tech} ويصلك إشعار.` : 'احجز حصتك في المعمل واكتب التجهيزات المطلوبة واختر ما تحتاجه من المخزون، فيجهزها محضّر المختبر قبل الحصة ويصلك إشعار.';

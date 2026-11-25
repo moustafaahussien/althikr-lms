@@ -109,7 +109,7 @@
       </tbody></table>
       ${(P.exams || []).length ? `<h3 style="color:#007B51">نتائج الاختبارات الإلكترونية</h3><table><thead><tr><th>الاختبار</th><th>المادة</th><th>التاريخ</th><th>الدرجة</th></tr></thead><tbody>${P.exams.map((x) => `<tr><td>${esc(x.title)}</td><td>${esc(x.subject || '')}</td><td>${esc(fmtD(x.date))}</td><td>${+x.score} / ${+x.max}</td></tr>`).join('')}</tbody></table>` : ''}
       ${(P.homework || []).length ? `<h3 style="color:#007B51">الواجبات المصحّحة</h3><table><thead><tr><th>الواجب</th><th>المادة</th><th>التاريخ</th><th>الدرجة</th></tr></thead><tbody>${P.homework.map((x) => `<tr><td>${esc(x.title)}</td><td>${esc(x.subject || '')}</td><td>${esc(fmtD(x.date))}</td><td>${+x.score} / ${+x.max}</td></tr>`).join('')}</tbody></table>` : ''}
-      <footer>منصة دار الذكر التعليمية — ${esc(new Date().toLocaleDateString('ar-SA-u-ca-gregory-nu-latn'))}</footer></body></html>`);
+      <footer>${esc(LMS.C.PLATFORM_NAME)} — ${esc(new Date().toLocaleDateString('ar-SA-u-ca-gregory-nu-latn'))}</footer></body></html>`);
     w.document.close(); w.focus(); setTimeout(() => w.print(), 300);
   }
 

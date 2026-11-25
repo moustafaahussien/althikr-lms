@@ -77,7 +77,9 @@
   const canOpen = (m) => (m.beta ? LMS.betaAllowed(m, ctx) : (!m.roles || !m.roles.length || m.roles.includes(role)));
   const allowedRoles = (m) => { const set = m.beta && ctx.beta && ctx.beta[m.key]; const r = Array.isArray(set) ? set : (m.roles || []);
     return r.length ? r.filter((x) => x !== 'admin') : Object.keys(ROLE_LABELS).filter((x) => x !== 'admin'); };
-  const mods = (C.MODULES || []).filter((m) => m.url || canOpen(m));
+  const LB = ctx.beta && ctx.beta._locked;
+  const SHOW_LOCKED = role === 'admin' || (Array.isArray(LB) ? LB : ['leadership', 'principal', 'supervisor', 'teacher', 'staff']).includes(role);
+  const mods = (C.MODULES || []).filter((m) => canOpen(m) || (m.url && SHOW_LOCKED));
   try { const fl = sessionStorage.getItem('lms_flash'); if (fl) { sessionStorage.removeItem('lms_flash'); LMS.toast(fl, 'err'); } } catch (_) {}
   const ready = mods.filter((m) => m.url && !m.beta).concat(mods.filter((m) => m.url && m.beta)), soon = mods.filter((m) => !m.url);
   const ext = (u) => /^https?:/i.test(u);

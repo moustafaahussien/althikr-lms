@@ -33,6 +33,7 @@
     </section>
     ${ctx.viewAs ? `<div class="notice" style="margin-bottom:14px">أنت الآن في <b>واجهة المشرف</b> — اضغط «${esc(ROLE_LABELS[ctx.realRole])}» تحت اسمك للرجوع للوضع الكامل.</div>` : ''}
     <div id="dutyToday"></div>
+    <div id="pushBox"></div>
     <div id="acks"></div>
     <div id="today"></div>
     <div id="panel"></div>
@@ -65,6 +66,8 @@
   if (STAFF) HT.then((ht) => ht ? { data: ht.duty } : sb.rpc('duty_today')).then(({ data }) => { if (!data || !data.length) return;
     $('#dutyToday').innerHTML = (`<div class="notice" style="margin-bottom:14px">🛡️ <b>مناوبتك اليوم:</b> ${data.map((d) => `${esc(d.slot)} — ${esc(d.place)}${d.note ? ' (' + esc(d.note) + ')' : ''}`).join(' · ')} <a href="services.html#duty">الجدول</a></div>`); }).catch(() => {});
   document.addEventListener('lms:msg', (e) => showAcks(e.detail));
+  // بطاقة تفعيل تنبيهات الجوال (sql/57)
+  if (window.LMS_PUSH && !LMS.DEMO) LMS_PUSH.mount($('#pushBox')).catch(() => {});
   // «مهامي»: ما ينتظرني في الوحدات المختلفة (sql/55)
   if (STAFF) sb.rpc('my_tasks').then(({ data }) => { if (!data || !data.length) return;
     const box = document.createElement('div'); box.className = 'glass card my-tasks'; box.style.marginBottom = '14px';

@@ -37,7 +37,7 @@
     };
   });
   // تحميل القاموس (متزامن قبل رسم الصفحة)
-  if (!window.LMS_I18N) document.write('<script src="assets/js/i18n-en.js?v=202611262000"><\/script>');
+  if (!window.LMS_I18N) document.write('<script src="assets/js/i18n-en.js?v=202611262100"><\/script>');
 
   var AR = /[؀-ۿ]/;
   var RUN = /[ء-يً-ٰٟٱ-ۓـ]+(?:[  ]+[ء-يً-ٰٟٱ-ۓـ]+)*/g;

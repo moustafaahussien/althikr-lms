@@ -29,8 +29,9 @@
     .timer { font-size: .82rem; color: var(--muted); }
   </style>
   <script src="assets/vendor/supabase-js-2.119.2.js"></script>
-  <script src="assets/js/config.js?v=202611261400"></script>
+  <script src="assets/js/config.js?v=202611261500"></script>
   <script src="assets/js/core.js?v=202611260200"></script>
+  <script src="assets/js/report-card.js?v=202611261500"></script>
 </head>
 <body>
   <main class="page pp-wrap">
@@ -140,6 +141,8 @@
       ${kids.length ? kids.map(card).join('') : '<div class="notice info">لا يوجد أبناء مرتبطون برقمك بعد.</div>'}`;
     $('#lo').onclick = logout;
     $('#chg').onclick = changePin;
+    area.onclick = (e) => { const b = e.target.closest('[data-rc]'); if (!b) return; const [k, i] = b.dataset.rc.split(':'); const c = kids.find((x) => x && x.id === k);
+      if (c && window.RC) RC.print([c.report_cards[+i]]); };
   }
   function card(c) {
     if (!c) return '';
@@ -156,11 +159,29 @@
         <thead><tr><th>التاريخ</th><th>هجري</th><th>الحصة</th><th>الحالة</th><th>ملاحظة</th></tr></thead><tbody>${a.recent.map((r) => `<tr><td>${esc(r.d)}</td><td>${esc(LMS.hijri(r.d))}</td>
         <td>${r.p ? r.p : 'يومي'}</td><td>${STL[r.s] || r.s}</td><td>${esc(r.n || '')}</td></tr>`).join('')}</tbody></table></div></details>` : ''}
       ${behavior(c.behavior)}
+      ${examsBox(c.exams)}
+      ${cardsBox(c)}
       <h3 style="margin:14px 0 8px;font-size:1rem">المعلمون</h3>
       ${(c.teachers || []).length ? `<div class="grid modules">${c.teachers.sort((x, y) => (x.subject || '').localeCompare(y.subject || '', 'ar')).map((t) => `
         <div class="module glass"><span class="ic">📚</span><b>${esc(t.subject)}</b><small>${esc(t.name)}</small></div>`).join('')}</div>`
         : '<div class="hint">لم تُسند مواد لهذا الصف بعد.</div>'}
     </div>`;
+  }
+  function examsBox(L) {
+    if (!(L || []).length) return '';
+    const DN = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+    return L.map((x) => `<h3 style="margin:14px 0 8px;font-size:1rem">📋 ${esc(x.session)}</h3>
+      <div class="kpi4"><div class="card-box"><b style="color:var(--accent)">${x.seat}</b><div class="hint">رقم الجلوس</div></div>
+        <div class="card-box"><b>${esc(x.room)}</b><div class="hint">${esc(x.location || 'اللجنة')}</div></div></div>
+      <div class="table-wrap no-tools" style="margin-top:6px"><table><thead><tr><th>اليوم</th><th>التاريخ</th><th>المادة</th><th>البداية</th><th>المدة</th></tr></thead><tbody>
+      ${x.schedule.map((s) => `<tr><td>${DN[new Date(s.day + 'T12:00:00').getDay()]}</td><td>${esc(s.day)}</td><td><b>${esc(s.subject)}</b></td><td>${esc(s.start || '—')}</td><td>${s.duration} د</td></tr>`).join('')}</tbody></table></div>`).join('');
+  }
+  function cardsBox(c) {
+    const L = c.report_cards || [];
+    if (!L.length) return '';
+    return `<h3 style="margin:14px 0 8px;font-size:1rem">📜 الشهادات الفصلية</h3>` + L.map((r, i) => `<div class="card-box" style="display:flex;gap:10px;align-items:center;margin-bottom:6px">
+      <div style="flex:1"><b>${esc(r.issue.title)}</b><div class="hint">${esc(r.issue.term || '')} · المعدل ${r.avg != null ? r.avg + '%' : '—'} — ${esc(r.label || '')}</div></div>
+      <button class="btn sm primary" data-rc="${esc(c.id)}:${i}">📜 عرض وطباعة</button></div>`).join('');
   }
   function behavior(b) {
     if (!b || !(b.notes || []).length) return '';

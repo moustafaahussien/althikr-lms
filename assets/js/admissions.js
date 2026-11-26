@@ -15,12 +15,16 @@
   const MANAGE = R === 'manage', CONTACT = R === 'manage' || R === 'marketing';
 
   const STAGES = [['lead', 'عميل محتمل', '📣'], ['inquiry', 'استفسار وبيانات ولي الأمر', '☎️'], ['test', 'اختبار القبول', '📝'], ['passed', 'اجتاز الاختبار', '✅'],
-    ['file', 'فتح الملف', '📁'], ['contract', 'توقيع العقد', '✍️'], ['enrolled', 'مسجّل رسميًا', '🎓']];
-  const CLOSED = { failed: ['لم يجتز الاختبار', '❌'], lost: ['لم يكمل', '🚫'] };
+    ['interview', 'مقابلة مدير المرحلة', '🤝'], ['approved', 'موافقة مدير المرحلة', '👍'], ['file', 'فتح الملف', '📁'], ['contract', 'توقيع العقد', '✍️'], ['enrolled', 'مسجّل رسميًا', '🎓']];
+  const CLOSED = { failed: ['لم يجتز الاختبار', '❌'], rejected: ['لم يوافق مدير المرحلة', '✋'], lost: ['لم يكمل', '🚫'] };
   const SL = (s) => (STAGES.find((x) => x[0] === s) || [s, (CLOSED[s] || [s])[0]])[1];
   const SI = (s) => (STAGES.find((x) => x[0] === s) || [0, 0, (CLOSED[s] || [0, '•'])[1]])[2];
   const SRC = { social: '📱 وسائل التواصل الاجتماعي', mall: '🛍️ دعاية في المولات', call: '📞 اتصال هاتفي', walkin: '🏫 زيارة المدرسة', referral: '🤝 ترشيح ولي أمر', website: '🌐 الموقع / النموذج الإلكتروني', event: '🎪 فعالية / معرض', other: '• أخرى' };
-  const KIND = { call: '📞 اتصال', whatsapp: '💬 واتساب', visit: '🏫 زيارة', email: '✉️ بريد', note: '📝 ملاحظة', stage: '➡️ مرحلة', test: '📝 اختبار', system: '⚙️ النظام' };
+  const KIND = { call: '📞 اتصال', whatsapp: '💬 واتساب', visit: '🏫 زيارة', email: '✉️ بريد', note: '📝 ملاحظة', stage: '➡️ مرحلة', test: '📝 اختبار', interview: '🤝 مقابلة', system: '⚙️ النظام' };
+  const PRINC = STAFF.filter((x) => ['principal', 'leadership', 'admin'].includes(x.role)).concat(STAFF.filter((x) => !['principal', 'leadership', 'admin'].includes(x.role)));
+  const princOpts = (sel) => `<optgroup label="مديرو المراحل والقيادات">${PRINC.filter((x) => ['principal', 'leadership', 'admin'].includes(x.role)).map((x) => `<option value="${x.id}" ${x.id === sel ? 'selected' : ''}>${esc(x.name)}${x.job ? ' — ' + esc(x.job) : ''}</option>`).join('')}</optgroup>
+    <optgroup label="آخرون">${PRINC.filter((x) => !['principal', 'leadership', 'admin'].includes(x.role)).map((x) => `<option value="${x.id}" ${x.id === sel ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</optgroup>`;
+  const testUrl = (tok) => location.href.split(/[?#]/)[0].replace(/admissions\.html$/, 'admission-test.html') + '?t=' + tok;
   const LOST = ['السعر / الرسوم', 'اختار مدرسة أخرى', 'بُعد المسافة / النقل', 'لا يوجد مقعد في الصف', 'لم يرد على التواصل', 'تأجيل للعام القادم', 'أخرى'];
   const GR = ME.grades || [], STAFF = ME.staff || [], CFG = ME.cfg || {};
   const d10 = (t) => (t ? String(t).slice(0, 10) : '');
@@ -36,14 +40,15 @@
   const val = (root, s) => { const el = $(s, root); return el ? el.value.trim() : ''; };
 
   // ---------- التبويبات ----------
-  const tabs = CONTACT ? [['board', '🧭 رحلة التسجيل'], ['new', '➕ عميل جديد'], ['follow', '📞 المتابعات'], ['tests', '📝 اختبارات القبول'], ['stats', '📊 التقارير'], ['link', '🔗 النموذج الإلكتروني']]
-    : R === 'principal' ? [['tests', '📝 اختبارات القبول'], ['board', '🧭 متقدّمو مرحلتي']] : [['tests', '📝 اختبارات القبول']];
+  const tabs = CONTACT ? [['board', '🧭 رحلة التسجيل'], ['new', '➕ عميل جديد'], ['follow', '📞 المتابعات'], ['tests', '📝 اختبارات القبول'], ['interviews', '🤝 المقابلات'], ['stats', '📊 التقارير'], ['link', '🔗 النموذج الإلكتروني']]
+    : R === 'principal' ? [['interviews', '🤝 مقابلات القبول'], ['tests', '📝 اختبارات القبول'], ['board', '🧭 متقدّمو مرحلتي']] : [['interviews', '🤝 مقابلات القبول'], ['tests', '📝 اختبارات القبول']];
+  if (MANAGE) tabs.splice(4, 0, ['exams', '🧩 بنك اختبارات القبول']);
   if (MANAGE) tabs.push(['settings', '⚙️ الإعدادات']);
   let TAB = tabs.some((t) => t[0] === location.hash.slice(1)) ? location.hash.slice(1) : tabs[0][0];
   const go = (t) => { TAB = t; history.replaceState(null, '', '#' + t); $$('#tabs button').forEach((x) => x.classList.toggle('on', x.dataset.t === t)); paint(); };
   $('#tabs').innerHTML = tabs.map(([k, l]) => `<button data-t="${k}" class="${k === TAB ? 'on' : ''}">${l}</button>`).join('');
   $('#tabs').onclick = (e) => { const b = e.target.closest('button'); if (b) go(b.dataset.t); };
-  const paint = () => { view.onclick = null; return ({ board: boardView, new: () => newView(), follow: followView, tests: testsView, stats: statsView, link: linkView, settings: settingsView })[TAB](); };
+  const paint = () => { view.onclick = null; return ({ board: boardView, new: () => newView(), follow: followView, tests: testsView, interviews: interviewsView, exams: examsView, stats: statsView, link: linkView, settings: settingsView })[TAB](); };
 
   /* =================== لوحة الرحلة =================== */
   const F = { q: '', source: '', grade: '', owner: '', year: '', closed: false, mode: 'kanban' };
@@ -93,7 +98,7 @@
           <td>${a.next_at ? esc(fmtD(a.next_at)) : '—'}</td></tr>`).join('')}</tbody></table></div><p class="hint">${L.length} متقدّم</p>`;
       return;
     }
-    const cols = STAGES.filter((s) => F.closed || s[0] !== 'enrolled').concat(F.closed ? [['failed', ...CLOSED.failed.slice(0, 1), '❌'], ['lost', CLOSED.lost[0], '🚫']] : []);
+    const cols = STAGES.filter((s) => F.closed || s[0] !== 'enrolled').concat(F.closed ? [['failed', CLOSED.failed[0], '❌'], ['rejected', CLOSED.rejected[0], '✋'], ['lost', CLOSED.lost[0], '🚫']] : []);
     bd.innerHTML = `<div class="kb">${cols.map(([k, l, i]) => { const C = L.filter((a) => a.stage === k);
       return `<div class="kcol"><div class="kh">${i} ${esc(l)} <span class="pill">${C.length}</span></div>${C.map(card).join('') || '<div class="hint" style="padding:8px">—</div>'}</div>`; }).join('')}</div>
       <p class="hint">${L.length} متقدّم — اضغط على أي بطاقة لفتح ملف الأسرة والانتقال للمرحلة التالية.</p>`;
@@ -106,14 +111,20 @@
     const box = document.createElement('div');
     const refresh = async () => { try { D = await call('adm_family_get', { p_id: id }); render(); if (after) after(); } catch (e) { toast(errMsg(e), 'err'); } };
     const stepper = (a) => { const idx = STAGES.findIndex((s) => s[0] === a.stage);
-      return `<div class="stp">${STAGES.map(([k, l, i], n) => `<div class="st ${a.stage === k ? 'cur' : (idx > n || (a.stage === 'failed' && n < 3) || (a.stage === 'lost' && n === 0)) ? 'done' : ''}" title="${esc(l)}"><span>${i}</span><small>${esc(l)}</small></div>`).join('')}</div>
+      return `<div class="stp">${STAGES.map(([k, l, i], n) => `<div class="st ${a.stage === k ? 'cur' : (idx > n || (a.stage === 'failed' && n < 3) || (a.stage === 'rejected' && n < 5) || (a.stage === 'lost' && n === 0)) ? 'done' : ''}" title="${esc(l)}"><span>${i}</span><small>${esc(l)}</small></div>`).join('')}</div>
         ${CLOSED[a.stage] ? `<div class="notice ${a.stage === 'lost' ? 'warn' : 'err'}" style="margin:6px 0">${CLOSED[a.stage][1]} ${esc(CLOSED[a.stage][0])}${a.lost_reason ? ' — ' + esc(a.lost_reason) : ''}</div>` : ''}`; };
     const actions = (a) => {
       if (!D.can_stage) return a.stage === 'lead' && D.can_edit ? '<span class="hint">ينقله قسم التسجيل والقبول للمراحل التالية.</span>' : '';
       const B = (s, l, c = '') => `<button class="btn sm ${c}" data-act="${s}" data-a="${a.id}">${l}</button>`;
-      const m = { lead: B('inquiry', '☎️ تسجيل الاستفسار وبيانات ولي الأمر', 'primary'), inquiry: B('test', '📅 تحديد موعد اختبار القبول', 'primary') + B('file_direct', '📁 فتح الملف بدون اختبار'),
-        test: B('result', '📝 رصد نتيجة الاختبار', 'primary') + B('test', '🔁 تغيير الموعد'), passed: B('file', '📁 فتح ملف الطالب', 'primary'),
-        failed: B('test', '🔁 إعادة الاختبار'), file: B('contract', '✍️ توقيع العقد', 'primary'), contract: B('enrolled', '🎓 التسجيل الرسمي', 'primary'), lost: B('inquiry', '↩️ إعادة فتح'), enrolled: '' }[a.stage] || '';
+      const att = a.attempt, live = att && ['open', 'started'].includes(att.status);
+      const online = live ? B('link', '🔗 رابط الاختبار', 'primary') + B('cancel_att', '⛔ إلغاء الرابط') : B('online', '🖥️ فتح الاختبار الإلكتروني', 'primary');
+      const m = { lead: B('inquiry', '☎️ تسجيل الاستفسار وبيانات ولي الأمر', 'primary'), inquiry: online + B('test', '📅 موعد اختبار حضوري') + B('file_direct', '📁 فتح الملف بدون اختبار'),
+        test: online + (live ? '' : B('result', '✍️ رصد يدوي للنتيجة')) + B('test', '📅 تغيير الموعد'), passed: B('interview', '🤝 تحديد مقابلة مدير المرحلة', 'primary'),
+        failed: online.replace('فتح الاختبار الإلكتروني', 'إعادة الاختبار الإلكتروني'),
+        interview: B('interview', '📅 تغيير موعد المقابلة') + (a.can_decide ? B('decide', '🤝 تسجيل قرار المقابلة', 'primary') : '<span class="hint">⏳ بانتظار قرار مدير المرحلة بعد المقابلة.</span>'),
+        approved: B('file', '📁 فتح ملف الطالب', 'primary'), rejected: B('interview', '🤝 مقابلة جديدة'),
+        file: a.interview_decision === 'approved' ? B('contract', '✍️ توقيع العقد', 'primary') : B('interview', '🤝 تحديد مقابلة مدير المرحلة (مطلوبة قبل العقد)', 'primary'),
+        contract: B('enrolled', '🎓 التسجيل الرسمي', 'primary'), lost: B('inquiry', '↩️ إعادة فتح'), enrolled: '' }[a.stage] || '';
       return m + (['enrolled', 'lost'].includes(a.stage) ? '' : B('lost', '🚫 لم يكمل', 'danger'));
     };
     const docsBox = (a) => { if (!['file', 'contract', 'enrolled'].includes(a.stage)) return ''; const docs = CFG.docs || []; const got = docs.filter((d) => a.docs && a.docs[d]).length;
@@ -121,11 +132,14 @@
         ${docs.map((d) => `<label class="chk"><input type="checkbox" data-doc="${esc(d)}" data-a="${a.id}" ${a.docs && a.docs[d] ? 'checked' : ''} ${MANAGE ? '' : 'disabled'}> ${esc(d)}${a.docs && a.docs[d] ? ` <span class="hint">(${esc(fmtD(a.docs[d]))})</span>` : ''}</label>`).join('')}</details>`; };
     const facts = (a) => [a.grade && `🎯 ${esc(a.grade)}`, a.year_name && `📆 <bdi>${esc(a.year_name)}</bdi>`, a.birth_date && `🎂 ${esc(fmtD(a.birth_date))}`, a.current_school && `🏫 من: ${esc(a.current_school)}`,
       a.national_id && `🪪 ${esc(a.national_id)}`, a.test_at && `📅 الاختبار: ${esc(fmt(a.test_at))}${a.tester ? ' — ' + esc(a.tester) : ''}`,
-      a.test_score != null && `📝 الدرجة: <b>${esc(a.test_score)}</b>${a.test_notes ? ' — ' + esc(a.test_notes) : ''}`, a.file_no && `📁 الملف: <b>${esc(a.file_no)}</b>`,
+      a.attempt && `🖥️ ${esc(a.attempt.exam)}: ${a.attempt.status === 'submitted' ? `<b>${esc(a.attempt.pct)}%</b> (${esc(a.attempt.score)} من ${esc(a.attempt.total)}) <a href="#" data-det="${a.attempt.id}">📄 الإجابات</a>` : a.attempt.status === 'started' ? '<span class="pill gold">⏳ يؤدي الاختبار الآن</span>' : `<span class="pill">🔗 الرابط مفتوح حتى ${esc(fmt(a.attempt.expires_at))}</span>`}`,
+      a.test_score != null && !(a.attempt && a.attempt.status === 'submitted') && `📝 الدرجة: <b>${esc(a.test_score)}</b>${a.test_notes ? ' — ' + esc(a.test_notes) : ''}`,
+      a.interview_at && `🤝 المقابلة: ${esc(fmt(a.interview_at))}${a.interviewer ? ' — ' + esc(a.interviewer) : ''}${a.interview_decision ? ` <span class="pill ${a.interview_decision === 'approved' ? 'ok' : 'bad'}">${a.interview_decision === 'approved' ? '👍 وافق' : '✋ لم يوافق'}${a.decided_by ? ' — ' + esc(a.decided_by) : ''}</span>` : ' <span class="pill gold">⏳ بانتظار القرار</span>'}${a.interview_notes ? ' — ' + esc(a.interview_notes) : ''}`, a.file_no && `📁 الملف: <b>${esc(a.file_no)}</b>`,
       a.contract_at && `✍️ العقد${a.contract_no ? ' ' + esc(a.contract_no) : ''}: ${esc(fmtD(a.contract_at))}${a.fees ? ` — ${Number(a.fees).toLocaleString('ar-SA')} ريال` : ''}`,
       a.enrolled_at && `🎓 سُجّل: ${esc(fmtD(a.enrolled_at))} ${a.student_id ? '<span class="pill ok">✓ مرتبط بحسابه في المنصة</span>' : '<span class="pill gold">سيرتبط تلقائيًا عند إضافته للمنصة برقم الهوية</span>'}`]
       .filter(Boolean).map((x) => `<span class="fct">${x}</span>`).join('');
     function render() {
+      D.applicants.forEach((a) => { a.can_decide = ctx.profile.role === 'admin' || a.interviewer_id === ctx.profile.id; });
       box.innerHTML = `<div class="fam">
         <div class="glass" style="padding:10px 12px;margin-bottom:10px">
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b style="font-size:1.05rem">👤 ${esc(D.guardian_name)}</b>${D.relation ? `<span class="hint">(${esc(D.relation)})</span>` : ''}
@@ -149,6 +163,7 @@
     }
     render();
     box.addEventListener('click', async (e) => {
+      const dt = e.target.closest('[data-det]'); if (dt) { e.preventDefault(); attemptDetail(+dt.dataset.det); return; }
       const t = e.target.closest('button,[data-doc]'); if (!t) return;
       if (t.dataset.nx) { const d = new Date(); d.setDate(d.getDate() + +t.dataset.nx); $('#ln', box).value = new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); return; }
       if (t.id === 'lsv') {
@@ -176,6 +191,20 @@
     const run = async (stage, p) => { await call('adm_stage', { p_id: a.id, p_stage: stage, p: p || {} }); toast('تم ✓ — ' + SL(stage)); return true; };
     try {
       if (act === 'inquiry') return await run('inquiry');
+      if (act === 'online') return await openOnline(a);
+      if (act === 'link') { showLink(a, a.attempt.token); return false; }
+      if (act === 'cancel_att') { if (!await confirmBox('إلغاء رابط الاختبار؟ لن يتمكن الطالب من استخدامه.', 'نعم، ألغِ')) return false; await call('adm_attempt_cancel', { p_id: a.attempt.id }); toast('أُلغي الرابط'); return true; }
+      if (act === 'decide') return await decideForm(a);
+      if (act === 'interview') {
+        const local = (t) => (t ? new Date(new Date(t) - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 16) : '');
+        return await modal({ title: '🤝 مقابلة مدير المرحلة — ' + a.name, body: `<p class="hint">مقابلة إلزامية بعد اجتياز اختبار القبول، ولا يُوقَّع العقد إلا بموافقة مدير المرحلة. يصل للمقابِل إشعار في الرسائل، ويسجّل قراره من «🤝 مقابلات القبول».</p>
+          ${a.test_score != null ? `<p>📝 نتيجة الاختبار: <b>${esc(a.test_score)}%</b> · ${esc(a.grade || '')}</p>` : ''}
+          <div class="form-grid"><label class="f">موعد المقابلة<input type="datetime-local" id="ia" value="${local(a.interview_at)}"></label>
+          <label class="f">مدير المرحلة (المقابِل)<select id="ii"><option value="">— اختر —</option>${princOpts(a.interviewer_id)}</select></label></div>`,
+          actions: [{ label: 'إلغاء', value: false }, { label: 'حفظ وإشعار المدير', cls: 'primary', onClick: (w) => {
+            if (!$('#ia', w).value || !$('#ii', w).value) { toast('حدّد الموعد والمقابِل', 'err'); return false; }
+            return run('interview', { interview_at: new Date($('#ia', w).value).toISOString(), interviewer_id: $('#ii', w).value }); } }] });
+      }
       if (act === 'result') return await resultForm(a);
       if (act === 'test') {
         const b = `<div class="form-grid"><label class="f">موعد الاختبار<input type="datetime-local" id="ta" value="${a.test_at ? new Date(new Date(a.test_at) - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 16) : ''}"></label>
@@ -211,6 +240,54 @@
       }
     } catch (e) { toast(errMsg(e), 'err'); }
     return false;
+  }
+  async function decideForm(a) {
+    return modal({ title: '🤝 قرار مقابلة القبول — ' + a.name, body: `<p class="hint">${esc(a.grade || '')}${a.test_score != null ? ` · نتيجة اختبار القبول: <b>${esc(a.test_score)}%</b>` : ''} · المقابلة: ${esc(fmt(a.interview_at))}</p>
+      ${a.test_notes ? `<p class="hint">${esc(a.test_notes)}</p>` : ''}
+      <label class="f">ملاحظات المقابلة (انطباعك عن الطالب وولي الأمر، والتوصيات)<textarea id="dn" rows="4">${esc(a.interview_notes || '')}</textarea></label>
+      <p class="hint">بالموافقة يستطيع قسم التسجيل فتح ملف الطالب وتوقيع العقد. وعدم الموافقة يغلق طلب الطالب.</p>`,
+      actions: [{ label: 'إلغاء', value: false }, { label: '✋ عدم موافقة', cls: 'danger', onClick: async (w) => {
+        if (!val(w, '#dn')) { toast('اكتب سبب عدم الموافقة في الملاحظات', 'err'); return false; }
+        await call('adm_interview_decide', { p_id: a.id, p_approve: false, p_notes: val(w, '#dn') }); toast('تم تسجيل القرار'); return true; } },
+      { label: '👍 موافقة', cls: 'primary', onClick: async (w) => { await call('adm_interview_decide', { p_id: a.id, p_approve: true, p_notes: val(w, '#dn') }); toast('تمت الموافقة ✓'); return true; } }] });
+  }
+  // فتح الاختبار الإلكتروني: اختيار الاختبار ثم رابط لمرة واحدة
+  let EXAMS = null;
+  const loadExams = async () => (EXAMS = EXAMS || await call('adm_exams_list'));
+  async function openOnline(a) {
+    const L = (await loadExams()).filter((e) => e.active);
+    if (!L.length) { toast('لا توجد اختبارات قبول إلكترونية — أنشئها من «🧩 بنك اختبارات القبول»', 'warn'); go('exams'); return false; }
+    const fit = L.filter((e) => !e.grade_ids.length || e.grade_ids.includes(a.grade_id)), rest = L.filter((e) => !fit.includes(e));
+    const o = (e) => `<option value="${e.id}">${esc(e.title)} — ${e.n} سؤال، ${e.duration_min} دقيقة، النجاح ${e.pass_pct}%</option>`;
+    const tok = await modal({ title: '🖥️ فتح اختبار القبول الإلكتروني — ' + a.name, body: `${a.grade ? `<p class="hint">الصف المطلوب: ${esc(a.grade)}</p>` : '<div class="notice warn">لم يُحدَّد الصف المطلوب للطالب.</div>'}
+      <label class="f">الاختبار<select id="oe">${fit.length ? `<optgroup label="مناسبة لصفه">${fit.map(o).join('')}</optgroup>` : ''}${rest.length ? `<optgroup label="اختبارات أخرى">${rest.map(o).join('')}</optgroup>` : ''}</select></label>
+      <label class="f">صلاحية الرابط<select id="oh"><option value="2">ساعتان (في المدرسة الآن)</option><option value="24">24 ساعة</option><option value="72">3 أيام (من المنزل)</option></select></label>
+      <p class="hint">الرابط يُستخدم <b>مرة واحدة</b>، ويبدأ عداد الوقت عند ضغط الطالب «ابدأ الاختبار»، ويُصحَّح آليًا عند التسليم وتنتقل حالته تلقائيًا إلى «اجتاز» أو «لم يجتز».</p>`,
+      actions: [{ label: 'إلغاء', value: null }, { label: 'إنشاء الرابط', cls: 'primary', onClick: async (w) => (await call('adm_attempt_open', { p_applicant: a.id, p_exam: +$('#oe', w).value, p_hours: +$('#oh', w).value })).token }] });
+    if (!tok) return false;
+    showLink(a, tok); return true;
+  }
+  function showLink(a, tok) {
+    const u = testUrl(tok);
+    modal({ title: '🔗 رابط اختبار القبول — ' + a.name, body: `<label class="f">الرابط<input id="lu" dir="ltr" readonly value="${esc(u)}"></label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><a class="btn primary sm" href="${esc(u)}" target="_blank" rel="noopener">🖥️ فتح على هذا الجهاز</a>
+        <button class="btn sm" id="cp">📋 نسخ</button>
+        <a class="btn sm" id="wa" target="_blank" rel="noopener">💬 إرسال لولي الأمر بواتساب</a></div>
+      <p class="hint" style="margin-top:8px">💡 في المدرسة: افتحه على جهاز المعمل واترك الطالب يبدأ. من المنزل: أرسله لولي الأمر.</p>`, actions: [{ label: 'تم', value: null }] });
+    setTimeout(() => { const w = [...document.querySelectorAll('.modal-wrap')].pop(); if (!w) return;
+      $('#cp', w).onclick = async () => { try { await navigator.clipboard.writeText(u); toast('تم النسخ ✓'); } catch (_) { $('#lu', w).select(); } };
+      const ph = (document.querySelector('.fam a[href^="tel:"]') || {}).textContent || '';
+      $('#wa', w).href = wa(ph.replace(/[^\d+]/g, '')).replace(/\/$/, '') + '?text=' + encodeURIComponent(`السلام عليكم، هذا رابط اختبار القبول للطالب ${a.name} في مدارس دار الذكر (يُستخدم مرة واحدة):\n${u}`); }, 50);
+  }
+  async function attemptDetail(id) {
+    let D; try { D = await call('adm_attempt_detail', { p_id: id }); } catch (e) { toast(errMsg(e), 'err'); return; }
+    const L = ['أ', 'ب', 'ج', 'د', 'هـ', 'و', 'ز'];
+    const giv = (q) => { const g = q.given; if (g == null) return '<span class="hint">لم يُجب</span>';
+      if (q.type === 'short') return esc(g); if (q.type === 'multi') return (g || []).map((i) => esc(q.options[i] ? q.options[i].t : '?')).join('، '); return esc(q.options[g] ? q.options[g].t : '?'); };
+    const right = (q) => q.type === 'short' ? esc(String(q.answer).split('|').join(' / ')) : q.options.filter((o) => o.ok).map((o) => esc(o.t)).join('، ');
+    modal({ title: `📄 إجابات ${D.name} — ${D.exam}`, wide: true, body: `<p><b>${esc(D.pct)}%</b> (${esc(D.score)} من ${esc(D.total)}) · درجة النجاح ${esc(D.pass_pct)}% · ${D.started_at ? 'بدأ ' + esc(fmt(D.started_at)) : ''}${D.submitted_at ? ' · سلّم ' + esc(fmt(D.submitted_at)) : ''}</p>
+      ${(D.items || []).map((q, i) => `<div class="lg" style="border-color:${q.got > 0 ? '#2e7d32' : '#c0392b'}"><b>${i + 1}.</b> ${esc(q.body)} <span class="pill ${q.got > 0 ? 'ok' : 'bad'}">${q.got}/${q.points}</span>
+        <div class="hint">إجابته: ${giv(q)} · الصحيحة: ${right(q)}</div></div>`).join('')}`, actions: [{ label: 'إغلاق', value: null }] });
   }
   async function resultForm(a) {
     return modal({ title: '📝 نتيجة اختبار القبول — ' + a.name, body: `<p class="hint">${esc(a.grade || '')} · ${esc(fmt(a.test_at))} · درجة الاجتياز المعتمدة: ${esc(CFG.pass ?? 60)}</p>
@@ -310,7 +387,7 @@
     try { L = await call('adm_tests'); } catch (e) { view.innerHTML = `<div class="notice err">${esc(errMsg(e))}</div>`; return; }
     const wait = L.filter((a) => a.stage === 'test'), done = L.filter((a) => a.stage !== 'test');
     const row = (a) => `<tr><td>${esc(fmt(a.test_at))}</td><td><b>${esc(a.name)}</b>${CONTACT ? `<div class="hint">👤 ${esc(a.guardian)}</div>` : ''}</td><td>${esc(a.grade || '')}</td><td>${esc(a.tester || '—')}</td>
-      <td>${a.stage === 'test' ? '<span class="pill gold">بانتظار النتيجة</span>' : `<span class="pill ${a.stage === 'failed' ? 'bad' : 'ok'}">${esc(SL(a.stage))}</span> ${a.test_score != null ? esc(a.test_score) : ''}`}</td>
+      <td>${a.stage === 'test' ? (a.attempt && a.attempt.status === 'started' ? '<span class="pill gold">⏳ يؤدي الاختبار الآن</span>' : a.attempt && a.attempt.status === 'open' ? '<span class="pill">🔗 الرابط مفتوح</span>' : '<span class="pill gold">بانتظار النتيجة</span>') : `<span class="pill ${a.stage === 'failed' ? 'bad' : 'ok'}">${esc(SL(a.stage))}</span> ${a.test_score != null ? esc(a.test_score) : ''}`}</td>
       <td>${a.can_grade ? `<button class="btn sm ${a.stage === 'test' ? 'primary' : ''}" data-res="${a.id}">${a.stage === 'test' ? '📝 رصد النتيجة' : '✏️ تعديل'}</button>` : ''}${CONTACT ? ` <button class="btn sm" data-fam="${a.family_id}">📂</button>` : ''}</td></tr>`;
     const tbl = (A) => `<div class="glass" style="padding:6px;overflow:auto"><table class="t"><thead><tr><th>الموعد</th><th>الطالب</th><th>الصف</th><th>المختبِر</th><th>النتيجة</th><th></th></tr></thead><tbody>${A.map(row).join('')}</tbody></table></div>`;
     view.innerHTML = `<h3>⏳ بانتظار الاختبار أو النتيجة (${wait.length})</h3>${wait.length ? tbl(wait) : '<div class="empty">لا اختبارات قبول مجدولة.</div>'}
@@ -320,6 +397,118 @@
       const r = e.target.closest('[data-res]'); if (r) { if (await resultForm(L.find((a) => a.id === +r.dataset.res))) testsView(); return; }
       const f = e.target.closest('[data-fam]'); if (f) openFamily(+f.dataset.fam, testsView);
     };
+  }
+
+  /* =================== المقابلات =================== */
+  async function interviewsView() {
+    view.innerHTML = '<div class="empty">جارٍ التحميل…</div>';
+    let L = [];
+    try { L = await call('adm_interviews'); } catch (e) { view.innerHTML = `<div class="notice err">${esc(errMsg(e))}</div>`; return; }
+    const wait = L.filter((a) => a.stage === 'interview'), done = L.filter((a) => a.stage !== 'interview');
+    const row = (a) => `<div class="glass xc"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b>${a.gender === 'f' ? '👧' : '👦'} ${esc(a.name)}</b><span class="hint">${esc(a.grade || '')}</span>
+        ${a.interview_decision ? `<span class="pill ${a.interview_decision === 'approved' ? 'ok' : 'bad'}">${a.interview_decision === 'approved' ? '👍 وافق' : '✋ لم يوافق'}</span>` : '<span class="pill gold">⏳ بانتظار القرار</span>'}</div>
+      <div class="hint">🤝 ${esc(fmt(a.interview_at))}${a.interviewer ? ' — ' + esc(a.interviewer) : ''} · 👤 ولي الأمر: ${esc(a.guardian)}${a.current_school ? ' · 🏫 من: ' + esc(a.current_school) : ''}</div>
+      <div>📝 اختبار القبول: ${a.attempt && a.attempt.status === 'submitted' ? `<b>${esc(a.attempt.pct)}%</b> — ${esc(a.attempt.exam)} <a href="#" data-det="${a.attempt.id}">📄 الإجابات</a>` : a.test_score != null ? `<b>${esc(a.test_score)}</b>` : '—'}${a.test_notes && !(a.attempt && a.attempt.status === 'submitted') ? ' — ' + esc(a.test_notes) : ''}</div>
+      ${a.interview_notes ? `<div>🗒️ ${esc(a.interview_notes)}</div>` : ''}
+      <div class="acts">${a.can_decide ? `<button class="btn sm ${a.stage === 'interview' ? 'primary' : ''}" data-dec="${a.id}">${a.stage === 'interview' ? '🤝 تسجيل القرار' : '✏️ تعديل القرار'}</button>` : ''}${CONTACT ? ` <button class="btn sm" data-fam="${a.family_id}">📂 ملف الأسرة</button>` : ''}</div></div>`;
+    view.innerHTML = `<p class="hint">مقابلة مدير المرحلة خطوة إلزامية بعد اجتياز اختبار القبول، ولا يُوقَّع العقد إلا بموافقته.</p>
+      <h3>⏳ بانتظار المقابلة/القرار (${wait.length})</h3>${wait.map(row).join('') || '<div class="empty">لا مقابلات معلّقة.</div>'}
+      ${done.length ? `<h3>✅ قرارات آخر 30 يومًا (${done.length})</h3>${done.map(row).join('')}` : ''}`;
+    view.onclick = async (e) => {
+      const dt = e.target.closest('[data-det]'); if (dt) { e.preventDefault(); attemptDetail(+dt.dataset.det); return; }
+      const d = e.target.closest('[data-dec]'); if (d) { if (await decideForm(L.find((a) => a.id === +d.dataset.dec))) interviewsView(); return; }
+      const f = e.target.closest('[data-fam]'); if (f) openFamily(+f.dataset.fam, interviewsView);
+    };
+  }
+
+  /* =================== بنك اختبارات القبول الإلكترونية =================== */
+  const QT = { mcq: '🔘 اختيار من متعدد', tf: '✔️ صح أو خطأ', multi: '☑️ أكثر من إجابة', short: '✍️ إجابة قصيرة' };
+  async function examsView() {
+    view.innerHTML = '<div class="empty">جارٍ التحميل…</div>';
+    let L = [];
+    try { EXAMS = null; L = await loadExams(); } catch (e) { view.innerHTML = `<div class="notice err">${esc(errMsg(e))}</div>`; return; }
+    const gname = (ids) => ids.length ? ids.map((i) => (GR.find((g) => g.id === i) || {}).name || i).join('، ') : 'كل الصفوف';
+    view.innerHTML = `<div class="toolbar glass" style="padding:10px;display:flex;gap:8px;align-items:center"><button class="btn primary sm" id="ne">＋ اختبار قبول جديد</button><span style="flex:1"></span>
+        <span class="hint">اختبار لكل صف أو مجموعة صفوف — يُصحَّح آليًا</span></div>
+      ${L.map((e) => `<div class="glass xc ${e.active ? '' : 'off'}" style="${e.active ? '' : 'opacity:.6'}"><b>${esc(e.title)}</b> ${e.active ? '' : '<span class="pill">مؤرشف</span>'}
+        <div class="hint">🎯 ${esc(gname(e.grade_ids))} · ${e.n} سؤال (${e.total} درجة) · ⏱️ ${e.duration_min} دقيقة · النجاح ${e.pass_pct}%${e.attempts ? ` · أدّاه ${e.attempts} طالب (المتوسط ${e.avg}%)` : ''}</div>
+        <div class="acts"><button class="btn sm" data-ed="${e.id}">✏️ تعديل</button><button class="btn sm" data-pv="${e.id}">👁️ معاينة</button><button class="btn sm" data-cp="${e.id}">📄 نسخة</button><button class="btn sm danger" data-del="${e.id}">🗑️</button></div></div>`).join('')
+        || '<div class="empty">لا توجد اختبارات بعد — أنشئ اختبار القبول الأول لكل صف أو مرحلة.</div>'}`;
+    view.onclick = async (ev) => {
+      const b = ev.target.closest('button'); if (!b) return;
+      if (b.id === 'ne') return examEditor({ title: '', grade_ids: [], duration_min: 40, pass_pct: CFG.pass ?? 60, shuffle: true, active: true, questions: [] });
+      const e = L.find((x) => x.id === +(b.dataset.ed || b.dataset.pv || b.dataset.cp || b.dataset.del));
+      if (b.dataset.ed) return examEditor(JSON.parse(JSON.stringify(e)));
+      if (b.dataset.cp) return examEditor(Object.assign(JSON.parse(JSON.stringify(e)), { id: '', title: e.title + ' (نسخة)' }));
+      if (b.dataset.pv) return modal({ title: '👁️ ' + e.title, wide: true, body: (e.questions || []).map((q, i) => `<div class="lg"><b>${i + 1}.</b> ${esc(q.body)} <span class="pill">${q.points}</span>
+          <div class="hint">${q.type === 'short' ? 'الإجابة: ' + esc(q.answer) : q.options.map((o) => (o.ok ? '✅ ' : '▫️ ') + esc(o.t)).join(' · ')}</div></div>`).join(''), actions: [{ label: 'إغلاق', value: null }] });
+      if (b.dataset.del) { if (!await confirmBox(`حذف «${e.title}»؟ (إن كان طلاب قد أدّوه فسيُؤرشف بدل الحذف)`, 'نعم')) return;
+        try { const r = await call('adm_exam_delete', { p_id: e.id }); toast(r.archived ? 'أُرشف الاختبار' : 'تم الحذف'); examsView(); } catch (er) { toast(errMsg(er), 'err'); } }
+    };
+  }
+  function examEditor(E) {
+    const box = document.createElement('div');
+    const uid = () => 'q' + Math.random().toString(36).slice(2, 8);
+    const qHtml = (q, i) => `<div class="glass qe" data-i="${i}" style="padding:10px;margin:8px 0">
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><b>${i + 1}.</b><select data-f="type">${opts(Object.entries(QT), q.type)}</select>
+          <label class="hint">الدرجة <input type="number" data-f="points" min="0.5" max="100" step="0.5" value="${q.points ?? 1}" style="width:70px"></label><span style="flex:1"></span>
+          <button class="btn sm" data-qm="up" title="أعلى">▲</button><button class="btn sm" data-qm="down" title="أسفل">▼</button><button class="btn sm danger" data-qm="del">🗑️</button></div>
+        <textarea data-f="body" rows="2" placeholder="نص السؤال" style="width:100%;margin-top:6px">${esc(q.body || '')}</textarea>
+        ${q.type === 'short' ? `<label class="f">الإجابة الصحيحة (لأكثر من صيغة افصل بـ | مثل: الرياض|رياض)<input data-f="answer" value="${esc(q.answer || '')}"></label>`
+          : `<div>${(q.options || []).map((o, j) => `<div style="display:flex;gap:6px;align-items:center;margin:4px 0"><input type="${q.type === 'multi' ? 'checkbox' : 'radio'}" name="ok${i}" data-ok="${j}" ${o.ok ? 'checked' : ''} title="الإجابة الصحيحة">
+              <input data-opt="${j}" value="${esc(o.t || '')}" style="flex:1" ${q.type === 'tf' ? 'readonly' : ''}>${q.type === 'tf' ? '' : `<button class="btn sm" data-rmopt="${j}">✕</button>`}</div>`).join('')}
+            ${q.type === 'tf' ? '' : '<button class="btn sm" data-addopt="1">＋ خيار</button>'}<span class="hint"> — علّم الإجابة الصحيحة</span></div>`}</div>`;
+    const read = () => { E.title = val(box, '#et'); E.duration_min = +$('#ed', box).value; E.pass_pct = +$('#ep', box).value; E.instructions = val(box, '#ei');
+      E.shuffle = $('#es', box).checked; E.active = $('#ea', box).checked; E.grade_ids = $$('[data-g]:checked', box).map((c) => +c.dataset.g);
+      $$('.qe', box).forEach((el) => { const q = E.questions[+el.dataset.i]; q.type = $('[data-f=type]', el).value; q.points = +$('[data-f=points]', el).value || 1; q.body = $('[data-f=body]', el).value;
+        if ($('[data-f=answer]', el)) q.answer = $('[data-f=answer]', el).value;
+        if ($$('[data-opt]', el).length) q.options = $$('[data-opt]', el).map((o, j) => ({ t: o.value, ok: !!($(`[data-ok="${j}"]`, el) || {}).checked })); }); };
+    const fix = (q) => { if (q.type === 'tf') { const ok = (q.options || []).findIndex((o) => o.ok); q.options = [{ t: 'صح', ok: ok !== 1 }, { t: 'خطأ', ok: ok === 1 }]; }
+      else if (q.type !== 'short' && (!q.options || q.options.length < 2)) q.options = [{ t: '', ok: true }, { t: '', ok: false }, { t: '', ok: false }, { t: '', ok: false }]; return q; };
+    const paintQ = () => { $('#qs', box).innerHTML = E.questions.map((q, i) => qHtml(fix(q), i)).join('') || '<div class="empty">أضف الأسئلة.</div>';
+      const tot = E.questions.reduce((a, q) => a + (+q.points || 1), 0); $('#qn', box).textContent = `${E.questions.length} سؤال — ${tot} درجة`; };
+    box.innerHTML = `<div class="form-grid"><label class="f">عنوان الاختبار<input id="et" value="${esc(E.title)}" placeholder="مثال: اختبار القبول — الصف الرابع"></label>
+        <label class="f">المدة (دقيقة)<input type="number" id="ed" min="5" max="240" value="${E.duration_min}"></label><label class="f">درجة النجاح %<input type="number" id="ep" min="0" max="100" value="${E.pass_pct}"></label></div>
+      <details ${E.grade_ids.length ? 'open' : ''}><summary><b>🎯 الصفوف</b> <span class="hint">(اتركها فارغة ليصلح لكل الصفوف)</span></summary><div style="columns:3 180px">${GR.map((g) => `<label class="chk"><input type="checkbox" data-g="${g.id}" ${E.grade_ids.includes(g.id) ? 'checked' : ''}> ${esc(g.name)}</label>`).join('')}</div></details>
+      <label class="f">تعليمات تظهر للطالب قبل البدء<textarea id="ei" rows="2">${esc(E.instructions || '')}</textarea></label>
+      <label class="chk"><input type="checkbox" id="es" ${E.shuffle ? 'checked' : ''}> ترتيب عشوائي للأسئلة لكل طالب</label><label class="chk"><input type="checkbox" id="ea" ${E.active ? 'checked' : ''}> متاح للاستخدام</label>
+      <h4 style="margin-bottom:0">❓ الأسئلة <span class="hint" id="qn"></span></h4><div id="qs"></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">${Object.entries(QT).map(([k, l]) => `<button class="btn sm" data-addq="${k}">＋ ${l}</button>`).join('')}<button class="btn sm" id="imp">📥 من بنك الأسئلة</button></div>`;
+    paintQ();
+    box.addEventListener('click', async (e) => {
+      const b = e.target.closest('button'); if (!b) return; e.preventDefault();
+      if (b.dataset.addq) { read(); E.questions.push({ id: uid(), type: b.dataset.addq, points: 1, body: '', answer: '' }); paintQ(); $$('.qe', box).pop().querySelector('textarea').focus(); return; }
+      if (b.id === 'imp') { read(); await importQb(E); paintQ(); return; }
+      const el = b.closest('.qe'); if (!el) return; read(); const i = +el.dataset.i, q = E.questions[i];
+      if (b.dataset.qm === 'del') E.questions.splice(i, 1);
+      if (b.dataset.qm === 'up' && i) E.questions.splice(i - 1, 0, E.questions.splice(i, 1)[0]);
+      if (b.dataset.qm === 'down' && i < E.questions.length - 1) E.questions.splice(i + 1, 0, E.questions.splice(i, 1)[0]);
+      if (b.dataset.addopt) q.options.push({ t: '', ok: false });
+      if (b.dataset.rmopt && q.options.length > 2) q.options.splice(+b.dataset.rmopt, 1);
+      paintQ();
+    });
+    box.addEventListener('change', (e) => { if (e.target.dataset.f === 'type') { read(); const q = E.questions[+e.target.closest('.qe').dataset.i]; q.options = null; paintQ(); } });
+    modal({ title: E.id ? '✏️ ' + E.title : '＋ اختبار قبول جديد', wide: true, body: box, actions: [{ label: 'إلغاء', value: null }, { label: 'حفظ الاختبار', cls: 'primary', onClick: async () => {
+      read(); await call('adm_exam_save', { p: E }); toast('تم حفظ الاختبار ✓'); EXAMS = null; examsView(); return true; } }] });
+  }
+  async function importQb(E) {
+    let D; try { D = await call('adm_qb_search', { p_subject: null, p_grade: null, p_q: '' }); } catch (e) { toast(errMsg(e), 'err'); return; }
+    if (!D.subjects.length) { toast('بنك الأسئلة لا يحتوي أسئلة ذاتية التصحيح بعد', 'warn'); return; }
+    const box = document.createElement('div'); let items = [];
+    box.innerHTML = `<div style="display:flex;gap:6px;flex-wrap:wrap"><select id="qs1">${opts(D.subjects.map((x) => [x.id, x.name]), '', '— المادة —')}</select>
+      <input type="number" id="qg" min="1" max="12" placeholder="رقم الصف" style="width:100px"><input id="qq" placeholder="بحث في نص السؤال" style="flex:1"><button class="btn sm" id="qgo">بحث</button></div>
+      <div id="qr" class="hint" style="margin-top:8px">اختر المادة.</div>`;
+    const search = async () => { if (!$('#qs1', box).value) return;
+      const r = await call('adm_qb_search', { p_subject: +$('#qs1', box).value, p_grade: $('#qg', box).value ? +$('#qg', box).value : null, p_q: val(box, '#qq') }); items = r.items;
+      $('#qr', box).innerHTML = items.length ? `<label class="chk"><input type="checkbox" id="qall"> تحديد الكل (${items.length})</label>` + items.map((q, i) => `<label class="chk" style="align-items:flex-start"><input type="checkbox" data-qi="${i}">
+        <span>${esc(q.body)} <span class="hint">· ${esc(QT[q.type] || q.type)}${q.grade ? ' · صف ' + q.grade : ''}${q.topic ? ' · ' + esc(q.topic) : ''}</span></span></label>`).join('') : 'لا نتائج.';
+      const all = $('#qall', box); if (all) all.onchange = () => $$('[data-qi]', box).forEach((c) => { c.checked = all.checked; }); };
+    $('#qgo', box).onclick = search; $('#qs1', box).onchange = search;
+    await modal({ title: '📥 استيراد من بنك الأسئلة', wide: true, body: box, actions: [{ label: 'إلغاء', value: null }, { label: 'إضافة المحدد', cls: 'primary', onClick: () => {
+      const pick = $$('[data-qi]:checked', box).map((c) => items[+c.dataset.qi]);
+      pick.forEach((q) => E.questions.push({ id: 'b' + q.id, type: q.type, body: q.body, points: +q.points || 1, answer: q.answer || '',
+        options: (q.options || []).map((o) => ({ t: o.t, ok: !!o.ok })) }));
+      toast(`أُضيف ${pick.length} سؤال`); return true; } }] });
   }
 
   /* =================== التقارير =================== */
@@ -336,7 +525,7 @@
           <div class="card-box glass"><b>${S.families}</b>أسرة (عميل)</div><div class="card-box glass"><b>${S.total}</b>طالب متقدّم</div>
           <div class="card-box glass"><b style="color:#007B51">${S.enrolled}</b>مسجّل رسميًا</div><div class="card-box glass"><b>${pct(S.enrolled, S.total)}</b>نسبة التحويل</div></div>
         <div class="row2">${T('🔻 قمع رحلة التسجيل', (S.funnel || []).map((f, i, A) => `<div style="margin:6px 0"><div style="display:flex;justify-content:space-between"><span>${SI(f.stage)} ${esc(f.label)}</span><b>${f.n}${i ? ` <span class="hint">(${pct(f.n, A[i - 1].n)} من السابقة)</span>` : ''}</b></div><div class="bar"><i style="width:${f.n * 100 / max}%"></i></div></div>`).join('')
-            + `<p class="hint">لم يجتز الاختبار: ${S.failed} · لم يكمل: ${S.lost}</p>`)}
+            + `<p class="hint">لم يجتز الاختبار: ${S.failed} · لم يوافق مدير المرحلة: ${S.rejected || 0} · لم يكمل: ${S.lost}</p>`)}
           ${T('📣 مصادر العملاء (للتسويق)', `<table class="t"><thead><tr><th>المصدر</th><th>متقدّمون</th><th>مسجّلون</th><th>التحويل</th></tr></thead><tbody>${(S.sources || []).map((s) => `<tr><td>${esc(SRC[s.source] || s.label)}</td><td>${s.n}</td><td>${s.enrolled}</td><td>${pct(s.enrolled, s.n)}</td></tr>`).join('') || '<tr><td colspan="4" class="hint">—</td></tr>'}</tbody></table>`)}
           ${T('🎯 حسب الصف المطلوب', `<table class="t"><thead><tr><th>الصف</th><th>متقدّمون</th><th>مسجّلون</th></tr></thead><tbody>${(S.grades || []).map((g) => `<tr><td>${esc(g.grade)}</td><td>${g.n}</td><td>${g.enrolled}</td></tr>`).join('')}</tbody></table>`)}
           ${T('👥 حسب المسؤول عن المتابعة', `<table class="t"><thead><tr><th>الموظف</th><th>متقدّمون</th><th>مسجّلون</th><th>التحويل</th></tr></thead><tbody>${(S.owners || []).map((o) => `<tr><td>${esc(o.name)}</td><td>${o.n}</td><td>${o.enrolled}</td><td>${pct(o.enrolled, o.n)}</td></tr>`).join('')}</tbody></table>`)}

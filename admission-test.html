@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <!-- اختبار القبول الإلكتروني — صفحة عامة برابط لمرة واحدة يفتحه قسم التسجيل (sql/80 — adm_take_*) -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://zpbhzhpvpvehowxvlsgp.supabase.co; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <meta name="referrer" content="no-referrer">
+  <title>اختبار القبول — مدارس دار الذكر</title>
+  <link rel="stylesheet" href="assets/css/brand.css?v=202611270330">
+  <link rel="stylesheet" href="assets/css/app.css?v=202611270330">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <meta name="theme-color" content="#007B51">
+  <style>
+    body { background: #F5F8F6; }
+    .wrap { max-width: 760px; margin: 0 auto; padding: 16px 14px 90px; }
+    .head { text-align: center; margin-bottom: 12px; } .head img { height: 56px; } .head h1 { margin: 6px 0 2px; font-size: 1.35rem; color: #007B51; }
+    .box { background: #fff; border-radius: 16px; padding: 16px; box-shadow: 0 2px 12px rgba(0, 0, 0, .05); margin-bottom: 12px; }
+    .q { font-size: 1.08rem; } .q .n { color: #007B51; font-weight: 800; } .q .pts { float: left; font-size: .8rem; color: #6b7a72; }
+    .opt { display: flex; gap: 10px; align-items: center; padding: 11px 12px; border: 2px solid #e3ece7; border-radius: 12px; margin: 8px 0; cursor: pointer; font-size: 1.02rem; }
+    .opt:has(input:checked) { border-color: #007B51; background: #eef8f2; } .opt input { width: 20px; height: 20px; accent-color: #007B51; }
+    .short { width: 100%; font: inherit; font-size: 1.05rem; padding: 11px; border: 2px solid #e3ece7; border-radius: 12px; margin-top: 8px; }
+    .bar { position: fixed; bottom: 0; inset-inline: 0; background: #fff; box-shadow: 0 -2px 12px rgba(0, 0, 0, .08); padding: 10px 14px; display: flex; gap: 10px; align-items: center; justify-content: center; z-index: 5; }
+    .timer { font-weight: 800; font-size: 1.2rem; font-variant-numeric: tabular-nums; min-width: 80px; text-align: center; } .timer.low { color: #b3261e; }
+    .btn { font: inherit; font-weight: 800; border: 0; border-radius: 12px; padding: 12px 22px; cursor: pointer; background: #eef1ef; }
+    .btn.primary { background: #007B51; color: #fff; } .btn:disabled { opacity: .6; }
+    .prog { flex: 1; max-width: 260px; height: 8px; background: #eef1ef; border-radius: 99px; overflow: hidden; } .prog i { display: block; height: 100%; background: #007B51; transition: width .3s; }
+    .center { text-align: center; } .big { font-size: 3rem; display: block; } .hint { color: #6b7a72; font-size: .9rem; } .err { color: #b3261e; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="head"><img src="assets/img/logo.png" alt=""><h1>اختبار القبول</h1><div class="hint" id="sub">مدارس دار الذكر</div></div>
+    <div id="app"><div class="box center hint">جارٍ التحميل…</div></div>
+  </main>
+  <script src="assets/vendor/supabase-js-2.119.2.js"></script>
+  <script src="assets/js/config.js?v=202611270330"></script>
+  <script>
+  (async function () {
+    const C = window.LMS_CONFIG, app = document.getElementById('app');
+    const sb = window.supabase.createClient(C.SUPABASE_URL, C.SUPABASE_ANON_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
+    const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+    const tok = (new URLSearchParams(location.search).get('t') || '').trim();
+    history.replaceState(null, '', location.pathname + '?t=' + encodeURIComponent(tok));
+    const rpc = async (fn, args) => { const { data, error } = await sb.rpc(fn, args); if (error) throw error; return data; };
+    const msg = (icon, title, text) => { app.innerHTML = `<div class="box center"><span class="big">${icon}</span><h2>${esc(title)}</h2><p>${text || ''}</p></div>`; const b = document.querySelector('.bar'); if (b) b.remove(); };
+    let D, ANS = {}, END = 0, dirty = false, sending = false, tick;
+    try { D = await rpc('adm_take_get', { p_token: tok }); } catch (e) { msg('⚠️', 'الرابط غير صالح', esc(e.message || '') + '<br><span class="hint">راجع قسم التسجيل والقبول للحصول على رابط جديد.</span>'); return; }
+    document.getElementById('sub').textContent = D.school || 'مدارس دار الذكر';
+    if (D.status === 'submitted') { msg('✅', 'تم تسليم هذا الاختبار', 'شكرًا لك. سيتواصل قسم التسجيل والقبول مع ولي الأمر بالنتيجة.'); return; }
+    if (D.status === 'expired') { msg('⌛', 'انتهت صلاحية الرابط', 'اطلب رابطًا جديدًا من قسم التسجيل والقبول.'); return; }
+    if (D.status === 'started') return run(D);
+    app.innerHTML = `<div class="box"><h2 style="margin-top:0">مرحبًا ${esc(D.name)} 👋</h2><p><b>${esc(D.title)}</b></p>
+      <p>📋 عدد الأسئلة: <b>${D.n}</b> · ⏱️ المدة: <b>${D.duration_min} دقيقة</b></p>
+      ${D.instructions ? `<div class="box" style="background:#f6faf8;box-shadow:none">${esc(D.instructions).replace(/\n/g, '<br>')}</div>` : ''}
+      <ul class="hint"><li>يبدأ الوقت عند الضغط على «ابدأ الاختبار» ولا يتوقف.</li><li>تُحفظ إجاباتك تلقائيًا أثناء الحل.</li><li>عند انتهاء الوقت يُسلَّم الاختبار تلقائيًا.</li><li>الاختبار يؤدَّى <b>مرة واحدة فقط</b>.</li></ul>
+      <button class="btn primary" id="go" style="width:100%;font-size:1.1rem">ابدأ الاختبار</button></div>`;
+    document.getElementById('go').onclick = async (e) => { e.target.disabled = true; try { run(await rpc('adm_take_start', { p_token: tok })); } catch (er) { msg('⚠️', 'تعذّر البدء', esc(er.message)); } };
+
+    function run(d) {
+      D = d; ANS = d.answers || {}; END = Date.now() + (d.remaining || 0) * 1000;
+      const Q = d.questions || [];
+      app.innerHTML = Q.map((q, i) => `<div class="box q" data-q="${esc(q.id)}"><span class="pts">${q.points} ${q.points == 1 ? 'درجة' : 'درجات'}</span><span class="n">${i + 1}.</span> ${esc(q.body).replace(/\n/g, '<br>')}
+        ${q.type === 'short' ? `<input class="short" data-short="${esc(q.id)}" value="${esc(ANS[q.id] || '')}" placeholder="اكتب إجابتك هنا" autocomplete="off">`
+          : q.options.map((o, j) => `<label class="opt"><input type="${q.type === 'multi' ? 'checkbox' : 'radio'}" name="${esc(q.id)}" value="${j}"
+              ${q.type === 'multi' ? ((ANS[q.id] || []).includes(j) ? 'checked' : '') : ANS[q.id] === j ? 'checked' : ''}> <span>${esc(o)}</span></label>`).join('')}
+        ${q.type === 'multi' ? '<div class="hint">اختر كل الإجابات الصحيحة</div>' : ''}</div>`).join('')
+        + '<div class="box center"><button class="btn primary" id="sub2" style="width:100%">✔️ تسليم الاختبار</button></div>';
+      document.body.insertAdjacentHTML('beforeend', `<div class="bar"><span>⏱️</span><span class="timer" id="tm"></span><div class="prog"><i id="pg"></i></div><span class="hint" id="cnt"></span><button class="btn primary" id="sub1">تسليم</button></div>`);
+      const prog = () => { const n = Q.filter((q) => { const a = ANS[q.id]; return Array.isArray(a) ? a.length : a !== undefined && a !== ''; }).length;
+        document.getElementById('pg').style.width = (Q.length ? n * 100 / Q.length : 0) + '%'; document.getElementById('cnt').textContent = `${n}/${Q.length}`; return n; };
+      app.addEventListener('change', (e) => { const t = e.target, q = t.name; if (!q) return;
+        const qq = Q.find((x) => x.id === q);
+        ANS[q] = qq.type === 'multi' ? [...app.querySelectorAll(`input[name="${CSS.escape(q)}"]:checked`)].map((x) => +x.value) : +t.value; dirty = true; prog(); });
+      app.addEventListener('input', (e) => { const s = e.target.dataset.short; if (s) { ANS[s] = e.target.value; dirty = true; prog(); } });
+      const save = async () => { if (!dirty || sending) return; dirty = false; try { await rpc('adm_take_save', { p_token: tok, p_answers: ANS }); } catch (_) { dirty = true; } };
+      const autosave = setInterval(save, 15000);
+      const submit = async (auto) => {
+        if (sending) return;
+        if (!auto) { const left = Q.length - prog(); if (!confirm(left ? `لم تُجب عن ${left} سؤال. هل تريد التسليم؟` : 'هل أنت متأكد من تسليم الاختبار؟')) return; }
+        sending = true; clearInterval(tick); clearInterval(autosave);
+        document.querySelectorAll('#sub1,#sub2').forEach((b) => { b.disabled = true; b.textContent = 'جارٍ التسليم…'; });
+        for (let i = 0; i < 4; i++) {
+          try { await rpc('adm_take_submit', { p_token: tok, p_answers: ANS }); window.onbeforeunload = null;
+            msg('✅', 'تم تسليم الاختبار', `شكرًا لك ${esc(D.name)}. سيتواصل قسم التسجيل والقبول مع ولي الأمر بالنتيجة.`); return; }
+          catch (e) { await new Promise((r) => setTimeout(r, 2000 * (i + 1))); }
+        }
+        sending = false; document.querySelectorAll('#sub1,#sub2').forEach((b) => { b.disabled = false; b.textContent = 'إعادة المحاولة'; });
+        alert('تعذّر الاتصال — تأكد من الإنترنت ثم اضغط «تسليم» مرة أخرى. إجاباتك محفوظة.');
+      };
+      document.getElementById('sub1').onclick = () => submit(false); document.getElementById('sub2').onclick = () => submit(false);
+      const tm = document.getElementById('tm');
+      const t = () => { const s = Math.max(0, Math.round((END - Date.now()) / 1000)); tm.textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+        tm.classList.toggle('low', s <= 60); if (s <= 0) submit(true); };
+      tick = setInterval(t, 1000); t(); prog();
+      window.onbeforeunload = (e) => { save(); e.preventDefault(); e.returnValue = ''; };
+      document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
+    }
+  })();
+  </script>
+</body>
+</html>

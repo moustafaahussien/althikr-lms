@@ -364,12 +364,12 @@
     view.innerHTML = '<div class="empty">جارٍ التحميل…</div>';
     let L = [], N = [];
     try { [L, N] = await Promise.all([call('adm_followups'), call('adm_board', { p: { closed: false } })]); } catch (e) { view.innerHTML = `<div class="notice err">${esc(errMsg(e))}</div>`; return; }
-    const today = today();
+    const td = today();
     const fresh = N.filter((a) => ['lead', 'inquiry'].includes(a.stage) && !a.next_at);
     const seen = new Set(); const freshFam = fresh.filter((a) => !seen.has(a.family_id) && seen.add(a.family_id));
     view.innerHTML = `<div class="row2">
       <div class="glass" style="padding:10px 12px"><h3 style="margin-top:0">📞 المتابعات المستحقة <span class="pill">${L.length}</span></h3><p class="hint">المتأخرة والمستحقة اليوم وخلال أسبوع.</p>
-        ${L.map((f) => `<div class="fu ${f.next_at < today ? 'late' : f.next_at === today ? 'now' : ''}" data-fam="${f.family_id}"><b>${esc(f.guardian)}</b> <span class="pill ${f.next_at <= today ? 'bad' : 'gold'}">${f.next_at < today ? 'متأخرة · ' : f.next_at === today ? 'اليوم · ' : ''}${esc(fmtD(f.next_at))}</span>
+        ${L.map((f) => `<div class="fu ${f.next_at < td ? 'late' : f.next_at === td ? 'now' : ''}" data-fam="${f.family_id}"><b>${esc(f.guardian)}</b> <span class="pill ${f.next_at <= td ? 'bad' : 'gold'}">${f.next_at < td ? 'متأخرة · ' : f.next_at === td ? 'اليوم · ' : ''}${esc(fmtD(f.next_at))}</span>
           <div class="hint">${esc(f.children || '')}${f.owner ? ' · ' + esc(f.owner) : ''}</div>${f.body ? `<div>${esc(f.body)}</div>` : ''}
           <div style="display:flex;gap:6px;margin-top:4px"><a class="btn sm" href="tel:${esc(f.phone)}">📞 اتصال</a><a class="btn sm" href="${esc(wa(f.phone))}" target="_blank" rel="noopener">💬 واتساب</a><button class="btn sm" data-done="${f.id}">✓ تمت</button></div></div>`).join('') || '<div class="hint">لا متابعات مستحقة 👍</div>'}</div>
       <div class="glass" style="padding:10px 12px"><h3 style="margin-top:0">📥 عملاء بدون موعد متابعة <span class="pill">${freshFam.length}</span></h3><p class="hint">عملاء محتملون واستفسارات لم يُحدَّد لهم موعد متابعة — افتح الملف وسجّل التواصل.</p>

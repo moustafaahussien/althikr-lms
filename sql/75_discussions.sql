@@ -64,13 +64,19 @@ end $$;
 -- مقرراتي (فصل + مادة)
 create or replace function public.ds_courses() returns jsonb
 language sql stable security definer set search_path = public, private as $$
-  select coalesce(jsonb_agg(x order by x->>'class', x->>'subject'), '[]'::jsonb) from (
-    select distinct jsonb_build_object('class_id', ta.class_id, 'subject_id', ta.subject_id, 'class', vc.label, 'subject', s.name_ar,
-           'role', private.ds_role(ta.class_id, ta.subject_id),
-           'new', (select count(*) from ds_threads t where t.class_id = ta.class_id and t.subject_id = ta.subject_id and not t.hidden and t.last_at > now() - interval '3 days'),
-           'open_q', (select count(*) from ds_threads t where t.class_id = ta.class_id and t.subject_id = ta.subject_id and t.kind in ('question','private') and not t.answered and not t.hidden)) x
-      from teaching_assignments ta join v_classes vc on vc.id = ta.class_id join subjects s on s.id = ta.subject_id
-     where private.ds_role(ta.class_id, ta.subject_id) is not null) z
+  with mine as (select class_id, subject_id, 'mod'::text r from teaching_assignments where teacher_id = public.me_id()),
+  stu as (select distinct ta.class_id, ta.subject_id, 'student'::text r from teaching_assignments ta
+           where public.me_role() = 'student' and ta.class_id = private.my_class_id()),
+  rev_t as (select t.teacher_id from (select distinct teacher_id from teaching_assignments) t
+             where public.me_role() <> 'student' and private.lp_is_reviewer(t.teacher_id)),
+  rev as (select distinct ta.class_id, ta.subject_id, 'view'::text r from teaching_assignments ta join rev_t using (teacher_id)
+           where exists (select 1 from ds_threads d where d.class_id = ta.class_id and d.subject_id = ta.subject_id)),
+  allc as (select * from mine union select * from stu union select * from rev where (class_id, subject_id) not in (select class_id, subject_id from mine))
+  select coalesce(jsonb_agg(jsonb_build_object('class_id', a.class_id, 'subject_id', a.subject_id, 'class', vc.label, 'subject', s.name_ar, 'role', a.r,
+           'new', (select count(*) from ds_threads t where t.class_id = a.class_id and t.subject_id = a.subject_id and not t.hidden and t.last_at > now() - interval '3 days'),
+           'open_q', (select count(*) from ds_threads t where t.class_id = a.class_id and t.subject_id = a.subject_id and t.kind in ('question','private') and not t.answered and not t.hidden))
+           order by a.r, vc.label, s.name_ar), '[]'::jsonb)
+    from allc a join v_classes vc on vc.id = a.class_id join subjects s on s.id = a.subject_id
 $$;
 
 create or replace function public.ds_list(p_class int, p_subject int) returns jsonb

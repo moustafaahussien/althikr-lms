@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <!-- سياسة أمان: المواقع المسموح للصفحة تحميل الأكواد منها والاتصال بها -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://zpbhzhpvpvehowxvlsgp.supabase.co https://drive.google.com https://*.googleusercontent.com; connect-src 'self' https://zpbhzhpvpvehowxvlsgp.supabase.co wss://zpbhzhpvpvehowxvlsgp.supabase.co; frame-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>سلالم التقدير ونواتج التعلم — منصة دار الذكر التعليمية</title>
+  <link rel="stylesheet" href="assets/css/brand.css?v=202611231330">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <meta name="theme-color" content="#007B51">
+  <link rel="manifest" href="supervision/manifest.json?v=2">
+    <link rel="stylesheet" href="assets/css/app.css?v=202611260200">
+  <link rel="stylesheet" href="assets/css/topbar.css?v=202611231330">
+  <style>
+    .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+    .rb-card { padding: 12px 14px; margin-bottom: 10px; }
+    .rb-card .acts { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+    .pill { display: inline-block; font-size: .76rem; font-weight: 700; padding: 1px 9px; border-radius: 99px; background: #eef0f3; white-space: nowrap; }
+    .pill.ok { background: #e6f6ee; color: #007B51; } .pill.gold { background: #fff4d6; color: #8a5a00; }
+    table.rb { width: 100%; border-collapse: collapse; font-size: .9rem; }
+    table.rb th, table.rb td { border: 1px solid #e3e8e5; padding: 6px; vertical-align: top; text-align: start; }
+    table.rb th { background: #F5F8F6; font-size: .82rem; }
+    .grid-wrap { overflow: auto; max-height: 70vh; border: 1px solid var(--line); border-radius: 10px; }
+    .grid-wrap table { border-collapse: separate; border-spacing: 0; width: 100%; }
+    .grid-wrap th, .grid-wrap td { border-bottom: 1px solid #eef1ef; padding: 5px 6px; white-space: nowrap; background: #fff; }
+    .grid-wrap thead th { position: sticky; top: 0; background: #F5F8F6; z-index: 2; font-size: .8rem; }
+    .grid-wrap td:first-child, .grid-wrap th:first-child { position: sticky; inset-inline-start: 0; z-index: 1; }
+    .grid-wrap select { min-width: 92px; padding: 3px; }
+    .grid-wrap .tot { font-weight: 800; color: var(--brand); text-align: center; }
+    .ed-row { display: grid; grid-template-columns: 1fr 70px 1fr 34px; gap: 6px; align-items: start; margin-bottom: 6px; }
+    .ed-desc { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 4px; margin-bottom: 8px; }
+    .ed-desc textarea { font-size: .8rem; min-height: 46px; }
+    .lv-row { display: grid; grid-template-columns: 1fr 80px 34px; gap: 6px; margin-bottom: 4px; }
+    .heat td.c { text-align: center; font-weight: 700; min-width: 54px; }
+    .lo-row { display: flex; gap: 8px; align-items: flex-start; padding: 8px 10px; border-bottom: 1px solid #eef1ef; }
+    .lo-row code { background: #eef6f2; color: #00603f; padding: 0 6px; border-radius: 6px; font-weight: 700; }
+    @media print { #topbar, .tabs, .toolbar, .noprint, .credit, .hero { display: none !important; } .grid-wrap { max-height: none; overflow: visible; } }
+  </style>
+</head>
+<body>
+  <header id="topbar"></header>
+  <main class="page" id="main">
+    <section class="hero glass">
+      <h1>🧩 سلالم التقدير ونواتج التعلم</h1>
+      <p>صمّم سلّم التقدير بمعايير ومستويات واضحة واربط كل معيار بناتج التعلم، وقيّم الفصل كاملًا بنقرات، وتُرحَّل الدرجة لسجل الدرجات تلقائيًا، ويظهر تقرير إتقان نواتج التعلم لكل طالب.</p>
+    </section>
+    <nav class="tabs glass" id="tabs"></nav>
+    <div id="view"><div class="empty">جارٍ التحميل…</div></div>
+  </main>
+  <footer class="credit">إعداد وتصميم: مصطفى حسين</footer>
+
+  <script src="assets/vendor/supabase-js-2.119.2.js"></script>
+  <script src="assets/js/config.js?v=202611261400"></script>
+  <script src="assets/js/academic-calendar.js?v=202611231330"></script>
+  <script src="assets/js/core.js?v=202611260200"></script>
+  <script src="assets/js/rubrics.js?v=202611261400"></script>
+</body>
+</html>

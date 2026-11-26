@@ -69,7 +69,7 @@
   // بطاقة تفعيل تنبيهات الجوال (sql/57)
   if (window.LMS_PUSH && !LMS.DEMO) LMS_PUSH.mount($('#pushBox')).catch(() => {});
   // «مهامي»: ما ينتظرني في الوحدات المختلفة (sql/55)
-  if (STAFF) sb.rpc('my_tasks').then(({ data }) => { if (!data || !data.length) return;
+  if (STAFF || ctx.profile.role === 'student') sb.rpc(STAFF ? 'my_tasks' : 'my_tasks_student').then(({ data }) => { if (!data || !data.length) return;
     const box = document.createElement('div'); box.className = 'glass card my-tasks'; box.style.marginBottom = '14px';
     box.innerHTML = `<b>📋 مهامي</b><div class="mt-list">${data.map((t) => `<a href="${esc(t.link)}">${t.icon} ${esc(t.text)}</a>`).join('')}</div>`;
     $('#acks').before(box); }).catch(() => {});

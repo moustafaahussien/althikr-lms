@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <!-- سياسة أمان: المواقع المسموح للصفحة تحميل الأكواد منها والاتصال بها -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://zpbhzhpvpvehowxvlsgp.supabase.co https://drive.google.com https://*.googleusercontent.com; connect-src 'self' https://zpbhzhpvpvehowxvlsgp.supabase.co wss://zpbhzhpvpvehowxvlsgp.supabase.co; frame-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>حصص الانتظار — منصة دار الذكر التعليمية</title>
+  <link rel="stylesheet" href="assets/css/brand.css?v=202611231330">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <meta name="theme-color" content="#007B51">
+  <link rel="manifest" href="supervision/manifest.json?v=2">
+    <link rel="stylesheet" href="assets/css/app.css?v=202611260200">
+  <link rel="stylesheet" href="assets/css/topbar.css?v=202611231330">
+  <style>
+    .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+    .seg button { border: 0; background: #fff; padding: 6px 14px; font: inherit; font-weight: 700; cursor: pointer; } .seg button.on { background: var(--brand); color: #fff; }
+    .ab-card { padding: 14px; margin-bottom: 12px; }
+    .ab-card table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: .92rem; }
+    .ab-card th, .ab-card td { padding: 7px 6px; border-bottom: 1px solid #eef1ef; text-align: start; }
+    .ab-card th { color: var(--muted); font-size: .8rem; }
+    .pill { display: inline-block; font-size: .76rem; font-weight: 700; padding: 1px 9px; border-radius: 99px; background: #eef0f3; white-space: nowrap; }
+    .pill.open { background: #fdecea; color: #b3261e; } .pill.ok { background: #e6f6ee; color: #007B51; } .pill.gold { background: #fff4d6; color: #8a5a00; }
+    .kpi4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 12px; }
+    @media (max-width: 640px) { .kpi4 { grid-template-columns: repeat(2, 1fr); } }
+    .kpi4 .card-box { padding: 12px; text-align: center; } .kpi4 .card-box b { font-size: 1.5rem; display: block; }
+    .cand { display: flex; gap: 8px; align-items: center; justify-content: space-between; padding: 9px 8px; border-bottom: 1px solid #eef1ef; }
+    .cand:hover { background: #F5F8F6; }
+    .pgrid { display: flex; flex-wrap: wrap; gap: 6px; } .pgrid label { border: 1px solid var(--line); border-radius: 8px; padding: 5px 10px; cursor: pointer; }
+    .tlist { max-height: 260px; overflow: auto; border: 1px solid var(--line); border-radius: 10px; }
+    .tlist label { display: flex; gap: 8px; padding: 7px 8px; border-bottom: 1px solid #f1f3f2; cursor: pointer; }
+    .mine-row { padding: 12px 14px; margin-bottom: 8px; display: flex; gap: 12px; align-items: center; }
+    .mine-row .p { font-size: 1.4rem; font-weight: 800; color: var(--brand); min-width: 44px; text-align: center; }
+    .print-only { display: none; } @media print { .print-only { display: block !important; } }
+    @media print { #topbar, .tabs, .toolbar, .noprint, .credit, .hero p { display: none !important; } .ab-card { break-inside: avoid; box-shadow: none; } }
+  </style>
+</head>
+<body>
+  <header id="topbar"></header>
+  <main class="page" id="main">
+    <section class="hero glass">
+      <h1>⏱️ حصص الانتظار</h1>
+      <p>سجّل غياب المعلم فتظهر حصصه من الجدول المدرسي تلقائيًا، ويرشّح النظام المعلمين المتاحين في كل حصة، وبعد الإسناد يصل إشعار فوري للمعلم البديل.</p>
+    </section>
+    <nav class="tabs glass" id="tabs"></nav>
+    <div id="view"><div class="empty">جارٍ التحميل…</div></div>
+  </main>
+  <footer class="credit">إعداد وتصميم: مصطفى حسين</footer>
+
+  <script src="assets/vendor/supabase-js-2.119.2.js"></script>
+  <script src="assets/js/config.js?v=202611261200"></script>
+  <script src="assets/js/academic-calendar.js?v=202611231330"></script>
+  <script src="assets/js/core.js?v=202611260200"></script>
+  <script src="assets/js/substitutes.js?v=202611261200"></script>
+</body>
+</html>

@@ -21,12 +21,12 @@
   const SI = (s) => (STAGES.find((x) => x[0] === s) || [0, 0, (CLOSED[s] || [0, '•'])[1]])[2];
   const SRC = { social: '📱 وسائل التواصل الاجتماعي', mall: '🛍️ دعاية في المولات', call: '📞 اتصال هاتفي', walkin: '🏫 زيارة المدرسة', referral: '🤝 ترشيح ولي أمر', website: '🌐 الموقع / النموذج الإلكتروني', event: '🎪 فعالية / معرض', other: '• أخرى' };
   const KIND = { call: '📞 اتصال', whatsapp: '💬 واتساب', visit: '🏫 زيارة', email: '✉️ بريد', note: '📝 ملاحظة', stage: '➡️ مرحلة', test: '📝 اختبار', interview: '🤝 مقابلة', system: '⚙️ النظام' };
-  const PRINC = STAFF.filter((x) => ['principal', 'leadership', 'admin'].includes(x.role)).concat(STAFF.filter((x) => !['principal', 'leadership', 'admin'].includes(x.role)));
-  const princOpts = (sel) => `<optgroup label="مديرو المراحل والقيادات">${PRINC.filter((x) => ['principal', 'leadership', 'admin'].includes(x.role)).map((x) => `<option value="${x.id}" ${x.id === sel ? 'selected' : ''}>${esc(x.name)}${x.job ? ' — ' + esc(x.job) : ''}</option>`).join('')}</optgroup>
-    <optgroup label="آخرون">${PRINC.filter((x) => !['principal', 'leadership', 'admin'].includes(x.role)).map((x) => `<option value="${x.id}" ${x.id === sel ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</optgroup>`;
   const testUrl = (tok) => location.href.split(/[?#]/)[0].replace(/admissions\.html$/, 'admission-test.html') + '?t=' + tok;
   const LOST = ['السعر / الرسوم', 'اختار مدرسة أخرى', 'بُعد المسافة / النقل', 'لا يوجد مقعد في الصف', 'لم يرد على التواصل', 'تأجيل للعام القادم', 'أخرى'];
   const GR = ME.grades || [], STAFF = ME.staff || [], CFG = ME.cfg || {};
+  const PRINC = STAFF.filter((x) => ['principal', 'leadership', 'admin'].includes(x.role)).concat(STAFF.filter((x) => !['principal', 'leadership', 'admin'].includes(x.role)));
+  const princOpts = (sel) => `<optgroup label="مديرو المراحل والقيادات">${PRINC.filter((x) => ['principal', 'leadership', 'admin'].includes(x.role)).map((x) => `<option value="${x.id}" ${x.id === sel ? 'selected' : ''}>${esc(x.name)}${x.job ? ' — ' + esc(x.job) : ''}</option>`).join('')}</optgroup>
+    <optgroup label="آخرون">${PRINC.filter((x) => !['principal', 'leadership', 'admin'].includes(x.role)).map((x) => `<option value="${x.id}" ${x.id === sel ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</optgroup>`;
   const d10 = (t) => (t ? String(t).slice(0, 10) : '');
   const today = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };   // التاريخ المحلي (لا UTC)
   const fmt = (t) => (t ? new Date(t).toLocaleString('ar-SA-u-ca-gregory', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) : '');

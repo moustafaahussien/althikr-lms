@@ -184,7 +184,7 @@
       const pick = async (day, slot, cb, cur) => {
         const F = await call('ec_invig_free', { p_session: S.session.id, p_day: day, p_slot: slot });
         modal({ title: `اختيار ملاحظ — ${dn(day)} ${SLOTS[slot]}`, body: `<input id="q" type="search" placeholder="ابحث…" style="width:100%;margin-bottom:6px"><div style="max-height:340px;overflow:auto" id="fl">
-            ${F.map((t) => `<div class="mine-row" style="padding:6px 8px;margin:0;cursor:pointer" data-t="${t.id}" data-q="${esc(LMS.norm(t.name))}"><span class="grow">${esc(t.name)}</span><span class="pill">${t.n} ملاحظة</span></div>`).join('') || '<div class="empty">لا يوجد معلمون متاحون.</div>'}</div>`,
+            ${F.map((t) => `<div class="mine-row" style="padding:6px 8px;margin:0;cursor:pointer" data-t="${t.id}" data-q="${esc(LMS.norm(t.name))}"><span class="grow">${esc(t.name)}${t.own ? "" : " <small class=\"hint\">(مرحلة أخرى)</small>"}</span><span class="pill">${t.n} ملاحظة</span></div>`).join('') || '<div class="empty">لا يوجد معلمون متاحون.</div>'}</div>`,
           actions: (cur ? [{ label: '🗑 إزالة', cls: 'danger ghost', onClick: async () => { await cb(null); return true; } }] : []).concat([{ label: 'إغلاق', value: null, cls: 'ghost' }]) });
         const w = [...document.querySelectorAll('.modal-wrap')].pop();
         $('#q', w).oninput = (e) => { const v = LMS.norm(e.target.value); $$('[data-q]', w).forEach((x) => { x.style.display = !v || x.dataset.q.includes(v) ? '' : 'none'; }); };

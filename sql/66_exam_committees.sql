@@ -269,10 +269,11 @@ begin
   select * into e from ec_sessions where id = p_session;
   if not p_keep then delete from ec_invig where session_id = p_session; end if;
   drop table if exists _pool;
+  -- معلمو مراحل الفترة أولًا، ثم بقية معلمي المدرسة عند الحاجة
   create temp table _pool on commit drop as
-    select distinct p.id teacher_id from profiles p join teaching_assignments ta on ta.teacher_id = p.id
+    select p.id teacher_id, bool_or(g.stage_id = any (e.stage_ids)) own from profiles p join teaching_assignments ta on ta.teacher_id = p.id
       join classes c on c.id = ta.class_id join grades g on g.id = c.grade_id
-     where p.active and p.role = 'teacher' and g.stage_id = any (e.stage_ids);
+     where p.active and p.role in ('teacher','staff') group by p.id;
   for ds in select distinct day, slot from ec_exams where session_id = p_session order by day, slot loop
     for rm in select r.id from ec_rooms r where r.session_id = p_session
                 and exists (select 1 from ec_seats s join students st on st.profile_id = s.student_id join ec_exams x on x.session_id = p_session and x.day = ds.day and x.slot = ds.slot and x.grade_id = st.grade_id
@@ -284,7 +285,7 @@ begin
                             join ec_exams x on x.session_id = p_session and x.day = ds.day and x.slot = ds.slot and x.grade_id = c.grade_id and x.subject_id = ta.subject_id
                             join ec_seats s on s.room_id = rm.id join students st on st.profile_id = s.student_id and st.grade_id = c.grade_id
                            where ta.teacher_id = pl.teacher_id)
-         order by (select count(*) from ec_invig i where i.session_id = p_session and i.teacher_id = pl.teacher_id),
+         order by pl.own desc, (select count(*) from ec_invig i where i.session_id = p_session and i.teacher_id = pl.teacher_id),
                   (select count(*) from ec_invig i where i.session_id = p_session and i.teacher_id = pl.teacher_id and i.day = ds.day), random()
          limit 1;
         if t is null then miss := miss + 1;
@@ -323,11 +324,13 @@ declare e ec_sessions;
 begin
   if not private.ec_manager() then raise exception 'غير مصرح'; end if;
   select * into e from ec_sessions where id = p_session;
-  return coalesce((select jsonb_agg(jsonb_build_object('id', x.id, 'name', x.full_name, 'n', x.n) order by x.n, x.full_name) from (
-      select distinct p.id, p.full_name, (select count(*) from ec_invig i where i.session_id = p_session and i.teacher_id = p.id) n
+  return coalesce((select jsonb_agg(jsonb_build_object('id', x.id, 'name', x.full_name, 'n', x.n, 'own', x.own) order by x.own desc, x.n, x.full_name) from (
+      select p.id, p.full_name, (select count(*) from ec_invig i where i.session_id = p_session and i.teacher_id = p.id) n,
+             bool_or(g.stage_id = any (e.stage_ids)) own
         from profiles p join teaching_assignments ta on ta.teacher_id = p.id join classes c on c.id = ta.class_id join grades g on g.id = c.grade_id
-       where p.active and p.role = 'teacher' and g.stage_id = any (e.stage_ids)
-         and not exists (select 1 from ec_invig i where i.session_id = p_session and i.day = p_day and i.slot = p_slot and i.teacher_id = p.id)) x), '[]'::jsonb);
+       where p.active and p.role in ('teacher','staff')
+         and not exists (select 1 from ec_invig i where i.session_id = p_session and i.day = p_day and i.slot = p_slot and i.teacher_id = p.id)
+       group by p.id, p.full_name) x), '[]'::jsonb);
 end $$;
 
 -- ---------- النشر والإشعار ----------

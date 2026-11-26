@@ -197,15 +197,32 @@
   /* ---------- الوحدات التجريبية (لوحة الإدارة ← الإعدادات) ----------
      الوحدة التجريبية تفتح للأدوار المحددة لها في beta_access، وإن لم تُحدَّد فلأدوارها الافتراضية في config.js.
      مدير النظام يفتح كل الوحدات دائمًا (إلا وهو يعرض المنصة بواجهة المشرف). */
+  /* التحكم في البطاقات (sql/78): beta_access._cards = {مفتاح: {status: open|beta|hidden, show: [أدوار الظهور]}}
+     و beta_access[مفتاح] = أدوار الاستخدام (لأي بطاقة، تجريبية أو مفتوحة). تُطبَّق الحالة على C.MODULES مرة واحدة. */
+  function applyCards(ctx) {
+    const cards = (ctx && ctx.beta && ctx.beta._cards) || {};
+    (C.MODULES || []).forEach((m) => {
+      if (m._defBeta === undefined) m._defBeta = !!m.beta;
+      const st = cards[m.key] && cards[m.key].status;
+      m.status = st || (m._defBeta ? 'beta' : 'open');
+      m.beta = m.status === 'beta';
+      m.hidden = m.status === 'hidden';
+    });
+  }
+  function useList(m, ctx) { const s = ctx && ctx.beta && ctx.beta[m.key]; return Array.isArray(s) ? s : null; }
   function betaAllowed(m, ctx) {
     if (typeof m === 'string') m = (C.MODULES || []).find((x) => x.key === m);
-    if (!m || !m.beta || !ctx || !ctx.profile) return true;
+    if (!m || !ctx || !ctx.profile) return true;
     const role = ctx.profile.role;
     if (role === 'admin') return true;
-    const set = ctx.beta && ctx.beta[m.key];
-    if (Array.isArray(set)) return set.includes(role);
+    if (m.hidden) return false;
+    const set = useList(m, ctx);
+    if (set) return set.includes(role);
+    if (!m.beta) return true;
     return !m.roles || !m.roles.length || m.roles.includes(role);
   }
+  // هل البطاقة خاضعة للتحكم من الإعدادات (تجريبية أو مخفية أو لها قائمة استخدام مخصّصة)
+  function cardGated(m, ctx) { return !!(m.beta || m.hidden || useList(m, ctx)); }
   // الوحدات التي تخص الصفحة الحالية (حسب رابطها) — services.html تجمع أكثر من وحدة
   function pageModules(page) { return (C.MODULES || []).filter((m) => m.url && !/^https?:/i.test(m.url) && m.url.split('#')[0] === page); }
 
@@ -216,11 +233,11 @@
     let ctx;
     try { ctx = await getContext(); } catch (e) { toast(errMsg(e), 'err'); throw e; }
     if (!ctx || !ctx.registered) { location.href = BASE + 'index.html'; return new Promise(() => {}); }
-    applyView(ctx);
+    applyView(ctx); applyCards(ctx);
     if (roles.length && !roles.includes(ctx.profile.role)) { try { sessionStorage.setItem('lms_flash', '🔒 ليس لديك صلاحيات الدخول لهذه الوحدة.'); } catch (_) {} location.href = BASE + 'home.html'; return new Promise(() => {}); }
     const pm = pageModules(pageKey());
-    if (pm.length && pm.every((m) => m.beta) && !pm.some((m) => betaAllowed(m, ctx))) {
-      try { sessionStorage.setItem('lms_flash', '🔒 ليس لديك صلاحيات الدخول لهذه الوحدة (وحدة تجريبية).'); } catch (_) {}
+    if (pm.length && pm.every((m) => cardGated(m, ctx)) && !pm.some((m) => betaAllowed(m, ctx))) {
+      try { sessionStorage.setItem('lms_flash', '🔒 ليس لديك صلاحيات الدخول لهذه الوحدة.'); } catch (_) {}
       location.href = BASE + 'home.html'; return new Promise(() => {});
     }
     renderTopbar(ctx);
@@ -319,8 +336,14 @@
     if (!session) { location.replace(BASE + 'index.html' + (next ? '?next=' + encodeURIComponent(next) : '')); return new Promise(() => {}); }
     let ctx = null;
     try { ctx = await getContext(); } catch (_) {}
-    if (ctx && ctx.registered) applyView(ctx);
-    else ctx = { limited: true, profile: { full_name: (ctx && ctx.email) || session.user.email || '', role: 'student' } };
+    if (ctx && ctx.registered) {
+      applyView(ctx); applyCards(ctx);
+      const pm = pageModules(pageKey());
+      if (pm.length && pm.every((m) => cardGated(m, ctx)) && !pm.some((m) => betaAllowed(m, ctx))) {
+        try { sessionStorage.setItem('lms_flash', '🔒 ليس لديك صلاحيات الدخول لهذه الوحدة.'); } catch (_) {}
+        location.replace(BASE + 'home.html'); return new Promise(() => {});
+      }
+    } else ctx = { limited: true, profile: { full_name: (ctx && ctx.email) || session.user.email || '', role: 'student' } };
     renderTopbar(ctx);
     return ctx;
   }
@@ -532,5 +555,5 @@
 
   window.LMS = { sb, C, configured, ROLE_LABELS, esc, $, $$, toast, modal, confirmBox, errMsg, norm, has, linkMeet,
                  fetchAll, signInWithGoogle, signOut, getContext, cached, clearCache, requireAuth, downloadCSV, rememberNext, takeNext,
-                 getView, setView, canSwitch, applyView, mountTopbar, betaAllowed, BASE, hijri, dateLine, printHTML, printTable, exportTable, tableRows, ymd, cal, clsText, isGroupCls, DEMO };
+                 getView, setView, canSwitch, applyView, mountTopbar, betaAllowed, applyCards, cardGated, BASE, hijri, dateLine, printHTML, printTable, exportTable, tableRows, ymd, cal, clsText, isGroupCls, DEMO };
 })();

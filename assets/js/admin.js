@@ -1041,11 +1041,19 @@
   /* ===================================================================
      الإعدادات
      =================================================================== */
-  const BETA_MODS = (LMS.C.MODULES || []).filter((m) => m.beta);
+  // التحكم الكامل في البطاقات (sql/78) — كل بطاقات الصفحة الرئيسية
+  const ALL_MODS = (LMS.C.MODULES || []);
   const BETA_ROLES = ['leadership', 'principal', 'supervisor', 'teacher', 'staff', 'student', 'parent'];
-  const betaRoles = (m, saved) => Array.isArray(saved && saved[m.key]) ? saved[m.key] : (!m.roles || !m.roles.length ? BETA_ROLES : m.roles.filter((r) => r !== 'admin'));
+  const defBeta = (m) => (m._defBeta !== undefined ? m._defBeta : !!m.beta);
+  const defUse = (m) => (!m.roles || !m.roles.length ? BETA_ROLES.slice() : m.roles.filter((r) => r !== 'admin'));
+  const defStatus = (m) => (defBeta(m) ? 'beta' : 'open');
+  const betaRoles = (m, saved) => Array.isArray(saved && saved[m.key]) ? saved[m.key] : defUse(m);
   const LOCK_DEFAULT = ['leadership', 'principal', 'supervisor', 'teacher', 'staff'];
   const lockedRoles = (saved) => Array.isArray(saved && saved._locked) ? saved._locked : LOCK_DEFAULT;
+  const cardOf = (m, saved) => (saved && saved._cards && saved._cards[m.key]) || {};
+  const sameSet = (x, y) => x.length === y.length && x.every((v) => y.includes(v));
+  const CST = { open: '✅ مفتوحة', beta: '🧪 تجريبية', hidden: '🚫 مخفية' };
+  const RST = { use: '✅ تستخدم', show: '🔒 تظهر مقفلة', none: '— لا تظهر' };
   async function settingsTab(pane) {
     const rows = await run(sb.from('app_settings').select('*'));
     const get = (k) => rows.find((r) => r.key === k)?.value;
@@ -1071,12 +1079,20 @@
           <input type="checkbox" id="tchLogin" ${get('teacher_login_enabled') !== false ? 'checked' : ''}> السماح للمعلمين بالدخول إلى المنصة</label>
         <p class="hint" style="margin:6px 0 0">عند الإيقاف يُمنع كل حساب دوره «معلم» من الدخول ويرى رسالة «دخول المعلمين غير متاح حاليًا». المشرفون والإدارة والموظفون غير متأثرين.</p>
       </div>
-      <div class="card glass" style="margin:16px 0;padding:14px"><b>🧪 الوحدات التجريبية — من يفتحها؟</b>
-        <p class="hint" style="margin:6px 0 10px">علّم الأدوار المسموح لها بفتح كل وحدة تجريبية (تظهر عليها شارة «تجريبي»). غير المسموح له يرى البطاقة <b>مقفلة 🔒</b> ورسالة «ليس لديك صلاحيات الدخول» — إذا كان دوره معلَّمًا في صف «إظهار البطاقات المقفلة»، وإلا لا تظهر له أصلًا. مدير النظام يفتح كل الوحدات دائمًا.</p>
-        <div class="table-wrap no-tools"><table id="betaTbl"><thead><tr><th>الوحدة</th>${BETA_ROLES.map((r) => `<th style="text-align:center">${esc(ROLE_LABELS[r] || r)}</th>`).join('')}</tr></thead>
-        <tbody><tr style="background:#F5F8F6"><td><b>🔒 إظهار البطاقات المقفلة</b><div class="hint" style="font-weight:400">يرى الدور كل البطاقات حتى غير المسموح له بها (مقفلة) للتعريف بالمنصة</div></td>${BETA_ROLES.map((r) => `<td style="text-align:center"><input type="checkbox" data-lk="${r}" ${lockedRoles(get('beta_access')).includes(r) ? 'checked' : ''}></td>`).join('')}</tr>
-        ${BETA_MODS.map((m) => `<tr><td>${m.icon} ${esc(m.title)}</td>${BETA_ROLES.map((r) => `<td style="text-align:center"><input type="checkbox" data-bm="${m.key}" data-br="${r}" ${betaRoles(m, get('beta_access')).includes(r) ? 'checked' : ''}></td>`).join('')}</tr>`).join('')}</tbody></table></div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn sm" id="betaAll">الكل للجميع (الأدوار الافتراضية)</button><button class="btn sm" id="betaNone">إخفاء الكل عدا مدير النظام</button></div>
+      <div class="card glass" style="margin:16px 0;padding:14px"><b>🗂️ التحكم في بطاقات المنصة — الحالة والظهور وصلاحية الاستخدام</b>
+        <p class="hint" style="margin:6px 0 10px">لكل بطاقة: <b>الحالة</b> (✅ مفتوحة · 🧪 تجريبية بشارة «تجريبي» · 🚫 مخفية عن الجميع وتُغلق صفحتها) — ولكل دور: <b>✅ تستخدم</b> (تفتح له) أو <b>🔒 تظهر مقفلة</b> (يراها ويظهر له «ليس لديك صلاحيات الدخول») أو <b>— لا تظهر</b>. مدير النظام يرى ويفتح كل البطاقات دائمًا. صف «الافتراضي للظهور» يحدد من يرى البطاقات المقفلة ما لم تخصّص البطاقة. ⚠️ يمكنك دائمًا <b>تضييق</b> الاستخدام أو الإخفاء؛ أما فتح بطاقة لدور خارج أدوارها الأصلية فيعمل للوحدات التجريبية، بينما بعض الوحدات بياناتها محمية أصلًا لأدوار محددة (مثل الإشراف أو شؤون الموظفين) فتبقى الصفحة فارغة أو مغلقة لذلك الدور.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px"><input id="cardQ" placeholder="🔎 ابحث عن بطاقة…" style="max-width:240px">
+          <select id="cardSt" style="max-width:170px"><option value="">كل الحالات</option>${Object.entries(CST).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></div>
+        <div class="table-wrap no-tools" style="max-height:70vh;overflow:auto"><table id="betaTbl"><thead><tr><th>البطاقة</th><th>الحالة</th>${BETA_ROLES.map((r) => `<th style="text-align:center">${esc(ROLE_LABELS[r] || r)}<div><button class="btn sm" type="button" data-colr="${r}" title="تطبيق على كل البطاقات الظاهرة في الجدول" style="padding:1px 6px;font-size:.75rem">الكل…</button></div></th>`).join('')}</tr></thead>
+        <tbody><tr style="background:#F5F8F6"><td colspan="2"><b>🔒 الافتراضي للظهور</b><div class="hint" style="font-weight:400">يرى الدور البطاقات غير المسموح له بها (مقفلة) للتعريف بالمنصة</div></td>${BETA_ROLES.map((r) => `<td style="text-align:center"><input type="checkbox" data-lk="${r}" ${lockedRoles(get('beta_access')).includes(r) ? 'checked' : ''}></td>`).join('')}</tr>
+        ${ALL_MODS.map((m) => { const sv = get('beta_access'), cd = cardOf(m, sv), use = betaRoles(m, sv), lk = lockedRoles(sv);
+          const show = Array.isArray(cd.show) ? cd.show : (m.url ? lk : []);
+          return `<tr data-row="${m.key}" data-q="${esc(m.title + ' ' + (m.desc || ''))}"><td>${m.icon} <b>${esc(m.title)}</b>${m.url ? '' : ' <span class="hint">(قريبًا)</span>'}</td>
+          <td><select data-cs="${m.key}">${Object.entries(CST).map(([k, v]) => `<option value="${k}" ${(cd.status || defStatus(m)) === k ? 'selected' : ''}>${v}</option>`).join('')}</select></td>
+          ${BETA_ROLES.map((r) => { const st = use.includes(r) ? 'use' : show.includes(r) ? 'show' : 'none';
+            return `<td style="text-align:center"><select data-bm="${m.key}" data-br="${r}" data-st="${st}" style="min-width:118px">${Object.entries(RST).map(([k, v]) => (k === 'show' && !m.url) ? '' : `<option value="${k}" ${st === k ? 'selected' : ''}>${v}</option>`).join('')}</select></td>`; }).join('')}</tr>`; }).join('')}</tbody></table></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn sm" id="betaAll">↺ استعادة الإعدادات الافتراضية</button><button class="btn sm" id="betaOpen">✅ الكل يستخدم كل البطاقات</button><button class="btn sm" id="betaNone">إخفاء الكل عدا مدير النظام</button></div>
+        <style>#betaTbl select[data-st="use"]{background:#E7F6EC}#betaTbl select[data-st="show"]{background:#FFF6E0}#betaTbl select[data-st="none"]{background:#F1F1F1;color:#777}#betaTbl tr.cs-hidden td{opacity:.55}#betaTbl tr.cs-beta td:first-child{color:#7c3aed}</style>
       </div>
       <div class="card glass" style="margin:16px 0;padding:14px">
         <label style="display:flex;gap:10px;align-items:center;font-weight:800;font-size:1.02rem">
@@ -1091,8 +1107,26 @@
       </div>
       <p class="hint">⚠️ أي حساب خارج هذه النطاقات لن يرى أي بيانات حتى لو كان مسجّلًا. لا تحذف نطاق المدرسة وإلا ستفقد الدخول أنت أيضًا.</p>
       <button class="btn primary" id="sv">حفظ الإعدادات</button></div>`;
-    $('#betaAll', pane).onclick = () => BETA_MODS.forEach((m) => BETA_ROLES.forEach((r) => { const c = $(`[data-bm="${m.key}"][data-br="${r}"]`, pane); c.checked = !m.roles || !m.roles.length || m.roles.includes(r); }));
-    $('#betaNone', pane).onclick = () => $$('[data-bm]', pane).forEach((c) => { c.checked = false; });
+    const setCell = (c, st) => { if (st === 'show' && !c.querySelector('option[value="show"]')) st = 'none'; c.value = st; c.dataset.st = st; };
+    const paintRow = (tr) => { const st = $('[data-cs]', tr).value; tr.classList.toggle('cs-hidden', st === 'hidden'); tr.classList.toggle('cs-beta', st === 'beta'); };
+    $$('#betaTbl tr[data-row]', pane).forEach(paintRow);
+    $('#betaTbl', pane).addEventListener('change', (e) => { const t = e.target;
+      if (t.dataset.bm) t.dataset.st = t.value;
+      if (t.dataset.cs) paintRow(t.closest('tr'));
+      if (t.dataset.lk) { const r = t.dataset.lk; $$(`[data-br="${r}"]`, pane).forEach((c) => { if (c.value !== 'use') setCell(c, t.checked ? 'show' : 'none'); }); } });
+    const filt = () => { const q = val(pane, '#cardQ').trim(), st = $('#cardSt', pane).value;
+      $$('#betaTbl tr[data-row]', pane).forEach((tr) => { tr.style.display = ((!q || tr.dataset.q.includes(q)) && (!st || $('[data-cs]', tr).value === st)) ? '' : 'none'; }); };
+    $('#cardQ', pane).oninput = filt; $('#cardSt', pane).onchange = filt;
+    const shownRows = () => $$('#betaTbl tr[data-row]', pane).filter((tr) => tr.style.display !== 'none');
+    $$('[data-colr]', pane).forEach((b) => { b.onclick = async () => { const r = b.dataset.colr;
+      const v = await modal({ title: `تطبيق على «${ROLE_LABELS[r] || r}» لكل البطاقات الظاهرة (${shownRows().length})`, body: '<p class="hint">يمكنك تصفية الجدول أولًا بالبحث أو الحالة.</p>',
+        actions: [{ label: RST.use, value: 'use', cls: 'primary' }, { label: RST.show, value: 'show' }, { label: RST.none, value: 'none' }, { label: 'إلغاء', value: null }] });
+      if (v) shownRows().forEach((tr) => setCell($(`[data-br="${r}"]`, tr), v)); }; });
+    $('#betaAll', pane).onclick = () => { $$('[data-lk]', pane).forEach((c) => { c.checked = LOCK_DEFAULT.includes(c.dataset.lk); });
+      ALL_MODS.forEach((m) => { const tr = $(`tr[data-row="${m.key}"]`, pane); $('[data-cs]', tr).value = defStatus(m); paintRow(tr);
+        BETA_ROLES.forEach((r) => setCell($(`[data-br="${r}"]`, tr), defUse(m).includes(r) ? 'use' : (m.url && LOCK_DEFAULT.includes(r)) ? 'show' : 'none')); }); };
+    $('#betaOpen', pane).onclick = () => shownRows().forEach((tr) => $$('[data-br]', tr).forEach((c) => setCell(c, 'use')));
+    $('#betaNone', pane).onclick = () => shownRows().forEach((tr) => $$('[data-br]', tr).forEach((c) => setCell(c, 'none')));
     $('#paSync', pane).onclick = async () => {
       try {
         const pre = await run(sb.rpc('parents_sync', { p_apply: false }));
@@ -1114,8 +1148,18 @@
         const allOn = $('#allLogin', pane).checked, tchOn = $('#tchLogin', pane).checked;
         if (allOn !== (get('all_login_enabled') !== false) && !await confirmBox(allOn ? 'فتح المنصة لكل المستخدمين؟' : 'إغلاق المنصة أمام كل المستخدمين (عدا مدير النظام)؟ سيُمنع الجميع من الدخول فورًا.', allOn ? 'نعم، افتح' : 'نعم، أغلق', !allOn)) return;
         if (tchOn !== (get('teacher_login_enabled') !== false) && !await confirmBox(tchOn ? 'فتح دخول المعلمين؟' : 'إيقاف دخول المعلمين؟ سيُمنع كل المعلمين من الدخول فورًا.', tchOn ? 'نعم، افتح' : 'نعم، أوقف', !tchOn)) return;
-        const beta = {}; BETA_MODS.forEach((m) => { beta[m.key] = BETA_ROLES.filter((r) => $(`[data-bm="${m.key}"][data-br="${r}"]`, pane).checked); });
-        beta._locked = BETA_ROLES.filter((r) => $(`[data-lk="${r}"]`, pane).checked);
+        const beta = { _cards: {} }; beta._locked = BETA_ROLES.filter((r) => $(`[data-lk="${r}"]`, pane).checked);
+        ALL_MODS.forEach((m) => {
+          const cell = (r) => $(`[data-bm="${m.key}"][data-br="${r}"]`, pane).value;
+          const use = BETA_ROLES.filter((r) => cell(r) === 'use'), show = BETA_ROLES.filter((r) => cell(r) !== 'none');
+          const status = $(`[data-cs="${m.key}"]`, pane).value;
+          // تُحفظ فقط القيم المختلفة عن الافتراضي، فتبقى البطاقات غير المعدّلة تتبع إعدادات config.js
+          if (defBeta(m) || !sameSet(use, defUse(m))) beta[m.key] = use;
+          const defShow = m.url ? Array.from(new Set(use.concat(beta._locked))) : use;
+          if (status !== defStatus(m) || !sameSet(show, defShow)) beta._cards[m.key] = { status, show };
+        });
+        const hid = ALL_MODS.filter((m) => beta._cards[m.key] && beta._cards[m.key].status === 'hidden' && cardOf(m, get('beta_access')).status !== 'hidden');
+        if (hid.length && !await confirmBox(`إخفاء ${hid.length} بطاقة عن الجميع (${hid.map((m) => m.title).join('، ')})؟ ستُغلق صفحاتها لكل المستخدمين عدا مدير النظام.`, 'نعم، أخفِ', true)) return;
         const paOn = $('#paLogin', pane).checked;
         if (paOn !== (get('parent_login_enabled') === true)) {
           if (!await confirmBox(paOn ? 'فتح بوابة أولياء الأمور؟ سيتمكن كل ولي أمر مربوط بابنه من الدخول فورًا.' : 'إغلاق بوابة أولياء الأمور؟', paOn ? 'نعم، افتح' : 'نعم، أغلق', !paOn)) return;
@@ -1125,7 +1169,7 @@
                                                   { key: 'cert_edu_title', value: val(pane, '#ceT') }, { key: 'cert_edu_name', value: val(pane, '#ceN') },
                                                   { key: 'cert_exec_title', value: val(pane, '#cxT') }, { key: 'cert_exec_name', value: val(pane, '#cxN') },
                                                   { key: 'all_login_enabled', value: allOn }, { key: 'teacher_login_enabled', value: tchOn }]));
-        await run(sb.rpc('beta_access_save', { p: beta }));
+        await run(sb.rpc('card_control_save', { p: beta }));
         LMS.clearCache();
         rows.splice(0, rows.length, ...(await run(sb.from('app_settings').select('*'))));
         toast('تم حفظ الإعدادات');

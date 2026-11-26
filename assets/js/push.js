@@ -20,8 +20,8 @@
     ready = new Promise((res, rej) => {
       window.OneSignalDeferred = window.OneSignalDeferred || [];
       const add = (src, next) => { const s = document.createElement('script'); s.src = src; s.defer = true; s.onerror = () => { s.remove(); next(); }; document.head.appendChild(s); };
-      add('https://onesignal.com/sdks/web/v16/OneSignalSDK.page.es6.js?v=202611231330',
-        () => add(BASE + 'supervision/os/OneSignalSDK.page.es6.js?v=202611231330',
+      add('https://onesignal.com/sdks/web/v16/OneSignalSDK.page.es6.js?v=202611262230',
+        () => add(BASE + 'supervision/os/OneSignalSDK.page.es6.js?v=202611262230',
           () => add('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js', () => { ready = null; rej(new Error('sdk')); })));
       OneSignalDeferred.push(async (OS) => {
         try { await OS.init({ appId: APP, serviceWorkerPath: 'althikr-lms/supervision/OneSignalSDKWorker.js', serviceWorkerParam: { scope: '/althikr-lms/supervision/' } }); res(OS); }

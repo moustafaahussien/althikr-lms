@@ -444,8 +444,8 @@ function loadOneSignal(){ if(window.LMS&&LMS.DEMO) return Promise.reject(new Err
     window.OneSignalDeferred=window.OneSignalDeferred||[];
     // مكتبة OneSignal من onesignal.com مباشرة (بعض المتصفحات يرجع لها cdn.onesignal.com بخطأ 503)، ثم نسخة محلية، ثم الـ CDN
     const add=(src,next)=>{ const s=document.createElement("script"); s.src=src; s.defer=true; s.onerror=()=>{ s.remove(); next(); }; document.head.appendChild(s); };
-    add("https://onesignal.com/sdks/web/v16/OneSignalSDK.page.es6.js?v=202611231330",
-      ()=>add("os/OneSignalSDK.page.es6.js?v=202611231330",
+    add("https://onesignal.com/sdks/web/v16/OneSignalSDK.page.es6.js?v=202611262230",
+      ()=>add("os/OneSignalSDK.page.es6.js?v=202611262230",
         ()=>add("https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js", ()=>{ osReady=null; rej(new Error("sdk")); })));
     OneSignalDeferred.push(async OS=>{ try{ await OS.init({appId:PUSH_APP, serviceWorkerPath:"althikr-lms/supervision/OneSignalSDKWorker.js", serviceWorkerParam:{scope:"/althikr-lms/supervision/"}, allowLocalhostAsSecureOrigin:true}); res(OS); }catch(e){ osReady=null; rej(e); } });
   });

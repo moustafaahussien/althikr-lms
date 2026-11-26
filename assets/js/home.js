@@ -82,17 +82,26 @@
   // ---------- الوحدات ----------
   // الجاهزة أولًا؛ و«قريبًا» في قسم مطوي آخر الصفحة (لا تظهر للمشرف والطالب وولي الأمر)
   // كل البطاقات تظهر للجميع ليتعرّف الكل على إمكانات المنصة؛ غير المسموح له يرى البطاقة مقفلة 🔒 وتظهر له رسالة عند الضغط
-  const canOpen = (m) => (m.beta ? LMS.betaAllowed(m, ctx) : (!m.roles || !m.roles.length || m.roles.includes(role)));
-  const allowedRoles = (m) => { const set = m.beta && ctx.beta && ctx.beta[m.key]; const r = Array.isArray(set) ? set : (m.roles || []);
+  // التحكم من لوحة الإدارة ← الإعدادات ← التحكم في البطاقات (sql/78): الحالة + أدوار الظهور + أدوار الاستخدام
+  const CARDS = (ctx.beta && ctx.beta._cards) || {};
+  const canOpen = (m) => (LMS.cardGated(m, ctx) ? LMS.betaAllowed(m, ctx) : (!m.roles || !m.roles.length || m.roles.includes(role)));
+  const allowedRoles = (m) => { const set = ctx.beta && ctx.beta[m.key]; const r = Array.isArray(set) ? set : (m.roles || []);
     return r.length ? r.filter((x) => x !== 'admin') : Object.keys(ROLE_LABELS).filter((x) => x !== 'admin'); };
   const LB = ctx.beta && ctx.beta._locked;
   const SHOW_LOCKED = role === 'admin' || (Array.isArray(LB) ? LB : ['leadership', 'principal', 'supervisor', 'teacher', 'staff']).includes(role);
-  const mods = (C.MODULES || []).filter((m) => canOpen(m) || (m.url && SHOW_LOCKED));
+  const visible = (m) => {
+    if (role === 'admin') return true;             // المدير يرى كل البطاقات (المخفية بشارة «مخفية»)
+    if (m.hidden) return false;
+    if (canOpen(m)) return true;
+    const sh = CARDS[m.key] && CARDS[m.key].show;
+    return !!m.url && (Array.isArray(sh) ? sh.includes(role) : SHOW_LOCKED);
+  };
+  const mods = (C.MODULES || []).filter(visible);
   try { const fl = sessionStorage.getItem('lms_flash'); if (fl) { sessionStorage.removeItem('lms_flash'); LMS.toast(fl, 'err'); } } catch (_) {}
   const ready = mods.filter((m) => m.url && !m.beta).concat(mods.filter((m) => m.url && m.beta)), soon = mods.filter((m) => !m.url);
   const ext = (u) => /^https?:/i.test(u);
   $('#modules').innerHTML = ready.map((m) => canOpen(m)
-    ? `<a class="module glass" href="${esc(m.url)}" ${ext(m.url) ? 'target="_blank" rel="noopener" title="يفتح في نافذة جديدة"' : ''}>${ext(m.url) ? '<span class="ext" aria-label="منصة خارجية — نافذة جديدة">↗</span>' : ''}${m.beta ? '<span class="beta-badge" title="وحدة تجريبية — قد تتغير">تجريبي</span>' : ''}<span class="ic">${m.icon}</span><b>${esc(m.title)}</b><small>${esc(m.desc || '')}</small></a>`
+    ? `<a class="module glass" href="${esc(m.url)}" ${ext(m.url) ? 'target="_blank" rel="noopener" title="يفتح في نافذة جديدة"' : ''}>${ext(m.url) ? '<span class="ext" aria-label="منصة خارجية — نافذة جديدة">↗</span>' : ''}${m.hidden ? '<span class="beta-badge" style="background:#64748b" title="مخفية عن الجميع — تظهر لمدير النظام فقط">مخفية</span>' : m.beta ? '<span class="beta-badge" title="وحدة تجريبية — قد تتغير">تجريبي</span>' : ''}<span class="ic">${m.icon}</span><b>${esc(m.title)}</b><small>${esc(m.desc || '')}</small></a>`
     : `<a class="module glass locked" href="#" role="button" data-locked="${esc(m.key)}" title="ليس لديك صلاحيات الدخول"><span class="lock" aria-label="مقفلة">🔒</span>${m.beta ? '<span class="beta-badge">تجريبي</span>' : ''}<span class="ic">${m.icon}</span><b>${esc(m.title)}</b><small>${esc(m.desc || '')}</small></a>`).join('');
   $('#modules').addEventListener('click', (e) => {
     const a = e.target.closest('[data-locked]'); if (!a) return; e.preventDefault();

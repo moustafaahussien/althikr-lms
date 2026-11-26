@@ -303,7 +303,7 @@ begin
     if a.stage not in ('contract','enrolled') then raise exception 'يُسجَّل الطالب رسميًا بعد توقيع العقد'; end if;
     if coalesce(nullif(btrim(p ->> 'national_id'), ''), a.national_id) is null then raise exception 'رقم هوية الطالب مطلوب للتسجيل الرسمي'; end if;
     update adm_applicants set stage = 'enrolled', national_id = coalesce(nullif(btrim(p ->> 'national_id'), ''), national_id),
-      enrolled_at = coalesce(nullif(p ->> 'enrolled_at', '')::date, current_date), stage_at = now(), updated_at = now() where id = p_id;
+      enrolled_at = coalesce(nullif(p ->> 'enrolled_at', '')::date, (now() at time zone 'Asia/Riyadh')::date), stage_at = now(), updated_at = now() where id = p_id;
     msg := 'التسجيل الرسمي للطالب في المدرسة';
   elsif p_stage = 'lost' then
     if btrim(coalesce(p ->> 'lost_reason', '')) = '' then raise exception 'اذكر سبب عدم الإكمال'; end if;
@@ -358,7 +358,7 @@ begin
     select jsonb_build_object('id', l.id, 'family_id', f.id, 'guardian', f.guardian_name, 'phone', f.phone, 'next_at', l.next_at, 'body', l.body,
       'owner', (select full_name from profiles where id = f.owner_id), 'mine', f.owner_id = public.me_id(),
       'children', (select string_agg(a.name || ' (' || private.adm_stage_label(a.stage) || ')', '، ') from adm_applicants a where a.family_id = f.id)) x
-    from adm_log l join adm_families f on f.id = l.family_id where l.next_at is not null and not l.done and l.next_at <= current_date + 7) z), '[]'::jsonb);
+    from adm_log l join adm_families f on f.id = l.family_id where l.next_at is not null and not l.done and l.next_at <= (now() at time zone 'Asia/Riyadh')::date + 7) z), '[]'::jsonb);
 end $$;
 
 -- ---------- اختبارات القبول ----------
@@ -390,7 +390,7 @@ end $$;
 -- ---------- التقارير ----------
 create or replace function public.adm_stats(p_from date default null, p_to date default null) returns jsonb
 language plpgsql stable security definer set search_path = public, private as $$
-declare f date := coalesce(p_from, current_date - 365); t date := coalesce(p_to, current_date);
+declare f date := coalesce(p_from, (now() at time zone 'Asia/Riyadh')::date - 365); t date := coalesce(p_to, (now() at time zone 'Asia/Riyadh')::date);
 begin
   if private.adm_role() not in ('manage','marketing') then raise exception 'للتسجيل والقبول والتسويق فقط'; end if;
   return (with base as (select a.*, fm.source, fm.owner_id from adm_applicants a join adm_families fm on fm.id = a.family_id
@@ -495,10 +495,10 @@ begin
     select count(*) into n from adm_families f where not exists (select 1 from adm_log l where l.family_id = f.id and l.kind <> 'system')
        and exists (select 1 from adm_applicants a where a.family_id = f.id and a.stage in ('lead','inquiry')) and (f.owner_id is null or f.owner_id = me);
     if n > 0 then out := out || jsonb_build_object('icon', '📥', 'text', n || ' عميل جديد لم يُتواصل معه بعد', 'link', 'admissions.html#follow'); end if;
-    select count(*) into n from adm_log l join adm_families f on f.id = l.family_id where l.next_at <= current_date and not l.done and (f.owner_id is null or f.owner_id = me);
+    select count(*) into n from adm_log l join adm_families f on f.id = l.family_id where l.next_at <= (now() at time zone 'Asia/Riyadh')::date and not l.done and (f.owner_id is null or f.owner_id = me);
     if n > 0 then out := out || jsonb_build_object('icon', '📞', 'text', n || ' متابعة عميل مستحقة اليوم', 'link', 'admissions.html#follow'); end if;
   end if;
-  select count(*) into n from adm_applicants a where a.stage = 'test' and (a.test_at at time zone 'Asia/Riyadh')::date <= current_date + 1
+  select count(*) into n from adm_applicants a where a.stage = 'test' and (a.test_at at time zone 'Asia/Riyadh')::date <= (now() at time zone 'Asia/Riyadh')::date + 1
      and (a.tester_id = me or (r = 'manage' and a.tester_id is null) or (r = 'principal' and private.adm_sees(a)));
   if n > 0 then out := out || jsonb_build_object('icon', '📝', 'text', n || ' اختبار قبول اليوم أو غدًا أو بانتظار النتيجة', 'link', 'admissions.html#tests'); end if;
   return out;

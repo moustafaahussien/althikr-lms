@@ -24,6 +24,7 @@
   const LOST = ['السعر / الرسوم', 'اختار مدرسة أخرى', 'بُعد المسافة / النقل', 'لا يوجد مقعد في الصف', 'لم يرد على التواصل', 'تأجيل للعام القادم', 'أخرى'];
   const GR = ME.grades || [], STAFF = ME.staff || [], CFG = ME.cfg || {};
   const d10 = (t) => (t ? String(t).slice(0, 10) : '');
+  const today = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };   // التاريخ المحلي (لا UTC)
   const fmt = (t) => (t ? new Date(t).toLocaleString('ar-SA-u-ca-gregory', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) : '');
   const fmtD = (t) => (t ? new Date(String(t).length <= 10 ? t + 'T12:00:00' : t).toLocaleDateString('ar-SA-u-ca-gregory', { day: 'numeric', month: 'short', year: 'numeric' }) : '');
   const ago = (t) => { const d = Math.floor((Date.now() - new Date(t)) / 864e5); return d <= 0 ? 'اليوم' : d === 1 ? 'أمس' : `منذ ${d} يوم`; };
@@ -74,11 +75,11 @@
   }
   const card = (a) => `<div class="ac glass" data-fam="${a.family_id}" title="فتح ملف الأسرة">
       <b>${esc(a.name)}</b> ${a.gender === 'f' ? '<span class="pill">طالبة</span>' : ''}
-      <div class="hint">${esc(a.grade || 'لم يُحدَّد الصف')}${a.year_name ? ' · ' + esc(a.year_name) : ''}</div>
+      <div class="hint">${esc(a.grade || 'لم يُحدَّد الصف')}${a.year_name ? ' · <bdi>' + esc(a.year_name) + '</bdi>' : ''}</div>
       <div class="hint">👤 ${esc(a.guardian)}${a.phone ? ` · <a href="tel:${esc(a.phone)}" dir="ltr">${esc(a.phone)}</a>` : ''}</div>
       <div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap">${a.source ? `<span class="pill">${esc((SRC[a.source] || '').split(' ')[0])} ${esc(a.source_label)}</span>` : ''}
         ${a.stage === 'test' && a.test_at ? `<span class="pill gold">📅 ${esc(fmt(a.test_at))}</span>` : ''}
-        ${a.next_at ? `<span class="pill ${a.next_at <= d10(new Date().toISOString()) ? 'bad' : 'gold'}">📞 متابعة ${esc(fmtD(a.next_at))}</span>` : ''}
+        ${a.next_at ? `<span class="pill ${a.next_at <= today() ? 'bad' : 'gold'}">📞 متابعة ${esc(fmtD(a.next_at))}</span>` : ''}
         ${a.file_no ? `<span class="pill">📁 ${esc(a.file_no)}</span>` : ''}</div>
       <div class="hint" style="margin-top:3px;font-size:.75rem">في هذه المرحلة ${esc(ago(a.stage_at))}${a.owner ? ' · ' + esc(a.owner) : ''}</div></div>`;
   function paintBoard(L) {
@@ -118,7 +119,7 @@
     const docsBox = (a) => { if (!['file', 'contract', 'enrolled'].includes(a.stage)) return ''; const docs = CFG.docs || []; const got = docs.filter((d) => a.docs && a.docs[d]).length;
       return `<details class="docs" ${got < docs.length ? 'open' : ''}><summary><b>📎 مستندات الملف</b> <span class="pill ${got === docs.length ? 'ok' : 'gold'}">${got}/${docs.length}</span></summary>
         ${docs.map((d) => `<label class="chk"><input type="checkbox" data-doc="${esc(d)}" data-a="${a.id}" ${a.docs && a.docs[d] ? 'checked' : ''} ${MANAGE ? '' : 'disabled'}> ${esc(d)}${a.docs && a.docs[d] ? ` <span class="hint">(${esc(fmtD(a.docs[d]))})</span>` : ''}</label>`).join('')}</details>`; };
-    const facts = (a) => [a.grade && `🎯 ${esc(a.grade)}`, a.year_name && `📆 ${esc(a.year_name)}`, a.birth_date && `🎂 ${esc(fmtD(a.birth_date))}`, a.current_school && `🏫 من: ${esc(a.current_school)}`,
+    const facts = (a) => [a.grade && `🎯 ${esc(a.grade)}`, a.year_name && `📆 <bdi>${esc(a.year_name)}</bdi>`, a.birth_date && `🎂 ${esc(fmtD(a.birth_date))}`, a.current_school && `🏫 من: ${esc(a.current_school)}`,
       a.national_id && `🪪 ${esc(a.national_id)}`, a.test_at && `📅 الاختبار: ${esc(fmt(a.test_at))}${a.tester ? ' — ' + esc(a.tester) : ''}`,
       a.test_score != null && `📝 الدرجة: <b>${esc(a.test_score)}</b>${a.test_notes ? ' — ' + esc(a.test_notes) : ''}`, a.file_no && `📁 الملف: <b>${esc(a.file_no)}</b>`,
       a.contract_at && `✍️ العقد${a.contract_no ? ' ' + esc(a.contract_no) : ''}: ${esc(fmtD(a.contract_at))}${a.fees ? ` — ${Number(a.fees).toLocaleString('ar-SA')} ريال` : ''}`,
@@ -149,7 +150,7 @@
     render();
     box.addEventListener('click', async (e) => {
       const t = e.target.closest('button,[data-doc]'); if (!t) return;
-      if (t.dataset.nx) { const d = new Date(); d.setDate(d.getDate() + +t.dataset.nx); $('#ln', box).value = d10(d.toISOString()); return; }
+      if (t.dataset.nx) { const d = new Date(); d.setDate(d.getDate() + +t.dataset.nx); $('#ln', box).value = new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); return; }
       if (t.id === 'lsv') {
         try { await call('adm_log_add', { p: { family_id: id, kind: $('#lk', box).value, body: val(box, '#lb'), next_at: $('#ln', box).value } }); toast('تم الحفظ ✓'); refresh(); }
         catch (er) { toast(errMsg(er), 'err'); } return;
@@ -164,7 +165,7 @@
     box.addEventListener('change', async (e) => {
       const c = e.target.closest('[data-doc]'); if (!c) return;
       const a = D.applicants.find((x) => x.id === +c.dataset.a); const docs = Object.assign({}, a.docs || {});
-      if (c.checked) docs[c.dataset.doc] = d10(new Date().toISOString()); else delete docs[c.dataset.doc];
+      if (c.checked) docs[c.dataset.doc] = today(); else delete docs[c.dataset.doc];
       try { await call('adm_docs_set', { p_id: a.id, p_docs: docs }); a.docs = docs; render(); } catch (er) { toast(errMsg(er), 'err'); c.checked = !c.checked; }
     });
     modal({ title: '📂 ملف الأسرة', body: box, wide: true, actions: [{ label: 'إغلاق', value: null }] });
@@ -193,13 +194,13 @@
       if (act === 'contract') {
         const docs = CFG.docs || [], miss = docs.filter((d) => !(a.docs && a.docs[d]));
         return await modal({ title: '✍️ توقيع العقد — ' + a.name, body: `${miss.length ? `<div class="notice warn">مستندات ناقصة (${miss.length}): ${esc(miss.join('، '))}</div>` : '<div class="notice ok">✓ كل المستندات مكتملة</div>'}
-          <div class="form-grid"><label class="f">تاريخ التوقيع<input type="date" id="cd" value="${d10(new Date().toISOString())}"></label><label class="f">رقم العقد<input id="cn" dir="ltr"></label>
+          <div class="form-grid"><label class="f">تاريخ التوقيع<input type="date" id="cd" value="${today()}"></label><label class="f">رقم العقد<input id="cn" dir="ltr"></label>
           <label class="f">الرسوم السنوية (ريال)<input type="number" id="cf" min="0" step="0.01"></label></div>`,
           actions: [{ label: 'إلغاء', value: false }, { label: 'تأكيد توقيع العقد', cls: 'primary', onClick: (w) => run('contract', { contract_at: $('#cd', w).value, contract_no: val(w, '#cn'), fees: $('#cf', w).value }) }] });
       }
       if (act === 'enrolled') {
         return await modal({ title: '🎓 التسجيل الرسمي — ' + a.name, body: `<p>بعد التسجيل يُرصد الطالب ضمن المسجّلين رسميًا، ويرتبط تلقائيًا بحسابه في المنصة عندما يُضاف من نظام التسجيل برقم هويته.</p>
-          <div class="form-grid"><label class="f">رقم هوية/إقامة الطالب<input id="ni" dir="ltr" value="${esc(a.national_id || '')}"></label><label class="f">تاريخ التسجيل<input type="date" id="ed" value="${d10(new Date().toISOString())}"></label></div>`,
+          <div class="form-grid"><label class="f">رقم هوية/إقامة الطالب<input id="ni" dir="ltr" value="${esc(a.national_id || '')}"></label><label class="f">تاريخ التسجيل<input type="date" id="ed" value="${today()}"></label></div>`,
           actions: [{ label: 'إلغاء', value: false }, { label: 'تسجيل رسمي', cls: 'primary', onClick: (w) => { if (!val(w, '#ni')) { toast('رقم الهوية مطلوب', 'err'); return false; } return run('enrolled', { national_id: val(w, '#ni'), enrolled_at: $('#ed', w).value }); } }] });
       }
       if (act === 'lost') {
@@ -286,7 +287,7 @@
     view.innerHTML = '<div class="empty">جارٍ التحميل…</div>';
     let L = [], N = [];
     try { [L, N] = await Promise.all([call('adm_followups'), call('adm_board', { p: { closed: false } })]); } catch (e) { view.innerHTML = `<div class="notice err">${esc(errMsg(e))}</div>`; return; }
-    const today = d10(new Date().toISOString());
+    const today = today();
     const fresh = N.filter((a) => ['lead', 'inquiry'].includes(a.stage) && !a.next_at);
     const seen = new Set(); const freshFam = fresh.filter((a) => !seen.has(a.family_id) && seen.add(a.family_id));
     view.innerHTML = `<div class="row2">
@@ -324,7 +325,7 @@
   /* =================== التقارير =================== */
   async function statsView() {
     const y = new Date(); const from0 = sessionStorage.getItem('adm_from') || `${y.getMonth() >= 7 ? y.getFullYear() : y.getFullYear() - 1}-08-01`;
-    view.innerHTML = `<div class="toolbar glass" style="padding:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">من <input type="date" id="sf" value="${from0}"> إلى <input type="date" id="st" value="${d10(new Date().toISOString())}">
+    view.innerHTML = `<div class="toolbar glass" style="padding:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">من <input type="date" id="sf" value="${from0}"> إلى <input type="date" id="st" value="${today()}">
       <button class="btn sm" id="sr">تحديث</button><span style="flex:1"></span><button class="btn sm" id="sp">🖨️ طباعة</button></div><div id="sb"><div class="empty">جارٍ التحميل…</div></div>`;
     const load = async () => {
       sessionStorage.setItem('adm_from', $('#sf').value);

@@ -44,11 +44,10 @@ $$;
 -- الإدارة كلها، مدير/وكيل/موجّه المرحلة لمراحله، ورائد الفصل لفصله
 create or replace function private.ew_scope() returns table(student_id uuid)
 language sql stable security definer set search_path = public, private as $$
-  select s.profile_id from students s join grades g on g.id = s.grade_id join profiles p on p.id = s.profile_id and p.active
-   where public.is_staff() and (
-         (private.bh_manager() and g.stage_id = any (private.my_stage_ids()))
-      or (public.me_role() in ('admin','leadership'))
-      or s.class_id in (select id from classes where homeroom_teacher_id = public.me_id()))
+  with z as materialized (select private.bh_manager() bm, private.my_stage_ids() ms, public.me_role()::text r, public.me_id() me, public.is_staff() st)
+  select s.profile_id from z, students s join grades g on g.id = s.grade_id join profiles p on p.id = s.profile_id and p.active
+   where z.st and (z.r in ('admin','leadership') or (z.bm and g.stage_id = any (z.ms))
+      or s.class_id in (select id from classes where homeroom_teacher_id = z.me))
 $$;
 
 create or replace function private.ew_can(p_student uuid) returns boolean
@@ -115,7 +114,9 @@ begin
   select coalesce(jsonb_agg(r || jsonb_build_object('name', p.full_name, 'class', vc.label, 'stage_id', vc.stage_id, 'grade_id', s.grade_id)
            order by (r->>'level') = 'red' desc, (r->>'score')::int desc, p.full_name), '[]'::jsonb)
     into out
-    from (select private.ew_row(m, cfg) r from private.ew_metrics(d) m) x
+    from (select private.ew_row(m, cfg) r from private.ew_metrics(d) m
+           where m.abs + m.late + m.neg + m.hw_miss > 0 or m.ex_n >= 2
+              or exists (select 1 from ew_cases c where c.student_id = m.student_id and c.status <> 'closed')) x
     join profiles p on p.id = (x.r->>'id')::uuid
     join students s on s.profile_id = p.id
     left join v_classes vc on vc.id = s.class_id

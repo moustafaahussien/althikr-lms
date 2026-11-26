@@ -22,6 +22,11 @@ begin
       end loop;
       continue;
     end if;
+    if k = '_order' and jsonb_typeof(v) = 'array' then   -- ترتيب البطاقات في الصفحة الرئيسية
+      out := out || jsonb_build_object('_order', (select coalesce(jsonb_agg(x order by i), '[]'::jsonb) from (
+        select x, min(i) i from jsonb_array_elements_text(v) with ordinality t(x, i) where x ~ '^[a-z0-9_]{1,30}$' group by x) q));
+      continue;
+    end if;
     continue when k !~ '^_?[a-z0-9_]{1,30}$' or jsonb_typeof(v) <> 'array';
     out := out || jsonb_build_object(k, (select coalesce(jsonb_agg(distinct x), '[]'::jsonb) from jsonb_array_elements_text(v) x where x = any (roles)));
   end loop;

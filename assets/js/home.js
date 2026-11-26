@@ -98,7 +98,11 @@
   };
   const mods = (C.MODULES || []).filter(visible);
   try { const fl = sessionStorage.getItem('lms_flash'); if (fl) { sessionStorage.removeItem('lms_flash'); LMS.toast(fl, 'err'); } } catch (_) {}
-  const ready = mods.filter((m) => m.url && !m.beta).concat(mods.filter((m) => m.url && m.beta)), soon = mods.filter((m) => !m.url);
+  // ترتيب البطاقات: المخصّص من لوحة الإدارة (_order)، وإلا المفتوحة أولًا ثم التجريبية
+  const ORD = Array.isArray(ctx.beta && ctx.beta._order) ? ctx.beta._order : null;
+  const rank = (m) => { const i = ORD ? ORD.indexOf(m.key) : -1; return i < 0 ? 1e4 + (C.MODULES || []).indexOf(m) : i; };
+  const ready = ORD ? mods.filter((m) => m.url).sort((a, b) => rank(a) - rank(b))
+    : mods.filter((m) => m.url && !m.beta).concat(mods.filter((m) => m.url && m.beta)), soon = mods.filter((m) => !m.url);
   const ext = (u) => /^https?:/i.test(u);
   $('#modules').innerHTML = ready.map((m) => canOpen(m)
     ? `<a class="module glass" href="${esc(m.url)}" ${ext(m.url) ? 'target="_blank" rel="noopener" title="يفتح في نافذة جديدة"' : ''}>${ext(m.url) ? '<span class="ext" aria-label="منصة خارجية — نافذة جديدة">↗</span>' : ''}${m.hidden ? '<span class="beta-badge" style="background:#64748b" title="مخفية عن الجميع — تظهر لمدير النظام فقط">مخفية</span>' : m.beta ? '<span class="beta-badge" title="وحدة تجريبية — قد تتغير">تجريبي</span>' : ''}<span class="ic">${m.icon}</span><b>${esc(m.title)}</b><small>${esc(m.desc || '')}</small></a>`

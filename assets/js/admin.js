@@ -1052,6 +1052,11 @@
   const lockedRoles = (saved) => Array.isArray(saved && saved._locked) ? saved._locked : LOCK_DEFAULT;
   const cardOf = (m, saved) => (saved && saved._cards && saved._cards[m.key]) || {};
   const sameSet = (x, y) => x.length === y.length && x.every((v) => y.includes(v));
+  // الترتيب الحالي: المحفوظ (_order) وإلا الافتراضي (المفتوحة ثم التجريبية، و«قريبًا» آخرًا)
+  const sortedMods = (saved) => { const o = Array.isArray(saved && saved._order) ? saved._order : null;
+    const def = ALL_MODS.filter((m) => m.url && !defBeta(m)).concat(ALL_MODS.filter((m) => m.url && defBeta(m)), ALL_MODS.filter((m) => !m.url));
+    if (!o) return def; const r = (m) => { const i = o.indexOf(m.key); return i < 0 ? 1e4 + def.indexOf(m) : i; };
+    return def.slice().sort((a, b) => r(a) - r(b)); };
   const CST = { open: '✅ مفتوحة', beta: '🧪 تجريبية', hidden: '🚫 مخفية' };
   const RST = { use: '✅ تستخدم', show: '🔒 تظهر مقفلة', none: '— لا تظهر' };
   async function settingsTab(pane) {
@@ -1083,15 +1088,16 @@
         <p class="hint" style="margin:6px 0 10px">لكل بطاقة: <b>الحالة</b> (✅ مفتوحة · 🧪 تجريبية بشارة «تجريبي» · 🚫 مخفية عن الجميع وتُغلق صفحتها) — ولكل دور: <b>✅ تستخدم</b> (تفتح له) أو <b>🔒 تظهر مقفلة</b> (يراها ويظهر له «ليس لديك صلاحيات الدخول») أو <b>— لا تظهر</b>. مدير النظام يرى ويفتح كل البطاقات دائمًا. صف «الافتراضي للظهور» يحدد من يرى البطاقات المقفلة ما لم تخصّص البطاقة. ⚠️ يمكنك دائمًا <b>تضييق</b> الاستخدام أو الإخفاء؛ أما فتح بطاقة لدور خارج أدوارها الأصلية فيعمل للوحدات التجريبية، بينما بعض الوحدات بياناتها محمية أصلًا لأدوار محددة (مثل الإشراف أو شؤون الموظفين) فتبقى الصفحة فارغة أو مغلقة لذلك الدور.</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px"><input id="cardQ" placeholder="🔎 ابحث عن بطاقة…" style="max-width:240px">
           <select id="cardSt" style="max-width:170px"><option value="">كل الحالات</option>${Object.entries(CST).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></div>
-        <div class="table-wrap no-tools" style="max-height:70vh;overflow:auto"><table id="betaTbl"><thead><tr><th>البطاقة</th><th>الحالة</th>${BETA_ROLES.map((r) => `<th style="text-align:center">${esc(ROLE_LABELS[r] || r)}<div><button class="btn sm" type="button" data-colr="${r}" title="تطبيق على كل البطاقات الظاهرة في الجدول" style="padding:1px 6px;font-size:.75rem">الكل…</button></div></th>`).join('')}</tr></thead>
-        <tbody><tr style="background:#F5F8F6"><td colspan="2"><b>🔒 الافتراضي للظهور</b><div class="hint" style="font-weight:400">يرى الدور البطاقات غير المسموح له بها (مقفلة) للتعريف بالمنصة</div></td>${BETA_ROLES.map((r) => `<td style="text-align:center"><input type="checkbox" data-lk="${r}" ${lockedRoles(get('beta_access')).includes(r) ? 'checked' : ''}></td>`).join('')}</tr>
-        ${ALL_MODS.map((m) => { const sv = get('beta_access'), cd = cardOf(m, sv), use = betaRoles(m, sv), lk = lockedRoles(sv);
+        <div class="table-wrap no-tools" style="max-height:70vh;overflow:auto"><table id="betaTbl"><thead><tr><th title="الترتيب في الصفحة الرئيسية">الترتيب</th><th>البطاقة</th><th>الحالة</th>${BETA_ROLES.map((r) => `<th style="text-align:center">${esc(ROLE_LABELS[r] || r)}<div><button class="btn sm" type="button" data-colr="${r}" title="تطبيق على كل البطاقات الظاهرة في الجدول" style="padding:1px 6px;font-size:.75rem">الكل…</button></div></th>`).join('')}</tr></thead>
+        <tbody><tr style="background:#F5F8F6"><td colspan="3"><b>🔒 الافتراضي للظهور</b><div class="hint" style="font-weight:400">يرى الدور البطاقات غير المسموح له بها (مقفلة) للتعريف بالمنصة</div></td>${BETA_ROLES.map((r) => `<td style="text-align:center"><input type="checkbox" data-lk="${r}" ${lockedRoles(get('beta_access')).includes(r) ? 'checked' : ''}></td>`).join('')}</tr>
+        ${sortedMods(get('beta_access')).map((m) => { const sv = get('beta_access'), cd = cardOf(m, sv), use = betaRoles(m, sv), lk = lockedRoles(sv);
           const show = Array.isArray(cd.show) ? cd.show : (m.url ? lk : []);
-          return `<tr data-row="${m.key}" data-q="${esc(m.title + ' ' + (m.desc || ''))}"><td>${m.icon} <b>${esc(m.title)}</b>${m.url ? '' : ' <span class="hint">(قريبًا)</span>'}</td>
+          return `<tr data-row="${m.key}" data-q="${esc(m.title + ' ' + (m.desc || ''))}" draggable="true"><td style="white-space:nowrap"><span class="ordn hint"></span> <button class="btn sm" type="button" data-mv="top" title="إلى الأول" style="padding:1px 5px">⤒</button><button class="btn sm" type="button" data-mv="up" title="أعلى" style="padding:1px 5px">▲</button><button class="btn sm" type="button" data-mv="down" title="أسفل" style="padding:1px 5px">▼</button><span title="اسحب لتغيير الترتيب" style="cursor:grab;padding:0 4px">⠿</span></td><td>${m.icon} <b>${esc(m.title)}</b>${m.url ? '' : ' <span class="hint">(قريبًا)</span>'}</td>
           <td><select data-cs="${m.key}">${Object.entries(CST).map(([k, v]) => `<option value="${k}" ${(cd.status || defStatus(m)) === k ? 'selected' : ''}>${v}</option>`).join('')}</select></td>
           ${BETA_ROLES.map((r) => { const st = use.includes(r) ? 'use' : show.includes(r) ? 'show' : 'none';
             return `<td style="text-align:center"><select data-bm="${m.key}" data-br="${r}" data-st="${st}" style="min-width:118px">${Object.entries(RST).map(([k, v]) => (k === 'show' && !m.url) ? '' : `<option value="${k}" ${st === k ? 'selected' : ''}>${v}</option>`).join('')}</select></td>`; }).join('')}</tr>`; }).join('')}</tbody></table></div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn sm" id="betaAll">↺ استعادة الإعدادات الافتراضية</button><button class="btn sm" id="betaOpen">✅ الكل يستخدم كل البطاقات</button><button class="btn sm" id="betaNone">إخفاء الكل عدا مدير النظام</button></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn sm" id="betaAll">↺ استعادة الإعدادات الافتراضية</button><button class="btn sm" id="betaOpen">✅ الكل يستخدم كل البطاقات</button><button class="btn sm" id="betaNone">إخفاء الكل عدا مدير النظام</button><button class="btn sm" id="ordReset">↺ الترتيب الافتراضي</button></div>
+        <p class="hint" style="margin:6px 0 0">↕️ <b>الترتيب</b>: بأزرار ⤒ ▲ ▼ أو بسحب الصف ⠿ — يطبّق على الصفحة الرئيسية لكل المستخدمين بعد الحفظ (بطاقات «قريبًا» تبقى في قسمها آخر الصفحة).</p>
         <style>#betaTbl select[data-st="use"]{background:#E7F6EC}#betaTbl select[data-st="show"]{background:#FFF6E0}#betaTbl select[data-st="none"]{background:#F1F1F1;color:#777}#betaTbl tr.cs-hidden td{opacity:.55}#betaTbl tr.cs-beta td:first-child{color:#7c3aed}</style>
       </div>
       <div class="card glass" style="margin:16px 0;padding:14px">
@@ -1110,6 +1116,20 @@
     const setCell = (c, st) => { if (st === 'show' && !c.querySelector('option[value="show"]')) st = 'none'; c.value = st; c.dataset.st = st; };
     const paintRow = (tr) => { const st = $('[data-cs]', tr).value; tr.classList.toggle('cs-hidden', st === 'hidden'); tr.classList.toggle('cs-beta', st === 'beta'); };
     $$('#betaTbl tr[data-row]', pane).forEach(paintRow);
+    const tbody = $('#betaTbl tbody', pane);
+    const renum = () => $$('#betaTbl tr[data-row]', pane).forEach((tr, i) => { $('.ordn', tr).textContent = i + 1; });
+    renum();
+    tbody.addEventListener('click', (e) => { const b = e.target.closest('[data-mv]'); if (!b) return; const tr = b.closest('tr');
+      if (b.dataset.mv === 'top') tbody.insertBefore(tr, tbody.querySelector('tr[data-row]'));
+      else if (b.dataset.mv === 'up') { const p = tr.previousElementSibling; if (p && p.dataset.row) tbody.insertBefore(tr, p); }
+      else { const n = tr.nextElementSibling; if (n) tbody.insertBefore(n, tr); }
+      renum(); tr.style.outline = '2px solid #1F7A4D'; setTimeout(() => { tr.style.outline = ''; }, 700); });
+    let drag = null;
+    tbody.addEventListener('dragstart', (e) => { drag = e.target.closest && e.target.closest('tr[data-row]'); if (drag) { e.dataTransfer.effectAllowed = 'move'; drag.style.opacity = '.4'; } });
+    tbody.addEventListener('dragend', () => { if (drag) drag.style.opacity = ''; drag = null; renum(); });
+    tbody.addEventListener('dragover', (e) => { const tr = e.target.closest('tr[data-row]'); if (!drag || !tr || tr === drag) return; e.preventDefault();
+      const r = tr.getBoundingClientRect(); tbody.insertBefore(drag, e.clientY > r.top + r.height / 2 ? tr.nextSibling : tr); });
+    $('#ordReset', pane).onclick = () => { sortedMods(null).forEach((m) => tbody.appendChild($(`tr[data-row="${m.key}"]`, pane))); renum(); };
     $('#betaTbl', pane).addEventListener('change', (e) => { const t = e.target;
       if (t.dataset.bm) t.dataset.st = t.value;
       if (t.dataset.cs) paintRow(t.closest('tr'));
@@ -1148,7 +1168,10 @@
         const allOn = $('#allLogin', pane).checked, tchOn = $('#tchLogin', pane).checked;
         if (allOn !== (get('all_login_enabled') !== false) && !await confirmBox(allOn ? 'فتح المنصة لكل المستخدمين؟' : 'إغلاق المنصة أمام كل المستخدمين (عدا مدير النظام)؟ سيُمنع الجميع من الدخول فورًا.', allOn ? 'نعم، افتح' : 'نعم، أغلق', !allOn)) return;
         if (tchOn !== (get('teacher_login_enabled') !== false) && !await confirmBox(tchOn ? 'فتح دخول المعلمين؟' : 'إيقاف دخول المعلمين؟ سيُمنع كل المعلمين من الدخول فورًا.', tchOn ? 'نعم، افتح' : 'نعم، أوقف', !tchOn)) return;
-        const beta = { _cards: {} }; beta._locked = BETA_ROLES.filter((r) => $(`[data-lk="${r}"]`, pane).checked);
+        const beta = { _cards: {} };
+        const ord = $$('#betaTbl tr[data-row]', pane).map((tr) => tr.dataset.row);
+        if (ord.join() !== sortedMods(null).map((m) => m.key).join()) beta._order = ord;   // يُحفظ فقط إن اختلف عن الافتراضي
+        beta._locked = BETA_ROLES.filter((r) => $(`[data-lk="${r}"]`, pane).checked);
         ALL_MODS.forEach((m) => {
           const cell = (r) => $(`[data-bm="${m.key}"][data-br="${r}"]`, pane).value;
           const use = BETA_ROLES.filter((r) => cell(r) === 'use'), show = BETA_ROLES.filter((r) => cell(r) !== 'none');

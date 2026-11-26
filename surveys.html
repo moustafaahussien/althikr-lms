@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <!-- سياسة أمان: المواقع المسموح للصفحة تحميل الأكواد منها والاتصال بها -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://zpbhzhpvpvehowxvlsgp.supabase.co https://drive.google.com https://*.googleusercontent.com; connect-src 'self' https://zpbhzhpvpvehowxvlsgp.supabase.co wss://zpbhzhpvpvehowxvlsgp.supabase.co; frame-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>الاستبيانات — منصة دار الذكر التعليمية</title>
+  <link rel="stylesheet" href="assets/css/brand.css?v=202611231330">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <meta name="theme-color" content="#007B51">
+  <link rel="manifest" href="supervision/manifest.json?v=2">
+    <link rel="stylesheet" href="assets/css/app.css?v=202611260200">
+  <link rel="stylesheet" href="assets/css/topbar.css?v=202611231330">
+  <style>
+    .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; flex-wrap: wrap; }
+    .seg button { border: 0; background: #fff; padding: 7px 14px; font: inherit; font-weight: 700; cursor: pointer; } .seg button.on { background: var(--brand); color: #fff; }
+    .xc { padding: 12px 14px; margin-bottom: 10px; } .xc .acts { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+    .pill { display: inline-block; font-size: .76rem; font-weight: 700; padding: 1px 9px; border-radius: 99px; background: #eef0f3; white-space: nowrap; }
+    .pill.ok { background: #e6f6ee; color: #007B51; } .pill.gold { background: #fff4d6; color: #8a5a00; } .pill.bad { background: #fdecea; color: #b3261e; }
+    table.t { width: 100%; border-collapse: collapse; font-size: .92rem; } table.t td, table.t th { padding: 7px 6px; border-bottom: 1px solid #eef1ef; text-align: start; } table.t th { font-size: .8rem; color: var(--muted); }
+    .kpi4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 12px; } @media (max-width: 640px) { .kpi4 { grid-template-columns: repeat(2, 1fr); } }
+    .kpi4 .card-box { padding: 12px; text-align: center; } .kpi4 .card-box b { font-size: 1.5rem; display: block; }
+    .bar { height: 10px; background: #eef1ef; border-radius: 99px; overflow: hidden; } .bar i { display: block; height: 100%; background: var(--brand); }
+    .row2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+    .chk { display: flex; gap: 8px; align-items: center; margin: 6px 0; cursor: pointer; }
+    .qed { border: 1px solid var(--line); border-radius: 10px; padding: 8px; margin-bottom: 8px; display: grid; grid-template-columns: 130px 1fr 34px; gap: 6px; }
+    .qed textarea { grid-column: 2 / 3; min-height: 54px; font-size: .85rem; }
+    .rep-q { padding: 12px 14px; margin-bottom: 10px; } .rep-row { display: grid; grid-template-columns: minmax(120px, 220px) 1fr 70px; gap: 8px; align-items: center; margin: 4px 0; font-size: .9rem; }
+    .txt-a { background: #F5F8F6; border-radius: 8px; padding: 6px 10px; margin: 4px 0; font-size: .9rem; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <header id="topbar"></header>
+  <main class="page" id="main">
+    <section class="hero glass">
+      <h1>📝 الاستبيانات</h1>
+      <p>استبيانات رضا أولياء الأمور وتقييم البرامج واستطلاعات المعلمين والطلاب — بأسئلة متنوعة وتقارير فورية، وتصل لولي الأمر في بوابته.</p>
+    </section>
+    <nav class="tabs glass" id="tabs"></nav>
+    <div id="view"><div class="empty">جارٍ التحميل…</div></div>
+  </main>
+  <footer class="credit">إعداد وتصميم: مصطفى حسين</footer>
+
+  <script src="assets/vendor/supabase-js-2.119.2.js"></script>
+  <script src="assets/js/config.js?v=202611261700"></script>
+  <script src="assets/js/academic-calendar.js?v=202611231330"></script>
+  <script src="assets/js/core.js?v=202611260200"></script>
+  <script src="assets/js/survey-form.js?v=202611261700"></script>
+  <script src="assets/js/surveys.js?v=202611261700"></script>
+</body>
+</html>

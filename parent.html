@@ -29,9 +29,10 @@
     .timer { font-size: .82rem; color: var(--muted); }
   </style>
   <script src="assets/vendor/supabase-js-2.119.2.js"></script>
-  <script src="assets/js/config.js?v=202611261500"></script>
+  <script src="assets/js/config.js?v=202611261700"></script>
   <script src="assets/js/core.js?v=202611260200"></script>
   <script src="assets/js/report-card.js?v=202611261500"></script>
+  <script src="assets/js/survey-form.js?v=202611261700"></script>
 </head>
 <body>
   <main class="page pp-wrap">
@@ -138,11 +139,57 @@
     const kids = d.children || [];
     area.innerHTML = `<div class="glass who-bar"><span>👤 <b>${esc(d.guardian.name || 'ولي الأمر')}</b> <span class="hint" dir="ltr">${esc(d.guardian.phone)}</span></span>
         <span class="row" style="margin:0"><span class="timer" id="tmr"></span><button class="btn sm" id="chg">تغيير الرمز السري</button><button class="btn sm danger" id="lo">خروج ولي الأمر</button></span></div>
-      ${kids.length ? kids.map(card).join('') : '<div class="notice info">لا يوجد أبناء مرتبطون برقمك بعد.</div>'}`;
+      ${kids.length ? kids.map(card).join('') : '<div class="notice info">لا يوجد أبناء مرتبطون برقمك بعد.</div>'}
+      <div id="ppMeet"></div><div id="ppSrv"></div>`;
     $('#lo').onclick = logout;
+    loadMeet(); loadSurveys();
     $('#chg').onclick = changePin;
     area.onclick = (e) => { const b = e.target.closest('[data-rc]'); if (!b) return; const [k, i] = b.dataset.rc.split(':'); const c = kids.find((x) => x && x.id === k);
       if (c && window.RC) RC.print([c.report_cards[+i]]); };
+  }
+  // لقاءات أولياء الأمور
+  const MODE = { in_person: '🏫 حضوري', online: '💻 عن بُعد', phone: '📞 هاتفي' };
+  async function loadMeet() {
+    const box = $('#ppMeet'); if (!box) return;
+    let M = [], T = [];
+    try { [M, T] = await Promise.all([call('pp_meet_mine', { p_token: TOKEN }), call('pp_meet_staff', { p_token: TOKEN })]); } catch (e) { box.innerHTML = ''; return; }
+    box.innerHTML = `<div class="card glass" style="margin-bottom:14px"><div class="section-title" style="margin-top:0"><h2>🤝 لقاءات المعلمين</h2></div>
+      ${M.map((m) => `<div class="card-box" style="margin-bottom:6px;display:flex;gap:10px;align-items:center"><div style="flex:1"><b>${esc(m.teacher)}</b> — ${esc(m.day)} الساعة ${esc(m.time)}
+          <div class="hint">${MODE[m.mode] || ''}${m.location ? ' · ' + esc(m.location) : ''} · بخصوص ${esc(m.student || '')}${m.topic ? ' · ' + esc(m.topic) : ''}</div>
+          ${m.status === 'cancelled' ? '<div class="hint" style="color:#c0392b">⚠️ ألغى المعلم هذا الموعد — يمكنك حجز موعد آخر</div>' : ''}</div>
+        ${m.status === 'booked' ? `<button class="btn sm danger ghost" data-mc="${m.id}">إلغاء الحجز</button>` : ''}</div>`).join('')}
+      <p class="hint">اختر المعلم لعرض مواعيده المتاحة:</p>
+      <div class="grid modules">${T.map((t) => `<button class="module glass" style="text-align:start;cursor:pointer" data-mt="${t.id}" data-ms="${t.student_id}"><span class="ic">👤</span><b>${esc(t.name)}</b>
+        <small>${esc(t.why || '')} · ${esc(t.student || '')}</small><small style="color:${t.open ? 'var(--accent)' : '#999'}">${t.open ? t.open + ' موعد متاح' : 'لا مواعيد متاحة حاليًا'}</small></button>`).join('') || '<div class="hint">لا يوجد معلمون مسندون لفصول أبنائك بعد.</div>'}</div></div>`;
+    box.onclick = async (e) => {
+      const c = e.target.closest('[data-mc]'), t = e.target.closest('[data-mt]');
+      try {
+        if (c) { if (!await LMS.confirmBox('إلغاء حجز هذا الموعد؟', 'إلغاء الحجز')) return; await call('pp_meet_cancel', { p_token: TOKEN, p_slot: +c.dataset.mc }); toast('أُلغي الحجز'); loadMeet(); }
+        if (t) {
+          const S = await call('pp_meet_slots', { p_token: TOKEN, p_teacher: t.dataset.mt });
+          if (!S.length) return toast('لا توجد مواعيد متاحة لهذا المعلم حاليًا', 'warn');
+          LMS.modal({ title: 'حجز لقاء', body: `<label class="f">اختر الموعد<select id="sl">${S.map((x) => `<option value="${x.id}">${esc(x.day)} — ${esc(x.time)} (${x.duration} د) ${MODE[x.mode] || ''}${x.location ? ' — ' + esc(x.location) : ''}</option>`).join('')}</select></label>
+              <label class="f">موضوع اللقاء (اختياري)<textarea id="tp" rows="3" maxlength="500" placeholder="مثال: الاستفسار عن مستوى ابني في المادة"></textarea></label>`,
+            actions: [{ label: 'إلغاء', value: null, cls: 'ghost' }, { label: 'تأكيد الحجز', cls: 'primary', onClick: async (w) => {
+              await call('pp_meet_book', { p_token: TOKEN, p_slot: +w.querySelector('#sl').value, p_student: t.dataset.ms, p_topic: w.querySelector('#tp').value });
+              toast('تم الحجز ✓ — وصل إشعار للمعلم'); loadMeet(); return true; } }] });
+        }
+      } catch (er) { toast(errMsg(er), 'err'); }
+    };
+  }
+  // الاستبيانات
+  async function loadSurveys() {
+    const box = $('#ppSrv'); if (!box || !window.SRV) return;
+    let L = [];
+    try { L = await call('pp_surveys', { p_token: TOKEN }); } catch (e) { return; }
+    if (!L.length) { box.innerHTML = ''; return; }
+    box.innerHTML = `<div class="card glass" style="margin-bottom:14px"><div class="section-title" style="margin-top:0"><h2>📝 استبيانات المدرسة</h2></div>
+      ${L.map((v) => `<div class="card-box" style="margin-bottom:6px;display:flex;gap:10px;align-items:center"><div style="flex:1"><b>${esc(v.title)}</b><div class="hint">${v.questions.length} سؤال${v.closes_at ? ' · حتى ' + esc(v.closes_at) : ''}</div></div>
+        ${v.done ? '<span class="hint" style="color:var(--accent)">✓ شكرًا لمشاركتك</span>' : `<button class="btn sm primary" data-sv="${v.id}">شارك</button>`}</div>`).join('')}</div>`;
+    box.onclick = (e) => { const b = e.target.closest('[data-sv]'); if (!b) return; const v = L.find((x) => x.id === +b.dataset.sv);
+      LMS.modal({ title: '📝 ' + v.title, wide: true, body: SRV.form(v), actions: [{ label: 'إلغاء', value: null, cls: 'ghost' }, { label: 'إرسال', cls: 'primary', onClick: async (w) => {
+        const a = SRV.collect(w, v); await call('pp_survey_submit', { p_token: TOKEN, p_id: v.id, p_answers: a }); toast('شكرًا لمشاركتك ✓'); loadSurveys(); return true; } }] });
+      SRV.bind([...document.querySelectorAll('.modal-wrap')].pop()); };
   }
   function card(c) {
     if (!c) return '';
@@ -160,12 +207,18 @@
         <td>${r.p ? r.p : 'يومي'}</td><td>${STL[r.s] || r.s}</td><td>${esc(r.n || '')}</td></tr>`).join('')}</tbody></table></div></details>` : ''}
       ${behavior(c.behavior)}
       ${examsBox(c.exams)}
+      ${clinicBox(c.clinic)}
       ${cardsBox(c)}
       <h3 style="margin:14px 0 8px;font-size:1rem">المعلمون</h3>
       ${(c.teachers || []).length ? `<div class="grid modules">${c.teachers.sort((x, y) => (x.subject || '').localeCompare(y.subject || '', 'ar')).map((t) => `
         <div class="module glass"><span class="ic">📚</span><b>${esc(t.subject)}</b><small>${esc(t.name)}</small></div>`).join('')}</div>`
         : '<div class="hint">لم تُسند مواد لهذا الصف بعد.</div>'}
     </div>`;
+  }
+  function clinicBox(L) {
+    if (!(L || []).length) return '';
+    return `<h3 style="margin:14px 0 8px;font-size:1rem">🩺 زيارات العيادة المدرسية <span class="hint">(آخر 60 يومًا)</span></h3>` + L.map((v) => `<div style="border-inline-start:4px solid #509BB9;padding:6px 10px;margin:6px 0;background:#f6fafc;border-radius:8px">
+      <b>${esc(v.complaint)}</b> — ${esc(v.action)}${v.notes ? `<div class="hint">${esc(v.notes)}</div>` : ''}<div class="hint">${new Date(v.at).toLocaleString('ar-SA-u-ca-gregory', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}</div></div>`).join('');
   }
   function examsBox(L) {
     if (!(L || []).length) return '';

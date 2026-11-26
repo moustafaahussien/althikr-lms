@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <!-- صفحة عامة بلا تسجيل دخول: طلب تسجيل من ولي الأمر (sql/79 — adm_public_submit) -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://zpbhzhpvpvehowxvlsgp.supabase.co; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>طلب التسجيل — مدارس دار الذكر</title>
+  <link rel="stylesheet" href="assets/css/brand.css?v=202611270230">
+  <link rel="stylesheet" href="assets/css/app.css?v=202611270230">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <meta name="theme-color" content="#007B51">
+  <style>
+    body { background: #F5F8F6; }
+    .wrap { max-width: 720px; margin: 0 auto; padding: 18px 14px 40px; }
+    .head { text-align: center; margin-bottom: 14px; } .head img { height: 64px; } .head h1 { margin: 8px 0 4px; font-size: 1.5rem; color: #007B51; }
+    .box { background: #fff; border-radius: 16px; padding: 16px; box-shadow: 0 2px 12px rgba(0, 0, 0, .05); margin-bottom: 12px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+    label.f { display: flex; flex-direction: column; gap: 4px; font-weight: 700; font-size: .92rem; }
+    label.f input, label.f select, label.f textarea { font: inherit; padding: 10px; border: 1px solid #d6e3dc; border-radius: 10px; font-weight: 400; }
+    .kid { border: 1px dashed #c9dbd1; border-radius: 12px; padding: 10px; margin: 8px 0; position: relative; }
+    .kid .rm { position: absolute; top: 6px; left: 8px; border: 0; background: none; cursor: pointer; font-size: 1.1rem; }
+    .btn { font: inherit; font-weight: 800; border: 0; border-radius: 12px; padding: 12px 18px; cursor: pointer; background: #eef1ef; }
+    .btn.primary { background: #007B51; color: #fff; width: 100%; font-size: 1.08rem; }
+    .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+    .ok { text-align: center; padding: 30px 16px; } .ok b { font-size: 3rem; display: block; }
+    .err { color: #b3261e; font-weight: 700; min-height: 1.2em; }
+    .hint { color: #6b7a72; font-size: .88rem; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="head"><img src="assets/img/logo.png" alt=""><h1>طلب التسجيل في مدارس دار الذكر</h1>
+      <p class="hint">سجّل بياناتك وسيتواصل معك قسم التسجيل والقبول لتحديد موعد زيارة المدرسة واختبار القبول.</p></div>
+    <div id="app"><div class="box hint" style="text-align:center">جارٍ التحميل…</div></div>
+  </main>
+  <script src="assets/vendor/supabase-js-2.119.2.js"></script>
+  <script src="assets/js/config.js?v=202611270230"></script>
+  <script>
+  (async function () {
+    const C = window.LMS_CONFIG, app = document.getElementById('app');
+    const sb = window.supabase.createClient(C.SUPABASE_URL, C.SUPABASE_ANON_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
+    const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+    const q = new URLSearchParams(location.search);
+    const SRC = ['social', 'mall', 'referral', 'website', 'event', 'other'];
+    const src = SRC.includes(q.get('src')) ? q.get('src') : 'website', camp = (q.get('c') || '').slice(0, 80);
+    let I;
+    try { const r = await sb.rpc('adm_public_info'); if (r.error) throw r.error; I = r.data; }
+    catch (e) { app.innerHTML = '<div class="box err">تعذّر تحميل النموذج — حاول لاحقًا.</div>'; return; }
+    if (!I.open) { app.innerHTML = '<div class="box ok"><b>🗓️</b>استقبال طلبات التسجيل الإلكترونية مغلق حاليًا.<br><span class="hint">يمكنك التواصل مع المدرسة مباشرة.</span></div>'; return; }
+    const grades = (I.grades || []).map((g) => `<option value="${g.id}">${esc(g.name)}</option>`).join('');
+    const years = (I.years || []).length ? I.years : (() => { const y = new Date().getFullYear(); return [`${y}-${y + 1}`, `${y + 1}-${y + 2}`]; })();
+    let n = 0;
+    const kid = () => { const i = n++; return `<div class="kid" data-i="${i}">${i ? '<button type="button" class="rm" title="حذف">✕</button>' : ''}<div class="grid">
+        <label class="f">اسم الطالب/ة الثلاثي<input name="k_name" required maxlength="80"></label>
+        <label class="f">الجنس<select name="k_gender"><option value="m">ذكر</option><option value="f">أنثى</option></select></label>
+        <label class="f">الصف المطلوب<select name="k_grade"><option value="">— اختر —</option>${grades}</select></label>
+        <label class="f">تاريخ الميلاد<input type="date" name="k_birth"></label>
+        <label class="f">المدرسة الحالية (إن وجدت)<input name="k_school" maxlength="80"></label></div></div>`; };
+    app.innerHTML = `<form id="fm" class="box" novalidate>
+        <h3 style="margin-top:0">👤 بيانات ولي الأمر</h3>
+        <div class="grid">
+          <label class="f">الاسم<input name="guardian_name" required maxlength="80" autocomplete="name"></label>
+          <label class="f">صلة القرابة<select name="relation"><option>الأب</option><option>الأم</option><option>ولي أمر آخر</option></select></label>
+          <label class="f">رقم الجوال<input name="phone" required dir="ltr" inputmode="tel" placeholder="05xxxxxxxx" autocomplete="tel"></label>
+          <label class="f">البريد الإلكتروني (اختياري)<input name="email" type="email" dir="ltr" autocomplete="email"></label>
+          <label class="f">الحي (اختياري)<input name="district" maxlength="60"></label>
+          <label class="f">العام الدراسي المطلوب<select name="year_name">${years.map((y) => `<option>${esc(y)}</option>`).join('')}</select></label>
+          ${src === 'website' && !camp ? `<label class="f">كيف عرفت عن المدرسة؟<select name="source"><option value="social">وسائل التواصل الاجتماعي</option><option value="referral">ترشيح من ولي أمر</option><option value="mall">إعلان في مول</option><option value="event">فعالية / معرض</option><option value="website">بحث في الإنترنت</option><option value="other">أخرى</option></select></label>` : ''}
+        </div>
+        <h3>👦 الأبناء</h3><div id="kids">${kid()}</div>
+        <button type="button" class="btn" id="add">➕ إضافة ابن آخر</button>
+        <label class="f" style="margin-top:12px">ملاحظات أو استفسار (اختياري)<textarea name="notes" rows="3" maxlength="1000"></textarea></label>
+        <div class="hp" aria-hidden="true"><label>الموقع<input name="website" tabindex="-1" autocomplete="off"></label></div>
+        <p class="hint">🔒 تُستخدم بياناتك للتواصل بخصوص التسجيل فقط.</p>
+        <p class="err" id="er"></p>
+        <button class="btn primary" id="sv">إرسال طلب التسجيل</button></form>`;
+    const fm = document.getElementById('fm');
+    document.getElementById('add').onclick = () => { if (fm.querySelectorAll('.kid').length >= 6) return; document.getElementById('kids').insertAdjacentHTML('beforeend', kid()); };
+    document.getElementById('kids').onclick = (e) => { const b = e.target.closest('.rm'); if (b) b.closest('.kid').remove(); };
+    fm.onsubmit = async (e) => {
+      e.preventDefault();
+      const er = document.getElementById('er'), sv = document.getElementById('sv'); er.textContent = '';
+      const v = (k) => (fm.elements[k] ? fm.elements[k].value.trim() : '');
+      const children = [...fm.querySelectorAll('.kid')].map((k) => ({ name: k.querySelector('[name=k_name]').value.trim(), gender: k.querySelector('[name=k_gender]').value,
+        grade_id: k.querySelector('[name=k_grade]').value, birth_date: k.querySelector('[name=k_birth]').value, current_school: k.querySelector('[name=k_school]').value.trim() })).filter((k) => k.name);
+      if (v('guardian_name').length < 3) { er.textContent = 'اكتب اسم ولي الأمر'; return; }
+      if (v('phone').replace(/\D/g, '').length < 9) { er.textContent = 'اكتب رقم جوال صحيح'; return; }
+      if (!children.length) { er.textContent = 'اكتب اسم ابن واحد على الأقل'; return; }
+      sv.disabled = true; sv.textContent = 'جارٍ الإرسال…';
+      const { error } = await sb.rpc('adm_public_submit', { p: { guardian_name: v('guardian_name'), relation: v('relation'), phone: v('phone'), email: v('email'), district: v('district'),
+        year_name: v('year_name'), notes: v('notes'), website: v('website'), source: v('source') || src, campaign: camp, children } });
+      if (error) { er.textContent = (error.message || 'تعذّر الإرسال').replace(/^.*?:\s*/, ''); sv.disabled = false; sv.textContent = 'إرسال طلب التسجيل'; return; }
+      app.innerHTML = `<div class="box ok"><b>✅</b><h2>تم استلام طلبك</h2><p>شكرًا لاهتمامك بمدارس دار الذكر. سيتواصل معك قسم التسجيل والقبول قريبًا على الرقم <span dir="ltr">${esc(v('phone'))}</span>.</p></div>`;
+    };
+  })();
+  </script>
+</body>
+</html>

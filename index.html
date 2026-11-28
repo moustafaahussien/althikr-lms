@@ -46,8 +46,7 @@
         ${notice}`;
       $('#gbtn').onclick = () => signInWithGoogle();
       $('#pbtn').onclick = () => { try { sessionStorage.setItem('lms_next', 'parent.html'); } catch (_) {} signInWithGoogle(); };
-      area.insertAdjacentHTML('beforeend', '<button type="button" class="demo-link" id="demoBtn">🎬 تجربة المنصة بحسابات تجريبية</button>');
-      $('#demoBtn').onclick = showDemo;
+      // رابط «تجربة المنصة بحسابات تجريبية» أُزيل من صفحة الدخول — الوضع التجريبي متاح فقط عبر index.html?demo=1
     };
 
     // ---------- الوضع التجريبي: اختيار الدور ----------

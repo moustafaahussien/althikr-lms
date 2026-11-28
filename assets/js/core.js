@@ -213,10 +213,15 @@
   function getView() { try { return localStorage.getItem(VIEW_KEY) || ''; } catch (_) { return ''; } }
   function setView(v) { try { v ? localStorage.setItem(VIEW_KEY, v) : localStorage.removeItem(VIEW_KEY); } catch (_) {} }
   function canSwitch(p) { return !!p && ['admin', 'leadership', 'principal'].includes(p.role) && /مشرف/.test(p.job_title || ''); }
+  // مدير مكتب الإشراف: مشرف مادة يحمل صلاحية «مدير» أو «مسؤول النظام» في مكتب الإشراف (sql/87)
+  const isOfficeMgr = (ctx) => !!ctx && !!ctx.profile && ctx.profile.role === 'supervisor' && ['admin', 'sys'].includes(ctx.sv_role);
   function applyView(ctx) {
     if (!ctx || !ctx.profile) return ctx;
     ctx.realRole = ctx.profile.role;
-    ctx.canSwitch = canSwitch(ctx.profile);
+    ctx.officeMgr = isOfficeMgr(ctx);
+    ctx.canSwitch = canSwitch(ctx.profile) || ctx.officeMgr;
+    // اسم الدور الكامل على زر التبديل: «مدير النظام» / «الإدارة العليا» / «مدير مرحلة» / «مدير مكتب الإشراف»
+    ctx.fullLabel = ctx.officeMgr ? 'مدير مكتب الإشراف' : ROLE_LABELS[ctx.realRole];
     ctx.viewAs = ctx.canSwitch && getView() === 'supervisor' ? 'supervisor' : '';
     if (ctx.viewAs) ctx.profile = Object.assign({}, ctx.profile, { role: 'supervisor' });
     else if (!ctx.canSwitch) setView('');
@@ -324,7 +329,7 @@
       ['guardians.html', '👪 أولياء الأمور', MGR && betaAllowed('guardians', ctx)]].filter((l) => l[2] && !LIM);
     const curMore = more.find((l) => l[0] === here);
     const navA = ([href, label]) => `<a href="${BASE + href}" class="${here === href ? 'on' : ''}"${here === href ? ' aria-current="page"' : ''}>${label}</a>`;
-    const roleTxt = LIM ? 'طالب' : ctx.viewAs ? (p.job_title || ROLE_LABELS.supervisor) : ctx.canSwitch ? ROLE_LABELS[p.role] : (p.job_title || ROLE_LABELS[p.role]);
+    const roleTxt = LIM ? 'طالب' : ctx.viewAs ? (p.job_title || ROLE_LABELS.supervisor) : ctx.canSwitch ? (ctx.fullLabel || ROLE_LABELS[p.role]) : (p.job_title || ROLE_LABELS[p.role]);
     bar.innerHTML = `
       <a class="skip-link" href="#main">تخطَّ إلى المحتوى</a>
       <div class="hrow">

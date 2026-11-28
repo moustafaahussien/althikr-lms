@@ -694,7 +694,7 @@ async function loadRemote(silent){
   const r=await jsonpRetry({action:"login",code:CODE});
   if(!r || !r.ok) return r||{ok:false,error:"unknown"};
   if(r.id && r.id!==CODE) return {ok:false,error:"not_member"};
-  WHO={name:r.name||"",dept:r.dept||"",admin:!!r.admin,sys:!!r.sys,role:r.role||""};
+  WHO={name:r.name||"",dept:r.dept||"",admin:!!r.admin,sys:!!r.sys,role:r.role||"",realAdmin:!!(r.admin||r.sys)};
   if(SV_VIEW()){ WHO.admin=false; WHO.sys=false; }   // واجهة المشرف: نفس ما يراه أي مشرف
   LS.set("tt_who",WHO); applyAdmin(); restoreTab(); loadInbox(); movePushToCode();
   const local=LS.get(localKey());
@@ -777,7 +777,17 @@ window.addEventListener("beforeunload",e=>{ if(dirty){ e.preventDefault(); e.ret
 const PAGE_URL = location.origin + location.pathname.replace(/index\.html$/,"");
 let ADM_USERS = [];
 const IS_SYS=()=>!!(WHO&&WHO.sys) && !SV_VIEW();
-function applyAdmin(){ document.getElementById("admTab").style.display = (WHO && WHO.admin) ? "" : "none"; document.getElementById("schTab").style.display = IS_SYS() ? "" : "none";
+/* زر التبديل بين الدورين: «مدير المكتب» (أو مدير النظام) ⇄ «مشرف» — يظهر لمن يحمل صلاحية إدارية في المكتب */
+function applyViewSw(){ const b=document.getElementById("viewSw"); if(!b) return;
+  const can = !!(WHO && (WHO.realAdmin || ["owner","sys","admin"].includes(WHO.role)));
+  if(!can && !SV_VIEW()){ b.style.display="none"; return; }
+  const full = WHO && WHO.role==="owner" ? "مدير النظام" : "مدير المكتب";
+  b.style.display="";
+  if(SV_VIEW()){ b.textContent="⇄ "+full; b.title="الرجوع إلى أدوات "+full; }
+  else { b.textContent="⇄ واجهة المشرف"; b.title="عرض المكتب كما يراه أي مشرف (بدون أدوات الإدارة)"; }
+  b.onclick=()=>{ try{ SV_VIEW() ? localStorage.removeItem("lms_view") : localStorage.setItem("lms_view","supervisor"); }catch(e){} location.reload(); };
+}
+function applyAdmin(){ applyViewSw(); document.getElementById("admTab").style.display = (WHO && WHO.admin) ? "" : "none"; document.getElementById("schTab").style.display = IS_SYS() ? "" : "none";
   document.getElementById("schedCard").style.display = IS_SYS() ? "" : "none"; document.getElementById("svSysCard").style.display = IS_SYS() ? "" : "none"; document.getElementById("admRole").style.display = IS_SYS() ? "" : "none";
   if((!(WHO&&WHO.admin) && curTab==="adm") || (!IS_SYS() && curTab==="sch")) document.querySelector('#tabs [data-t="day"]').click(); }
 function inviteText(u,code){ if(LANG!=="en") return inviteTextAr(u,code); return `Hello ${u.name},

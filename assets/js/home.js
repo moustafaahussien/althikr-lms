@@ -13,8 +13,8 @@
   const chips = [];
   if (ctx.canSwitch) {
     // صاحب الصفتين: الضغط على «مدير النظام» يرجع للوضع الكامل، والضغط على «مشرف …» يفتح واجهة المشرف
-    chips.push(`<button type="button" class="chip view-sw ${ctx.viewAs ? '' : 'on'}" data-view="" title="الواجهة الكاملة">${esc(ROLE_LABELS[ctx.realRole])}</button>`);
-    chips.push(`<button type="button" class="chip teal view-sw ${ctx.viewAs ? 'on' : ''}" data-view="supervisor" title="واجهة المشرف">${esc(p.job_title)}</button>`);
+    chips.push(`<button type="button" class="chip view-sw ${ctx.viewAs ? '' : 'on'}" data-view="" title="الواجهة الكاملة">${ctx.officeMgr ? '🧭 ' : ''}${esc(ctx.fullLabel)}</button>`);
+    chips.push(`<button type="button" class="chip teal view-sw ${ctx.viewAs ? 'on' : ''}" data-view="supervisor" title="واجهة المشرف">${esc(p.job_title || 'مشرف')}</button>`);
   } else {
     chips.push(`<span class="chip">${esc(ROLE_LABELS[role])}</span>`);
     if (p.job_title) chips.push(`<span class="chip teal">${esc(p.job_title)}</span>`);
@@ -31,7 +31,7 @@
       <p>مرحبًا بك في ${esc(C.PLATFORM_NAME)}</p>
       <div class="chips">${chips.join('')}</div>
     </section>
-    ${ctx.viewAs ? `<div class="notice" style="margin-bottom:14px">أنت الآن في <b>واجهة المشرف</b> — اضغط «${esc(ROLE_LABELS[ctx.realRole])}» تحت اسمك للرجوع للوضع الكامل.</div>` : ''}
+    ${ctx.viewAs ? `<div class="notice" style="margin-bottom:14px">أنت الآن في <b>واجهة المشرف</b> — اضغط «${esc(ctx.fullLabel)}» تحت اسمك للرجوع${ctx.officeMgr ? ' لأدوات مدير المكتب' : ' للوضع الكامل'}.</div>` : ''}
     <div id="dutyToday"></div>
     <div id="pushBox"></div>
     <div id="acks"></div>
@@ -45,7 +45,7 @@
     const v = b.dataset.view;
     if (v === (ctx.viewAs || '')) { if (v) location.href = 'supervision/'; return; }
     LMS.setView(v);
-    location.href = v ? 'supervision/' : 'home.html';
+    location.href = v || ctx.officeMgr ? 'supervision/' : 'home.html';
   });
 
   // ---------- تعاميم بانتظار «تم الاطلاع» ----------

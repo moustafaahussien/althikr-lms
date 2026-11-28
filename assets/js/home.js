@@ -124,6 +124,7 @@
   const SHOW_LOCKED = role === 'admin' || (Array.isArray(LB) ? LB : ['leadership', 'principal', 'supervisor', 'teacher', 'staff']).includes(role);
   const visible = (m) => {
     if (role === 'admin') return true;             // المدير يرى كل البطاقات (المخفية بشارة «مخفية»)
+    const ov = LMS.userCard(m, ctx); if (ov) return ov !== 'none' && !!m.url;   // إعداد فردي للموظف
     if (m.hidden) return false;
     if (canOpen(m)) return true;
     const sh = CARDS[m.key] && CARDS[m.key].show;

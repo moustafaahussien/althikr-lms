@@ -244,12 +244,15 @@
       m.hidden = m.status === 'hidden';
     });
   }
+  // إعداد فردي للموظف (sql/92): use | show | none — يغلب إعداد الدور
+  function userCard(m, ctx) { const a = ctx && ctx.profile && ctx.profile.card_access; const v = a && m && a[m.key]; return ['use', 'show', 'none'].includes(v) ? v : ''; }
   function useList(m, ctx) { const s = ctx && ctx.beta && ctx.beta[m.key]; return Array.isArray(s) ? s : null; }
   function betaAllowed(m, ctx) {
     if (typeof m === 'string') m = (C.MODULES || []).find((x) => x.key === m);
     if (!m || !ctx || !ctx.profile) return true;
     const role = ctx.profile.role;
     if (role === 'admin') return true;
+    const ov = userCard(m, ctx); if (ov) return ov === 'use';
     if (m.hidden) return false;
     const set = useList(m, ctx);
     if (set) return set.includes(role);
@@ -257,7 +260,7 @@
     return !m.roles || !m.roles.length || m.roles.includes(role);
   }
   // هل البطاقة خاضعة للتحكم من الإعدادات (تجريبية أو مخفية أو لها قائمة استخدام مخصّصة)
-  function cardGated(m, ctx) { return !!(m.beta || m.hidden || useList(m, ctx)); }
+  function cardGated(m, ctx) { return !!(m.beta || m.hidden || useList(m, ctx) || userCard(m, ctx)); }
   // الوحدات التي تخص الصفحة الحالية (حسب رابطها) — services.html تجمع أكثر من وحدة
   function pageModules(page) { return (C.MODULES || []).filter((m) => m.url && !/^https?:/i.test(m.url) && m.url.split('#')[0] === page); }
 
@@ -617,5 +620,5 @@
 
   window.LMS = { sb, C, configured, ROLE_LABELS, esc, $, $$, toast, modal, openPage, confirmBox, errMsg, norm, has, linkMeet,
                  fetchAll, signInWithGoogle, signOut, getContext, cached, clearCache, requireAuth, downloadCSV, rememberNext, takeNext,
-                 getView, setView, canSwitch, applyView, logActivity, mountTopbar, betaAllowed, applyCards, cardGated, BASE, hijri, dateLine, printHTML, printTable, exportTable, tableRows, ymd, cal, clsText, isGroupCls, DEMO };
+                 getView, setView, canSwitch, applyView, logActivity, mountTopbar, betaAllowed, applyCards, cardGated, userCard, BASE, hijri, dateLine, printHTML, printTable, exportTable, tableRows, ymd, cal, clsText, isGroupCls, DEMO };
 })();

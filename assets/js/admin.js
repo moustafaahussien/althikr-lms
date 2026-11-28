@@ -439,7 +439,7 @@
           <td>${esc(t?.subjects || '—')}</td><td>${esc(t?.stages || '—')}</td>
           <td title="${esc(t ? t.classes.map((c) => c.label + ' — ' + c.subject).join('\n') : '')}">${t ? t.class_count : '—'}</td>
           <td>${t ? t.weekly_periods : '—'}</td><td>${esc(t?.supervisors || '—')}</td>
-          <td dir="ltr">${esc(p.email || '—')}</td><td>${esc(ROLE_LABELS[p.role])}${scCount[p.id] ? ` <span class="chip pink" title="نطاقات">${scCount[p.id]}</span>` : ''}</td><td>${pill(p.active)}</td>
+          <td dir="ltr">${esc(p.email || '—')}</td><td>${esc(p.role === 'principal' && /وكيل/.test(p.job_title || '') ? 'وكيل' : ROLE_LABELS[p.role])}${Object.keys(p.card_access || {}).length ? ` <span class="chip" title="صلاحيات بطاقات خاصة">🗂️ ${Object.keys(p.card_access).length}</span>` : ''}${scCount[p.id] ? ` <span class="chip pink" title="نطاقات">${scCount[p.id]}</span>` : ''}</td><td>${pill(p.active)}</td>
           <td class="actions"><button class="btn sm" data-edit="${p.id}">تعديل</button>
             ${p.id !== ME.id ? `<button class="btn sm danger" data-del="${p.id}">حذف</button>` : ''}</td></tr>`; }).join('')
           : '<tr><td colspan="10" class="empty">لا نتائج</td></tr>'}</tbody></table>`;
@@ -470,7 +470,8 @@
           <label class="f">الاسم الكامل<input id="fn" value="${esc(p.full_name || '')}"></label>
           <label class="f">البريد المدرسي<input id="em" dir="ltr" value="${esc(p.email || '')}" placeholder="name@${esc(LMS.C.SCHOOL_DOMAIN)}"></label>
           <label class="f">الدور<select id="rl" ${p.id === ME.id ? 'disabled' : ''}>${Object.entries(ROLE_LABELS).filter(([k]) => k !== 'student')
-            .map(([k, v]) => `<option value="${k}" ${k === p.role ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
+            .flatMap(([k, v]) => k === 'principal' ? [[k, v], ['vice', 'وكيل (صلاحيات مدير مرحلة)']] : [[k, v]])
+            .map(([k, v]) => `<option value="${k}" ${k === (p.role === 'principal' && /وكيل/.test(p.job_title || '') ? 'vice' : p.role) ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
           <label class="f">المسمى الوظيفي<input id="jt" value="${esc(p.job_title || '')}"></label>
           <label class="f">الحالة<select id="ac" ${p.id === ME.id ? 'disabled' : ''}><option value="1" ${p.active ? 'selected' : ''}>نشط</option><option value="0" ${!p.active ? 'selected' : ''}>موقوف</option></select></label>
         </div>
@@ -479,6 +480,10 @@
           ${T[p.id].classes.map((c) => `<tr><td>${esc(c.label)}</td><td>${esc(c.subject)}</td><td>${c.periods ?? '—'}</td></tr>`).join('')}</tbody></table></div>
           <p class="hint">لتعديل فصول المعلم أو مادته: من مكتب الإشراف التربوي (جدول الحصص / الإعدادات).</p>` : ''}
         <p class="hint">«الإدارة العليا» ترى كل المدرسة للقراءة. «مدير مرحلة» و«مشرف» يريان ما يحدده النطاق أدناه. «المعلم» يرى فصوله المُسندة فقط.</p>
+        <details style="margin:14px 0 6px" ${Object.keys(p.card_access || {}).length ? 'open' : ''}><summary><b>🗂️ صلاحيات البطاقات لهذا الموظف</b> <span class="hint">(${Object.keys(p.card_access || {}).length ? Object.keys(p.card_access).length + ' بطاقة بإعداد خاص' : 'كلها حسب دوره'})</span></summary>
+          <p class="hint" style="margin:6px 0">«حسب الدور» = زي إعدادات البطاقات للدور ده (مكتوب جنبها هتبقى إيه). أي اختيار تاني بيغلب إعداد الدور للموظف ده بس.</p>
+          <div class="toolbar" style="gap:6px;margin:0 0 6px"><input id="caQ" type="search" placeholder="🔎 ابحث عن بطاقة" style="flex:1"><button type="button" class="btn sm ghost" id="caReset">↺ رجّع الكل «حسب الدور»</button></div>
+          <div class="table-wrap" style="max-height:340px;overflow:auto"><table><thead><tr><th>البطاقة</th><th>حسب الدور</th><th>صلاحية الموظف</th></tr></thead><tbody id="caBody"></tbody></table></div></details>
         <h4 style="margin:14px 0 6px">النطاقات</h4>
         ${isNew ? '<p class="hint">احفظ الموظف أولًا ثم افتح «تعديل» لإضافة النطاقات.</p>' : `
           <div id="scList">${myScopes.length ? myScopes.map((s) => `<div class="toolbar" style="margin:0 0 6px">
@@ -493,6 +498,21 @@
             <label class="f">المادة<select id="scSub"><option value="">كل المواد</option>${opts(R.subjects, (s) => s.id, (s) => s.name_ar)}</select></label>
           </div>
           <button class="btn sm ok" id="scAdd" style="margin-top:8px">+ إضافة نطاق</button>`}`;
+      // صلاحيات البطاقات الفردية (sql/92)
+      const BA = (await run(sb.from('app_settings').select('value').eq('key', 'beta_access')))[0]?.value || {};
+      const CA = Object.assign({}, p.card_access || {});
+      const roleNow = () => { const v = val(body, '#rl') || p.role; return v === 'vice' ? 'principal' : v; };
+      const byRole = (m, r) => { if (r === 'admin') return 'use'; const c = cardOf(m, BA), st = c.status || defStatus(m); if (st === 'hidden') return 'none';
+        const use = Array.isArray(BA[m.key]) ? BA[m.key] : (st === 'beta' ? defUse(m) : (!m.roles || !m.roles.length ? BETA_ROLES : m.roles));
+        if (use.includes(r)) return 'use'; const sh = Array.isArray(c.show) ? c.show : lockedRoles(BA); return sh.includes(r) ? 'show' : 'none'; };
+      const caDraw = () => { const q = LMS.norm(val(body, '#caQ')), r = roleNow();
+        $('#caBody', body).innerHTML = sortedMods(BA).filter((m) => m.url && (!q || LMS.has(m.title, q))).map((m) => `<tr${CA[m.key] ? ' style="background:#fff8e6"' : ''}><td>${esc(m.icon || '')} ${esc(m.title)}</td><td class="hint">${RST[byRole(m, r)]}</td>
+          <td><select data-ca="${esc(m.key)}"><option value="">حسب الدور</option>${Object.entries(RST).map(([k, l]) => `<option value="${k}" ${CA[m.key] === k ? 'selected' : ''}>${l}</option>`).join('')}</select></td></tr>`).join(''); };
+      caDraw();
+      body.addEventListener('change', (e) => { const c = e.target.closest('[data-ca]'); if (c) { c.value ? (CA[c.dataset.ca] = c.value) : delete CA[c.dataset.ca]; caDraw(); }
+        if (e.target.id === 'rl') caDraw(); });
+      body.addEventListener('input', (e) => { if (e.target.id === 'caQ') caDraw(); });
+      body.addEventListener('click', (e) => { if (e.target.id === 'caReset') { Object.keys(CA).forEach((k) => delete CA[k]); caDraw(); } });
       if (!isNew) {
         body.addEventListener('click', async (e) => {
           const d = e.target.closest('[data-sdel]');
@@ -519,6 +539,8 @@
         { label: 'حفظ', cls: 'primary', onClick: async (w) => {
           const row = { full_name: val(w, '#fn'), email: val(w, '#em').toLowerCase() || null, job_title: val(w, '#jt') || null };
           if (p.id !== ME.id) { row.role = val(w, '#rl'); row.active = val(w, '#ac') === '1'; }
+          if (row.role === 'vice') { row.role = 'principal'; if (!/وكيل/.test(row.job_title || '')) row.job_title = 'وكيل' + (row.job_title ? ' — ' + row.job_title : ''); }
+          row.card_access = CA;
           if (!row.full_name) { toast('الاسم مطلوب', 'warn'); return false; }
           if (row.email && !row.email.endsWith('@' + LMS.C.SCHOOL_DOMAIN)) { toast('البريد يجب أن يكون على نطاق المدرسة', 'warn'); return false; }
           if (!row.email && row.role !== 'teacher' && p.role !== 'teacher') { toast('البريد مطلوب لهذا الدور', 'warn'); return false; }

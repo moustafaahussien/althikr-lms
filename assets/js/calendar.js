@@ -8,7 +8,7 @@
   if (!LMS.betaAllowed('calendar', ctx)) { view.innerHTML = '<div class="notice">🔒 ليس لديك صلاحيات الدخول لهذه الوحدة (وحدة تجريبية).</div>'; return; }
   const call = async (fn, args) => { const { data, error } = await sb.rpc(fn, args || {}); if (error) throw error; return data; };
   const ymd = LMS.ymd, TODAY = ymd(new Date());
-  const KIND = { exam: ['📝', 'اختبارات', '#c0392b'], event: ['🎉', 'فعالية', '#007B51'], meeting: ['🗣️', 'اجتماع', '#509BB9'], holiday: ['🏖️', 'إجازة', '#8e44ad'],
+  const KIND = { club: ['⭐', 'تدريب نادٍ', '#e67e22'], exam: ['📝', 'اختبارات', '#c0392b'], event: ['🎉', 'فعالية', '#007B51'], meeting: ['🗣️', 'اجتماع', '#509BB9'], holiday: ['🏖️', 'إجازة', '#8e44ad'],
                  visit: ['🧭', 'زيارة', '#b9691b'], deadline: ['⏰', 'موعد نهائي', '#d35400'], booking: ['🔬', 'حجز', '#16a085'], other: ['📌', 'أخرى', '#556'] };
   const ROLES = { leadership: 'الإدارة العليا', principal: 'مديرو المراحل', supervisor: 'المشرفون', teacher: 'المعلمون', staff: 'الموظفون', student: 'الطلاب', parent: 'أولياء الأمور' };
   const DAYS = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];

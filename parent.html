@@ -6,12 +6,12 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.sheetjs.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://zpbhzhpvpvehowxvlsgp.supabase.co https://drive.google.com https://*.googleusercontent.com; connect-src 'self' https://zpbhzhpvpvehowxvlsgp.supabase.co wss://zpbhzhpvpvehowxvlsgp.supabase.co; frame-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>دخول ولي الأمر — منصة دار الذكر التعليمية</title>
-  <link rel="stylesheet" href="assets/css/brand.css?v=202611272000">
+  <link rel="stylesheet" href="assets/css/brand.css?v=202611281330">
   <link rel="icon" type="image/png" href="favicon.png">
   <meta name="theme-color" content="#007B51">
   <link rel="manifest" href="supervision/manifest.json?v=2">
   <meta name="robots" content="noindex">
-  <link rel="stylesheet" href="assets/css/app.css?v=202611272000">
+  <link rel="stylesheet" href="assets/css/app.css?v=202611281330">
   <style>
     .pp-wrap { max-width: 760px; margin: 0 auto; }
     .pp-box { padding: 22px; margin-bottom: 16px; }
@@ -29,11 +29,11 @@
     .timer { font-size: .82rem; color: var(--muted); }
   </style>
   <script src="assets/vendor/supabase-js-2.119.2.js"></script>
-  <script src="assets/js/config.js?v=202611272000"></script>
-  <script src="assets/js/i18n.js?v=202611272000"></script>
-  <script src="assets/js/core.js?v=202611272000"></script>
-  <script src="assets/js/report-card.js?v=202611272000"></script>
-  <script src="assets/js/survey-form.js?v=202611272000"></script>
+  <script src="assets/js/config.js?v=202611281330"></script>
+  <script src="assets/js/i18n.js?v=202611281330"></script>
+  <script src="assets/js/core.js?v=202611281330"></script>
+  <script src="assets/js/report-card.js?v=202611281330"></script>
+  <script src="assets/js/survey-form.js?v=202611281330"></script>
 </head>
 <body>
   <main class="page pp-wrap">
@@ -173,7 +173,7 @@
         ${sec('👕 الزي المدرسي', `${c.uniform.map((o) => `<div style="padding:4px 0"><b>#${o.id}</b> ${UST[o.status] || o.status} · ${o.lines.map((l) => esc(l.item) + ' (' + esc(l.size) + ') × ' + l.qty).join('، ')} · ${esc(o.total)} ريال
             ${o.reply ? `<div class="hint">↩️ ${esc(o.reply)}</div>` : ''}${o.status === 'pending' ? ` <button class="btn sm ghost" data-uc="${o.id}">إلغاء</button>` : ''}</div>`).join('')}
             ${c.uniform_items.length ? `<button class="btn sm" data-uo="${c.id}">👕 طلب زي</button>` : '<span class="hint">لا تتوفر أصناف للطلب حاليًا.</span>'}`)}
-        ${c.clubs.length || c.activities.length || c.trips.some((x) => x.status === 'done') ? sec('⭐ النوادي والأنشطة', `${c.clubs.map((x) => `<div>${esc(x.icon)} <b>${esc(x.name)}</b>${x.status === 'pending' ? ' <span class="hint">(بانتظار الموافقة)</span>' : ''} <span class="hint">${esc(x.schedule || '')}</span></div>`).join('')}
+        ${c.clubs.length || c.activities.length || c.trips.some((x) => x.status === 'done') ? sec('⭐ النوادي والأنشطة', `${c.clubs.map((x) => `<div>${esc(x.icon)} <b>${esc(x.name)}</b>${x.status === 'pending' ? ' <span class="hint">(بانتظار الموافقة)</span>' : ''} <span class="hint">${x.days ? '🗓️ ' + esc(x.days) + (x.time_from ? ' · ⏰ ' + esc(x.time_from) + (x.time_to ? '–' + esc(x.time_to) : '') : '') : esc(x.schedule || '')}${x.coach ? ' · المدرب: ' + esc(x.coach) : ''}${x.held ? ` · حضر ${x.attended} من ${x.held}` : ''}</span></div>`).join('')}
             ${c.activities.slice(0, 8).map((a) => `<div>🎯 ${esc(a.title)} <span class="hint">${esc(a.kind)} · ${esc(a.day)}</span> ${ROLE[a.role] || ''}</div>`).join('')}
             ${c.trips.filter((x) => x.status === 'done').map((r) => `<div>🚍 ${esc(r.title)} <span class="hint">${esc(r.day)}${r.attended ? ' · حضر' : ''}</span></div>`).join('')}`) : ''}</div>`; }).join('');
     box.onclick = async (e) => {

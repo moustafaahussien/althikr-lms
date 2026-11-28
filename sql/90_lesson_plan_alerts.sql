@@ -36,7 +36,7 @@ language sql stable security definer set search_path = public as $$
 $$;
 
 -- حصص يوم معيّن من جداول المشرفين: المعلم، الفصل، المادة، المرحلة، وقت البداية
-create or replace function private.lpa_slots(d date)
+create or replace function private.lpa_slots_raw(d date)
 returns table (slot_id bigint, teacher_id uuid, period smallint, start_t text, class_id int, cls text, subject_id int,
                stage_id int, grade_number smallint, owner_id uuid, class_label text, subject_name text)
 language sql stable security definer set search_path = public as $$
@@ -57,6 +57,18 @@ language sql stable security definer set search_path = public as $$
   left join tt_teacher_subject tts on tts.sheet_id = sl.sheet_id and tts.teacher_id = sl.teacher_id
   left join v_classes vc on vc.id = sl.class_id
   where sl.kind = 'class' and sl.teacher_id is not null and sl.day = extract(dow from d)::int
+$$;
+
+-- نفس الحصة ممكن تكون في جدولين (مشرف المادة ومنسق المسار مثلًا) — حصة واحدة لكل (معلم، حصة، فصل) ومعاها كل المشرفين أصحاب الجداول
+drop function if exists private.lpa_slots(date);
+create or replace function private.lpa_slots(d date)
+returns table (slot_id bigint, teacher_id uuid, period smallint, start_t text, class_id int, cls text, subject_id int,
+               stage_id int, grade_number smallint, owners uuid[], class_label text, subject_name text)
+language sql stable security definer set search_path = public as $$
+  select min(r.slot_id), r.teacher_id, r.period, min(r.start_t), max(r.class_id), min(r.cls), max(r.subject_id),
+         max(r.stage_id), max(r.grade_number), array_agg(distinct r.owner_id), min(r.class_label), min(r.subject_name)
+  from private.lpa_slots_raw(d) r
+  group by r.teacher_id, r.period, coalesce(r.class_id::text, lower(regexp_replace(coalesce(r.cls, ''), '[\s/-]', '', 'g')))
 $$;
 
 -- حالة التحضير: ok = فيه تحضير مُرسل، draft = مسودة بس، none = مافيش
@@ -125,21 +137,20 @@ begin
 
   -- (2) مدير المرحلة والمشرف: قبل الحصة بـ mins دقيقة
   if coalesce((cfg ->> 'managers')::boolean, true) and private.school_day(today) then
-    create temp table if not exists _lpa (slot_id bigint, teacher_id uuid, tname text, line text, owner_id uuid, princ uuid[]) on commit drop;
+    create temp table if not exists _lpa (slot_id bigint, teacher_id uuid, tname text, line text, owners uuid[], princ uuid[]) on commit drop;
     truncate _lpa;
     insert into _lpa
     select s.slot_id, s.teacher_id, (select full_name from profiles where id = s.teacher_id),
-           private.lpa_line(s.period, s.start_t, s.subject_name, coalesce(s.class_label, s.cls), x.st), s.owner_id, private.lpa_principals(s.stage_id, s.grade_number)
+           private.lpa_line(s.period, s.start_t, s.subject_name, coalesce(s.class_label, s.cls), x.st), array_remove(s.owners, s.teacher_id), private.lpa_principals(s.stage_id, s.grade_number)
     from private.lpa_slots(today) s, lateral (select private.lpa_plan(s.teacher_id, today, s.class_id, s.subject_id) st) x
     where s.start_t is not null and x.st <> 'ok'
       and (today + s.start_t::time) - make_interval(mins => mins) <= nowr and nowr < today + s.start_t::time
       and not exists (select 1 from lp_alert_sent a where a.day = today and a.slot_id = s.slot_id and a.kind = 'm');
     if exists (select 1 from _lpa) then
-      for who in select distinct u from (select owner_id u from _lpa where owner_id is distinct from teacher_id
-                                          union select unnest(princ) from _lpa) z where u is not null loop
+      for who in select distinct u from (select unnest(owners) u from _lpa union select unnest(princ) from _lpa) z where u is not null loop
         if not exists (select 1 from profiles where id = who and active) then continue; end if;
         select string_agg('👤 أ. ' || tname || E'\n' || replace(line, '• ', '   '), E'\n' order by tname), count(*) into lines, n
-        from _lpa where (owner_id = who and owner_id is distinct from teacher_id) or who = any (princ);
+        from _lpa where who = any (owners) or who = any (princ);
         if n > 0 then
           subj := '⚠️ ' || n || ' حصة هتبدأ بعد ' || mins || ' دقائق بدون تحضير';
           body := E'الحصص دي هتبدأ قريب والمعلم لسه مابعتش تحضيرها:\n\n' || lines || E'\n\nتقدر تتابع التحاضير من: تحضير الدروس ← متابعة الالتزام.';

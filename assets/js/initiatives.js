@@ -41,7 +41,7 @@
       ${TAB === 'bank' ? `<p class="hint">${L.length} مبادرة معتمدة، نُفّذ منها ${done.length} واستفاد منها ${done.reduce((a, i) => a + (i.beneficiaries || 0), 0)} — استلهم منها أو تواصل مع أصحابها.</p>` : ''}
       <div id="list">${L.map((i) => `<div data-q="${esc(LMS.norm(i.title + ' ' + (i.owner || '') + ' ' + (i.goals || '')))}" data-f="${i.field}">${card(i)}</div>`).join('') ||
         `<div class="empty">${TAB === 'mine' ? 'لم تضف مبادرات بعد — شارك فكرتك!' : TAB === 'review' ? '✅ لا توجد مبادرات بانتظار اعتمادك.' : 'لا توجد مبادرات بعد.'}</div>`}</div>`;
-    const flt = () => { const v = LMS.norm($('#q').value), f = $('#ff').value; $$('#list [data-q]').forEach((r) => { r.style.display = (!v || r.dataset.q.includes(v)) && (!f || r.dataset.f === f) ? '' : 'none'; }); };
+    const flt = () => { const v = LMS.norm($('#q').value), f = $('#ff').value; $$('#list [data-q]').forEach((r) => { r.style.display = LMS.has(r.dataset.q, v) && (!f || r.dataset.f === f) ? '' : 'none'; }); };
     $('#q').oninput = flt; $('#ff').onchange = flt;
     if ($('#new')) $('#new').onclick = () => form({ field: 'educational' });
     view.onclick = async (e) => {

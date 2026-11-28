@@ -99,7 +99,7 @@
     setTimeout(() => {
       const w = [...document.querySelectorAll('.modal-wrap')].pop(); if (!w) return;
       $('#all', w).onchange = (e) => { $('#pg', w).style.display = e.target.checked ? 'none' : ''; };
-      const q = $('#tq', w); if (q) q.oninput = () => { const v = LMS.norm(q.value); $$('#tl label', w).forEach((l) => { l.style.display = !v || l.dataset.q.includes(v) ? '' : 'none'; }); };
+      const q = $('#tq', w); if (q) q.oninput = () => { const v = LMS.norm(q.value); $$('#tl label', w).forEach((l) => { l.style.display = LMS.has(l.dataset.q, v) ? '' : 'none'; }); };
     }, 0);
   }
 

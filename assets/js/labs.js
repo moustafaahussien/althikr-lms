@@ -133,7 +133,7 @@
         const r = await call('lab_book_save', { p: { id: b.id || null, lab: CODE, day: $('#bD', w).value, period: +$('#bP', w).value, class: $('#bC', w).value,
           subject: $('#bS', w).value, title: $('#bT', w).value, needs: $('#bN', w).value, items } });
         toast(b.id ? 'تم حفظ التعديل' : `تم الحجز ✓ — وصل إشعار لـ${W.techS}`); reload(); return !!r; } }] });
-    setTimeout(() => { const q = document.getElementById('bQ'); if (q) q.oninput = () => { const v = LMS.norm(q.value); $$('#bI label').forEach((l) => { l.style.display = !v || l.dataset.n.includes(v) ? '' : 'none'; }); }; }, 50);
+    setTimeout(() => { const q = document.getElementById('bQ'); if (q) q.oninput = () => { const v = LMS.norm(q.value); $$('#bI label').forEach((l) => { l.style.display = LMS.has(l.dataset.n, v) ? '' : 'none'; }); }; }, 50);
   }
 
   // ============================ حجوزاتي ============================
@@ -207,7 +207,7 @@
         ${M ? `<td style="white-space:nowrap"><button class="btn sm" data-ed="${i.id}">✏️</button> <button class="btn sm" data-adj="${i.id}" title="توريد / خصم">±</button> <button class="btn sm" data-his="${i.id}" title="سجل الحركة">🕘</button>${['admin', 'supervisor'].includes(D.my_role) ? ` <button class="btn sm danger" data-del="${i.id}">🗑</button>` : ''}</td>` : ''}</tr>`).join('')}
       </tbody></table></div>${L.length ? '' : '<div class="empty">لا توجد أصناف.</div>'}`;
     $('#iF').onchange = (e) => { INVF = e.target.value; paintInv(); };
-    $('#iQ').oninput = (e) => { const v = LMS.norm(e.target.value); $$('#iT tbody tr').forEach((r) => { r.style.display = !v || r.dataset.n.includes(v) ? '' : 'none'; }); };
+    $('#iQ').oninput = (e) => { const v = LMS.norm(e.target.value); $$('#iT tbody tr').forEach((r) => { r.style.display = LMS.has(r.dataset.n, v) ? '' : 'none'; }); };
     if (!M) return;
     $('#iAdd').onclick = () => itemForm({});
     $('#iImp').onclick = () => $('#iFile').click();

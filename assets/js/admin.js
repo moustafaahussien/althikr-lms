@@ -8,9 +8,7 @@
   const ME = ctx.profile;
 
   // ---------- أدوات ----------
-  const norm = (t) => String(t ?? '').trim().toLowerCase().replace(/[\u064B-\u0652\u0670]/g, '')
-    .replace(/[أإآٱ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/ـ/g, '')
-    .replace(/[٠-٩]/g, (d) => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/\s+/g, ' ');
+  const norm = LMS.norm;   // التطبيع الموحد (همزات، ى، ة، الأسماء المركبة)
   const opts = (items, val, lab, sel, empty) =>
     (empty !== undefined ? `<option value="">${esc(empty)}</option>` : '') +
     items.map((x) => `<option value="${esc(val(x))}" ${String(val(x)) === String(sel ?? '') ? 'selected' : ''}>${esc(lab(x))}</option>`).join('');
@@ -433,7 +431,7 @@
       const has = (t, f, v) => !v || (t && String(t[f] || '').split('، ').includes(v));
       const rows = all.filter((p) => { const t = T[p.id];
         return (!rf || p.role === rf) && has(t, 'stages', sf) && has(t, 'subjects', bf) && has(t, 'supervisors', pf)
-          && (!q || norm(p.full_name + ' ' + (p.email || '') + ' ' + (t ? t.classes.map((c) => c.label).join(' ') : '')).includes(q)); });
+          && (!q || LMS.has(p.full_name + ' ' + (p.email || '') + ' ' + (t ? t.classes.map((c) => c.label).join(' ') : ''), q)); });
       $('#tbl', pane).innerHTML = `<p class="hint" style="margin:0 0 8px">${rows.length} موظف — المادة والمرحلة والفصول والنصاب من جدول الحصص في مكتب الإشراف التربوي.</p>
         <table><thead><tr><th>الاسم</th><th>المادة</th><th>المرحلة</th><th>الفصول</th><th>الحصص/أسبوع</th><th>المشرف</th><th>البريد</th><th>الدور</th><th>الحالة</th><th></th></tr></thead>
         <tbody>${rows.length ? rows.map((p) => { const t = T[p.id]; return `<tr>
@@ -581,7 +579,7 @@
         if (clF.value === 'none') { if (s.class_id) return false; }
         else if (clF.value && String(s.class_id) !== clF.value) return false;
         if (ac !== '' && String(s.active ? 1 : 0) !== ac) return false;
-        return !q || norm(`${s.full_name} ${s.student_number || ''} ${s.email || ''}`).includes(q);
+        return !q || LMS.has(`${s.full_name} ${s.student_number || ''} ${s.email || ''}`, q);
       });
       $('#cnt', pane).textContent = `${current.length} طالب${current.length > 600 ? ' — يُعرض أول 600، استخدم التصفية' : ''}`;
       const shown = current.slice(0, 600);

@@ -10,7 +10,7 @@
   // داخل كل قسم: القيادات أولًا ثم المشرفون ثم المعلمون ثم البقية
   const senior = (t) => { t = String(t || ''); return /تنفيذي|مدير التعليم|مدير عام/.test(t) ? 0 : /^مدير|مديرة|رئيس/.test(t) ? 1 : /وكيل/.test(t) ? 2 : /مرشد/.test(t) ? 4 : /^مشرف|منسق/.test(t) ? 3 : /^معلم/.test(t) ? 5 : 6; };
   const rank = (g) => { const i = ORDER.indexOf(g); return i < 0 ? 99 : i; };
-  const norm = (s) => String(s || '').toLowerCase().replace(/[أإآٱ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/\s+/g, ' ').trim();
+  const norm = LMS.norm;   // التطبيع الموحد (همزات، ى، ة، الأسماء المركبة)
   const initials = (n) => String(n || '').trim().split(/\s+/).slice(0, 2).map((w) => w[0] || '').join(' ');
   const txt = (v) => Array.isArray(v) ? v.join('، ') : String(v || '');
   const telFmt = (m) => /^05\d{8}$/.test(m) ? `${m.slice(0, 3)} ${m.slice(3, 6)} ${m.slice(6)}` : m;

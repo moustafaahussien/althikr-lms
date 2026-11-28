@@ -539,9 +539,11 @@
     window.addEventListener('load', () => { navigator.serviceWorker.register(BASE + 'sw.js', { scope: BASE }).catch(() => {}); });
   }
   // البحث في كل المنصة يتجاهل همزات الألف (أ إ آ = ا) ونقاط الياء الأخيرة (ى = ي) والتاء المربوطة والتشكيل والتطويل
+  // وتتجاهل المسافة في الأسماء المركبة (عبد السلام = عبدالسلام، أبو بكر = أبوبكر)، وتقبل أجزاء الاسم بأي ترتيب (محمد الشهاوي ← محمد جميل طارق الشهاوي)
   const norm = (t) => String(t ?? '').normalize('NFC').replace(/[\u064B-\u0652\u0670\u0640]/g, '')
-    .replace(/[أإآٱ]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه').toLowerCase().replace(/\s+/g, ' ').trim();
-  const has = (text, q) => norm(text).includes(norm(q));
+    .replace(/[أإآٱ]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه').replace(/[٠-٩]/g, (d) => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).toLowerCase().replace(/\s+/g, ' ').trim()
+    .replace(/(^| )(عبد|ابو) (?=\S)/g, '$1$2');
+  const has = (text, q) => { const t = norm(text), w = norm(q); return !w || w.split(' ').every((x) => t.includes(x)); };
   /* ---------- هوية المدرسة: اسم المنصة في عنوان الصفحة ---------- */
   function applyBrand() {
     try {

@@ -49,7 +49,7 @@
     const draw = () => {
       const v = LMS.norm(F.q);
       const rows = R.filter((r) => (!F.lvl || (F.lvl === 'case' ? r.case : F.lvl === 'nocase' ? !r.case : r.level === F.lvl)) && (!F.stage || String(r.stage_id) === F.stage)
-        && (!F.why || r.lv[F.why]) && (!v || LMS.norm(r.name + ' ' + (r.class || '')).includes(v)));
+        && (!F.why || r.lv[F.why]) && LMS.has(r.name + ' ' + (r.class || ''), v));
       $('#lst').innerHTML = rows.slice(0, 300).map((r) => `<div class="glass ew-row ${r.level}" data-s="${r.id}">
           <span class="lvl ${r.level}">${LVL[r.level]}</span>
           <div class="grow"><b>${esc(r.name)}</b> <small class="hint">${esc(r.class || '')}</small><div>${indChips(r)}</div></div>

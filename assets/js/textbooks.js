@@ -171,7 +171,7 @@
     view.innerHTML = `<div class="glass" style="padding:14px"><h3 style="margin-top:0">⚙️ مسؤولو الكتب المدرسية</h3><p class="hint">من يدير الطلب والاستلام والمخزون والتوزيع. إن لم تحدد أحدًا يُعتمد المسمى الوظيفي (كتب / مستودع / مخازن / مصادر التعلم). رائد كل فصل يوزّع كتب فصله دائمًا.</p>
       <input id="fl" placeholder="🔎 تصفية" style="width:100%"><div style="max-height:320px;overflow:auto;columns:2 220px">${L.map((s) => `<label class="chk" data-n="${esc(s.name + ' ' + (s.job || ''))}"><input type="checkbox" data-o="${s.id}" ${sel.includes(s.id) ? 'checked' : ''}> ${esc(s.name)} <span class="hint">${esc(s.job || '')}</span></label>`).join('')}</div>
       <button class="btn primary" id="sv">حفظ</button></div>`;
-    $('#fl').oninput = (e) => $$('[data-n]').forEach((l) => { l.style.display = !e.target.value || l.dataset.n.includes(e.target.value) ? '' : 'none'; });
+    $('#fl').oninput = (e) => $$('[data-n]').forEach((l) => { l.style.display = LMS.has(l.dataset.n, e.target.value) ? '' : 'none'; });
     $('#sv').onclick = async () => { try { await call('tb_settings_set', { p_officers: $$('[data-o]:checked').map((x) => x.dataset.o) }); toast('تم ✓'); ME = await call('tb_me'); } catch (e) { toast(errMsg(e), 'err'); } };
   }
   paint();

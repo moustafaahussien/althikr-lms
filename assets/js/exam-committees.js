@@ -187,7 +187,7 @@
             ${F.map((t) => `<div class="mine-row" style="padding:6px 8px;margin:0;cursor:pointer" data-t="${t.id}" data-q="${esc(LMS.norm(t.name))}"><span class="grow">${esc(t.name)}${t.own ? "" : " <small class=\"hint\">(مرحلة أخرى)</small>"}</span><span class="pill">${t.n} ملاحظة</span></div>`).join('') || '<div class="empty">لا يوجد معلمون متاحون.</div>'}</div>`,
           actions: (cur ? [{ label: '🗑 إزالة', cls: 'danger ghost', onClick: async () => { await cb(null); return true; } }] : []).concat([{ label: 'إغلاق', value: null, cls: 'ghost' }]) });
         const w = [...document.querySelectorAll('.modal-wrap')].pop();
-        $('#q', w).oninput = (e) => { const v = LMS.norm(e.target.value); $$('[data-q]', w).forEach((x) => { x.style.display = !v || x.dataset.q.includes(v) ? '' : 'none'; }); };
+        $('#q', w).oninput = (e) => { const v = LMS.norm(e.target.value); $$('[data-q]', w).forEach((x) => { x.style.display = LMS.has(x.dataset.q, v) ? '' : 'none'; }); };
         $('#fl', w).onclick = wrap(async (e) => { const r = e.target.closest('[data-t]'); if (!r) return; await cb(r.dataset.t); w.remove(); });
       };
       sv.onclick = wrap(async (e) => {

@@ -76,7 +76,7 @@
     const paintSel = () => { const n = SEL.size; const b = $('#save'); if (b) { b.textContent = n ? `حفظ الملاحظة لـ ${n} ${n === 1 ? 'طالب' : 'طلاب'}` : 'اختر الطلاب أولًا'; b.disabled = !n; } };
     $('#g').onchange = (e) => { G = e.target.value; C = ''; fillClasses(); loadRoster(); };
     $('#c').onchange = (e) => { C = e.target.value; loadRoster(); };
-    $('#q').oninput = (e) => { const v = LMS.norm(e.target.value); $$('#roster .bh-st').forEach((l) => { l.style.display = !v || l.dataset.n.includes(v) ? '' : 'none'; }); };
+    $('#q').oninput = (e) => { const v = LMS.norm(e.target.value); $$('#roster .bh-st').forEach((l) => { l.style.display = LMS.has(l.dataset.n, v) ? '' : 'none'; }); };
     $('#all').onclick = () => { $$('#roster [data-s]').forEach((c) => { if (c.closest('.bh-st').style.display !== 'none') { c.checked = true; SEL.add(c.dataset.s); } }); paintSel(); };
     $('#none').onclick = () => { $$('#roster [data-s]').forEach((c) => { c.checked = false; }); SEL.clear(); paintSel(); };
     $('#roster').onchange = (e) => { const c = e.target.closest('[data-s]'); if (!c) return; c.checked ? SEL.add(c.dataset.s) : SEL.delete(c.dataset.s); paintSel(); };
@@ -131,7 +131,7 @@
       $('#list').innerHTML = L.length ? `<p class="hint">${L.length} ملاحظة — ⭐ ${L.filter((n) => n.kind === 'positive').length} · ⚠️ ${L.filter((n) => n.kind === 'negative').length}</p>` + L.map((n) => `<div data-q="${esc(LMS.norm(n.student + ' ' + n.text))}">${noteRow(n, true)}</div>`).join('') : '<div class="empty">لا توجد ملاحظات في هذه الفترة.</div>';
     };
     ['fs', 'fk', 'ff', 'ft'].forEach((id) => { $('#' + id).onchange = (e) => { F[{ fs: 'scope', fk: 'kind', ff: 'from', ft: 'to' }[id]] = e.target.value; load(); }; });
-    $('#fq').oninput = (e) => { const v = LMS.norm(e.target.value); $$('#list [data-q]').forEach((r) => { r.style.display = !v || r.dataset.q.includes(v) ? '' : 'none'; }); };
+    $('#fq').oninput = (e) => { const v = LMS.norm(e.target.value); $$('#list [data-q]').forEach((r) => { r.style.display = LMS.has(r.dataset.q, v) ? '' : 'none'; }); };
     view.onclick = (e) => noteActions(e, load);
     load();
   }

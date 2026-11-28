@@ -131,7 +131,7 @@
       <label class="f">الأقسام (قسم في كل سطر — تظهر عند كتابة الطلب)<textarea id="dps" rows="5">${esc((ME.departments || []).join('\n'))}</textarea></label>
       <p class="hint">إن لم تحدد أحدًا يُعتمد المسمى الوظيفي: «المدير التنفيذي» للاعتماد، و«مشتريات» للشراء. <b>الطلب نفسه للإداريين فقط</b> (الموظفون والقيادات ومديرو المراحل) — لا يظهر للمعلمين.</p>
       <button class="btn primary" id="sv">حفظ</button></div>`;
-    view.oninput = (e) => { const f = e.target.dataset.flt; if (!f) return; const q = e.target.value.trim(); $$(`[data-pk="${f}"] [data-n]`).forEach((l) => { l.style.display = !q || l.dataset.n.includes(q) ? '' : 'none'; }); };
+    view.oninput = (e) => { const f = e.target.dataset.flt; if (!f) return; const q = e.target.value.trim(); $$(`[data-pk="${f}"] [data-n]`).forEach((l) => { l.style.display = LMS.has(l.dataset.n, q) ? '' : 'none'; }); };
     $('#sv').onclick = async () => { try { await call('pr_settings_set', { p: { approver_ids: $$('[data-ap]:checked').map((x) => x.dataset.ap), buyer_ids: $$('[data-bu]:checked').map((x) => x.dataset.bu),
       departments: $('#dps').value.split('\n').map((x) => x.trim()).filter(Boolean) } }); await reloadMe(); toast('تم الحفظ ✓'); } catch (e) { toast(errMsg(e), 'err'); } };
   }

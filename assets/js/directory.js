@@ -22,7 +22,8 @@
     if (error) throw error;
     ALL = (data || []).map((p) => Object.assign(p, {
       subj: txt(p.subjects), stg: txt(p.stages),
-      key: norm([p.name, p.en, p.title, p.grp, txt(p.subjects), p.email, p.mobile, p.manager, p.no].join(' '))
+      key: norm([p.name, p.en, p.title, p.grp, txt(p.subjects), p.email, p.mobile, p.manager, p.no].join(' ')),
+      keyNs: norm([p.name, p.en, p.title, p.grp, txt(p.subjects), p.email, p.mobile, p.manager, p.no].join(' ')).replace(/ /g, '')
     })).sort((a, b) => rank(a.grp) - rank(b.grp) || senior(a.title) - senior(b.title) || a.name.localeCompare(b.name, 'ar'));
   } catch (e) { $('#list').innerHTML = `<div class="notice err">${esc(errMsg(e))}</div>`; return; }
 
@@ -43,7 +44,7 @@
 
   function filtered() {
     const q = norm($('#q').value);
-    return ALL.filter((p) => (!GRP || p.grp === GRP) && (!q || q.split(' ').every((w) => p.key.includes(w))));
+    return ALL.filter((p) => (!GRP || p.grp === GRP) && (!q || q.split(' ').every((w) => p.keyNs.includes(w))));
   }
   function contact(p) {
     const out = [];

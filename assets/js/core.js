@@ -60,14 +60,14 @@
   let POP_SKIP = 0;
   window.addEventListener('popstate', () => {
     if (POP_SKIP) { POP_SKIP--; return; }
-    const pages = document.querySelectorAll('.modal-wrap.page'), top = pages[pages.length - 1];
+    const pages = document.querySelectorAll('.modal-wrap.pgfull'), top = pages[pages.length - 1];
     if (top && top._close) top._close(null, true);
   });
   function modal({ title, body, actions = [], wide = false, page }) {
     const full = page ?? wide;
     return new Promise((resolve) => {
       const wrap = document.createElement('div');
-      wrap.className = 'modal-wrap' + (full ? ' page' : '');
+      wrap.className = 'modal-wrap' + (full ? ' pgfull' : '');
       wrap.innerHTML = full ? `
         <div class="modal glass wide" role="dialog" aria-modal="true">
           <div class="modal-head"><button class="btn sm ghost pg-back" data-x aria-label="رجوع">→ رجوع</button><h3>${esc(title)}</h3><span></span></div>
@@ -88,7 +88,7 @@
         if (done) return; done = true;
         realRemove(); document.removeEventListener('keydown', onKey);
         if (full && !fromPop) { POP_SKIP++; history.back(); }
-        if (!document.querySelector('.modal-wrap.page')) document.documentElement.classList.remove('pg-open');
+        if (!document.querySelector('.modal-wrap.pgfull')) document.documentElement.classList.remove('pg-open');
         resolve(val);
       };
       wrap._close = close;

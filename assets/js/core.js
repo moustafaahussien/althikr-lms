@@ -542,13 +542,13 @@
   const norm = (t) => String(t ?? '').normalize('NFC').replace(/[\u064B-\u0652\u0670\u0640]/g, '')
     .replace(/[أإآٱ]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه').toLowerCase().replace(/\s+/g, ' ').trim();
   const has = (text, q) => norm(text).includes(norm(q));
-  /* ---------- هوية المدرسة والمنتج: اسم المنصة في عنوان الصفحة، وسطر «Mecha LMS» في التذييل ---------- */
+  /* ---------- هوية المدرسة: اسم المنصة في عنوان الصفحة ---------- */
   function applyBrand() {
     try {
       const DEF = 'منصة دار الذكر التعليمية';
       if (C.PLATFORM_NAME && C.PLATFORM_NAME !== DEF && document.title.includes(DEF)) document.title = document.title.replace(DEF, C.PLATFORM_NAME);
       const f = document.querySelector('footer.credit');
-      if (f && C.PRODUCT_NAME && !f.querySelector('.prod')) f.insertAdjacentHTML('beforeend', ` <span class="prod">· ⚙️ ${esc(C.PRODUCT_NAME)}</span>`);
+      // التذييل: «جميع الحقوق محفوظة © MechaSTEM» مكتوب في الصفحات نفسها — لا يُضاف سطر آخر
     } catch (_) {}
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', applyBrand); else applyBrand();

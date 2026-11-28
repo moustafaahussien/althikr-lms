@@ -487,6 +487,8 @@ window.LMS_I18N = {
 "إعارة": "Loan",
 "إعارة مفتوحة": "Open loan",
 "إعداد وتصميم": "Designed & developed by",
+"جميع الحقوق محفوظة © MechaSTEM": "All rights reserved © MechaSTEM",
+"جميع الحقوق محفوظة": "All rights reserved",
 "إعدادات الإصدار": "Issue settings",
 "إعدادات الجداول لمدير النظام والإدارة العليا ومديري المراحل": "Timetable settings for the system admin, senior leadership and stage principals",
 "إعدادات العمود": "Column settings",

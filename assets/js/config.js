@@ -20,8 +20,8 @@ window.LMS_CONFIG = {
   LOGO_MARK: 'assets/img/logo-mark.png',                      // الشعار المربع (الشريط العلوي)
 
   /* ---------- هوية المنتج (ثابتة لكل المدارس) ---------- */
-  PRODUCT_NAME: 'Mecha LMS',
-  PRODUCT_BY: 'مصطفى حسين',
+  PRODUCT_NAME: 'MechaSTEM',
+  COPYRIGHT: 'جميع الحقوق محفوظة © MechaSTEM',
 
   /* الوحدات التي تظهر في الصفحة الرئيسية.
      roles: الأدوار التي ترى الوحدة (اتركها [] لتظهر للجميع)

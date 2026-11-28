@@ -37,7 +37,7 @@
   // ---------- التبويبات ----------
   const loaded = {};
   const tabs = { overview, import: importTab, staff: staffTab, students: studentsTab, classes: classesTab,
-                 subjects: subjectsTab, assign: assignTab, years: yearsTab, audit: auditTab, settings: settingsTab };
+                 subjects: subjectsTab, assign: assignTab, years: yearsTab, activity: activityTab, audit: auditTab, settings: settingsTab };
   async function openTab(name, force = false) {
     $$('#tabs button').forEach((b) => b.classList.toggle('on', b.dataset.tab === name));
     $$('.tab-pane').forEach((p) => p.classList.toggle('on', p.id === 'tab-' + name));
@@ -1012,6 +1012,89 @@
   const TABLE_AR = { profiles: 'المستخدمون', students: 'الطلاب', classes: 'الفصول', subjects: 'المواد', teaching_assignments: 'الإسناد',
     staff_scopes: 'النطاقات', parent_links: 'أولياء الأمور', academic_years: 'الأعوام', terms: 'الفصول الدراسية', app_settings: 'الإعدادات' };
   const ACT_AR = { INSERT: 'إضافة', UPDATE: 'تعديل', DELETE: 'حذف' };
+  /* ===================================================================
+     سجل النشاطات (sql/88): مين دخل المنصة، إمتى، ومن أي جهاز، وإيه الصفحات اللي فتحها
+     =================================================================== */
+  async function activityTab(pane) {
+    const RYD = (d) => new Date(d.getTime() + 3 * 36e5).toISOString().slice(0, 10);   // تاريخ بتوقيت الرياض
+    const day = (n) => RYD(new Date(Date.now() - n * 864e5));
+    const tm = (d) => new Date(d).toLocaleTimeString('ar-SA', { hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Riyadh' });
+    const dt = (d) => new Date(d).toLocaleString('ar-SA-u-ca-gregory', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Riyadh' });
+    const ago = (d) => { const m = Math.round((Date.now() - new Date(d)) / 6e4); return m < 1 ? 'الآن' : m < 60 ? `منذ ${m} د` : m < 1440 ? `منذ ${Math.round(m / 60)} س` : `منذ ${Math.round(m / 1440)} يوم`; };
+    const KIND = { login: '🔑 دخول', page: '📄 صفحة', action: '⚡ إجراء' };
+    let F = { from: day(0), to: day(0), role: '', q: '' }, SUB = 'people', DATA = {};
+    pane.innerHTML = `<div class="toolbar" style="flex-wrap:wrap;gap:6px">
+        <span class="hint">من</span><input type="date" id="af" value="${F.from}"><span class="hint">إلى</span><input type="date" id="at" value="${F.to}">
+        <button class="btn sm" data-qd="0">اليوم</button><button class="btn sm" data-qd="1">أمس</button><button class="btn sm" data-qd="7">آخر 7 أيام</button><button class="btn sm" data-qd="30">آخر 30 يوم</button>
+        <select id="ar"><option value="">كل الأدوار</option>${Object.entries(ROLE_LABELS).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select>
+        <input id="aq" type="search" placeholder="🔎 ابحث بالاسم أو البريد" style="min-width:200px">
+        <button class="btn" id="arf">تحديث</button></div>
+      <div class="grid stats" id="ast" style="margin:10px 0"></div>
+      <div class="toolbar" id="asub" style="gap:6px">${[['people', '👥 المستخدمون'], ['log', '🕘 السجل التفصيلي'], ['stats', '📊 إحصاءات'], ['absent', '🚫 موظفون لم يدخلوا']].map(([k, l]) => `<button class="btn sm ${k === SUB ? 'primary' : ''}" data-sub="${k}">${l}</button>`).join('')}
+        <span class="grow"></span><button class="btn sm ghost" id="acsv">⬇️ تصدير Excel (CSV)</button></div>
+      <div id="abody"></div>
+      <p class="hint">🔑 «دخول» = أول صفحة يفتحها المستخدم بعد ما يسجّل دخوله أو يفتح المتصفح، و«صفحة» = كل صفحة يفتحها (تحديث نفس الصفحة خلال دقيقتين مايتحسبش). السجل بيتحفظ 400 يوم. الوضع التجريبي مابيتسجلش.</p>`;
+    const p = () => ({ from: F.from, to: F.to, role: F.role, q: F.q });
+    async function load() {
+      $('#abody', pane).innerHTML = '<div class="loader"><div class="spin"></div>جارٍ التحميل…</div>';
+      const [st, pe, lg] = await Promise.all([sb.rpc('act_stats', { p: p() }), sb.rpc('act_people', { p: p() }), sb.rpc('act_list', { p: Object.assign(p(), { limit: 1500 }) })]);
+      const err = st.error || pe.error || lg.error; if (err) { $('#abody', pane).innerHTML = `<div class="notice err">${esc(errMsg(err))}</div>`; return; }
+      DATA = { st: st.data, pe: pe.data || [], lg: lg.data || [] };
+      const S = DATA.st;
+      $('#ast', pane).innerHTML = [['🟢', S.now, 'متصلين الآن (آخر 15 دقيقة)'], ['👥', S.users, 'مستخدم دخلوا في الفترة'], ['🔑', S.logins, 'مرة دخول'], ['📄', S.pages, 'صفحة اتفتحت']]
+        .map(([i, n, l]) => `<div class="stat glass"><div class="n">${i} ${n}</div><div class="l">${l}</div></div>`).join('');
+      draw();
+    }
+    function personPage(who) {
+      const P = DATA.pe.find((x) => x.who === who) || {}, L = DATA.lg.filter((x) => x.who === who);
+      const box = document.createElement('div');
+      box.innerHTML = `<div class="pg-hero"><span class="ic">👤</span><div style="flex:1"><h2>${esc(P.name || '')}</h2><div class="hint">${esc(P.job || '')} · ${esc(ROLE_LABELS[P.role] || P.role || '')}${P.email ? ' · <span dir="ltr">' + esc(P.email) + '</span>' : ''}</div></div></div>
+        <div class="pg-grid">${[['🔑 مرات الدخول', P.logins], ['📄 الصفحات', P.pages], ['📅 أيام الدخول', P.days], ['⏱️ أول ظهور', P.first && dt(P.first)], ['🕘 آخر ظهور', P.last && dt(P.last) + ' (' + ago(P.last) + ')'], ['💻 آخر جهاز', P.device], ['⭐ أكثر الصفحات', P.top]]
+          .map(([k, v]) => `<div class="kv"><div class="k">${k}</div><div class="v">${esc(v ?? '—') || '—'}</div></div>`).join('')}</div>
+        <div class="pg-sec"><h3>🕘 نشاطه في الفترة (${L.length})</h3><div class="table-wrap" style="max-height:none"><table><thead><tr><th>الوقت</th><th>النوع</th><th>الصفحة</th><th>الجهاز</th></tr></thead><tbody>
+          ${L.map((r) => `<tr><td>${dt(r.at)}</td><td>${KIND[r.kind] || r.kind}</td><td>${esc(r.title || r.page || '')}${r.detail ? `<div class="hint">${esc(r.detail)}</div>` : ''}</td><td class="hint">${esc(r.device || '')}</td></tr>`).join('') || '<tr><td colspan="4" class="empty">لا يوجد</td></tr>'}</tbody></table></div></div>`;
+      LMS.openPage('👤 ' + (P.name || ''), box);
+    }
+    function draw() {
+      const b = $('#abody', pane), S = DATA.st;
+      if (SUB === 'people') b.innerHTML = `<div class="table-wrap glass" style="max-height:none"><table><thead><tr><th>#</th><th>الاسم</th><th>الدور</th><th>آخر ظهور</th><th>أول ظهور</th><th>🔑 دخول</th><th>📅 أيام</th><th>📄 صفحات</th><th>الجهاز</th><th>أكثر الصفحات</th></tr></thead><tbody>
+        ${DATA.pe.map((r, i) => `<tr><td>${i + 1}</td><td><button class="nm-link" data-who="${r.who}">${esc(r.name)}</button><div class="hint">${esc(r.job || '')}</div></td><td>${esc(ROLE_LABELS[r.role] || r.role)}</td>
+          <td>${dt(r.last)}<div class="hint">${ago(r.last)}</div></td><td>${dt(r.first)}</td><td>${r.logins}</td><td>${r.days}</td><td>${r.pages}</td><td class="hint">${esc(r.device || '')}</td><td class="hint" style="white-space:normal;max-width:260px">${esc(r.top || '')}</td></tr>`).join('')
+          || '<tr><td colspan="10" class="empty">محدش دخل في الفترة دي</td></tr>'}</tbody></table></div>`;
+      if (SUB === 'log') b.innerHTML = `<div class="table-wrap glass" style="max-height:none"><table><thead><tr><th>الوقت</th><th>الاسم</th><th>الدور</th><th>النوع</th><th>الصفحة</th><th>الجهاز</th></tr></thead><tbody>
+        ${DATA.lg.map((r) => `<tr><td>${dt(r.at)}</td><td><button class="nm-link" data-who="${r.who}">${esc(r.name)}</button></td><td>${esc(ROLE_LABELS[r.role] || r.role || '')}</td><td>${KIND[r.kind] || r.kind}</td>
+          <td>${esc(r.title || r.page || '')}${r.detail ? `<div class="hint">${esc(r.detail)}</div>` : ''}</td><td class="hint">${esc(r.device || '')}</td></tr>`).join('') || '<tr><td colspan="6" class="empty">لا يوجد</td></tr>'}</tbody></table></div>
+        ${DATA.lg.length >= 1500 ? '<p class="hint">يُعرض آخر 1500 حدث — ضيّق الفترة أو ابحث باسم لعرض الباقي.</p>' : ''}`;
+      if (SUB === 'stats') {
+        const bar = (n, max) => `<div style="background:var(--brand2);border-radius:6px;height:14px;width:100%"><div style="background:var(--brand);height:14px;border-radius:6px;width:${max ? Math.max(2, n * 100 / max) : 0}%"></div></div>`;
+        const mxD = Math.max(1, ...S.by_day.map((x) => x.users)), mxH = Math.max(1, ...S.by_hour.map((x) => x.n)), mxP = Math.max(1, ...S.top_pages.map((x) => x.n));
+        b.innerHTML = `<div class="row2" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px">
+          <div class="glass" style="padding:12px"><h3 style="margin-top:0">👥 حسب الدور</h3>${Object.entries(S.by_role || {}).sort((a, c) => c[1] - a[1]).map(([k, n]) => `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--line)"><span>${esc(ROLE_LABELS[k] || k)}</span><b>${n}</b></div>`).join('') || '<p class="hint">—</p>'}</div>
+          <div class="glass" style="padding:12px"><h3 style="margin-top:0">📅 المستخدمون في كل يوم</h3>${S.by_day.map((x) => `<div style="display:grid;grid-template-columns:110px 1fr 40px;gap:8px;align-items:center;margin:3px 0"><span class="hint">${new Date(x.day + 'T12:00:00').toLocaleDateString('ar-SA-u-ca-gregory', { weekday: 'short', day: 'numeric', month: 'short' })}</span>${bar(x.users, mxD)}<b>${x.users}</b></div>`).join('') || '<p class="hint">—</p>'}</div>
+          <div class="glass" style="padding:12px"><h3 style="margin-top:0">🕘 أوقات الذروة (بتوقيت الرياض)</h3>${S.by_hour.map((x) => `<div style="display:grid;grid-template-columns:70px 1fr 40px;gap:8px;align-items:center;margin:3px 0"><span class="hint">${((x.h + 11) % 12) + 1} ${x.h < 12 ? 'ص' : 'م'}</span>${bar(x.n, mxH)}<b>${x.n}</b></div>`).join('') || '<p class="hint">—</p>'}</div>
+          <div class="glass" style="padding:12px"><h3 style="margin-top:0">⭐ أكثر الصفحات استخدامًا</h3>${S.top_pages.map((x) => `<div style="display:grid;grid-template-columns:150px 1fr 70px;gap:8px;align-items:center;margin:3px 0"><span>${esc(x.page)}</span>${bar(x.n, mxP)}<span class="hint">${x.n} · ${x.users} شخص</span></div>`).join('') || '<p class="hint">—</p>'}</div></div>`;
+      }
+      if (SUB === 'absent') { const A = (S.absent_staff || []).filter((x) => !F.role || x.role === F.role);
+        b.innerHTML = `<p class="hint">${A.length} من الموظفين (غير الطلاب وأولياء الأمور) مادخلوش المنصة خالص في الفترة دي.</p><div class="table-wrap glass" style="max-height:none"><table><thead><tr><th>#</th><th>الاسم</th><th>المسمى الوظيفي</th><th>الدور</th></tr></thead><tbody>
+          ${A.map((r, i) => `<tr><td>${i + 1}</td><td><b>${esc(r.name)}</b></td><td>${esc(r.job || '')}</td><td>${esc(ROLE_LABELS[r.role] || r.role)}</td></tr>`).join('') || '<tr><td colspan="4" class="empty">كل الموظفين دخلوا ✓</td></tr>'}</tbody></table></div>`; }
+      $$('#asub [data-sub]', pane).forEach((x) => x.classList.toggle('primary', x.dataset.sub === SUB));
+    }
+    const setRange = (n) => { F.to = n === 1 ? day(1) : day(0); F.from = n === 0 ? day(0) : n === 1 ? day(1) : day(n - 1); $('#af', pane).value = F.from; $('#at', pane).value = F.to; load(); };
+    pane.onclick = (e) => {
+      const q = e.target.closest('[data-qd]'); if (q) return setRange(+q.dataset.qd);
+      const s = e.target.closest('[data-sub]'); if (s) { SUB = s.dataset.sub; return draw(); }
+      const w = e.target.closest('[data-who]'); if (w) return personPage(w.dataset.who);
+      if (e.target.id === 'arf') return load();
+      if (e.target.id === 'acsv') { const t = $('#abody table', pane); if (t) LMS.exportTable(t, 'سجل النشاطات ' + F.from + (F.to !== F.from ? ' إلى ' + F.to : '')); }
+    };
+    pane.onchange = (e) => {
+      if (e.target.id === 'af') { F.from = e.target.value; load(); } if (e.target.id === 'at') { F.to = e.target.value; load(); }
+      if (e.target.id === 'ar') { F.role = e.target.value; load(); }
+    };
+    let tq; pane.oninput = (e) => { if (e.target.id !== 'aq') return; clearTimeout(tq); tq = setTimeout(() => { F.q = e.target.value.trim(); load(); }, 400); };
+    await load();
+  }
+
   async function auditTab(pane) {
     pane.innerHTML = `<div class="toolbar"><select id="tf"><option value="">كل الجداول</option>${Object.entries(TABLE_AR).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select>
       <span class="hint grow">آخر 300 تغيير</span><button class="btn" id="rf">تحديث</button></div><div class="table-wrap glass" id="tbl"></div>`;

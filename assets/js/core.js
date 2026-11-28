@@ -180,6 +180,7 @@
 
   async function signOut() {
     clearCache();
+    try { Object.keys(sessionStorage).filter((k) => k.startsWith('lms_act_')).forEach((k) => sessionStorage.removeItem(k)); } catch (_) {}
     try { await sb.auth.signOut(); } catch (_) {}
     location.href = BASE + 'index.html';
   }
@@ -275,6 +276,7 @@
       location.href = BASE + 'home.html'; return new Promise(() => {});
     }
     renderTopbar(ctx);
+    logActivity();
     return ctx;
   }
 
@@ -362,6 +364,28 @@
     startClock();
   }
 
+  /* ---------- سجل النشاطات (sql/88) ----------
+     «دخول» = أول صفحة في جلسة المتصفح لهذا المستخدم، و«صفحة» = كل صفحة يفتحها. لا يُسجَّل شيء في الوضع التجريبي. */
+  function deviceLabel() {
+    const u = navigator.userAgent || '';
+    const dev = /iPad|Tablet/i.test(u) ? 'تابلت' : /Mobi|Android|iPhone/i.test(u) ? 'جوال' : 'كمبيوتر';
+    const os = /iPhone|iPad|iOS/i.test(u) ? 'iOS' : /Android/i.test(u) ? 'Android' : /Windows/i.test(u) ? 'Windows' : /Mac OS/i.test(u) ? 'Mac' : /Linux/i.test(u) ? 'Linux' : '';
+    const br = /Edg\//.test(u) ? 'Edge' : /SamsungBrowser/.test(u) ? 'Samsung' : /CriOS|Chrome\//.test(u) ? 'Chrome' : /FxiOS|Firefox\//.test(u) ? 'Firefox' : /Safari\//.test(u) ? 'Safari' : '';
+    return [dev, os, br].filter(Boolean).join(' · ');
+  }
+  async function logActivity(kind, detail) {
+    if (DEMO || !sb) return;
+    try {
+      const { data: { session } } = await sb.auth.getSession(); if (!session) return;
+      const key = 'lms_act_' + ((session.user && session.user.id) || '');
+      const title = (document.title || '').split(' — ')[0].split(' – ')[0].trim();
+      const page = pageKey();
+      let first = false; try { first = !sessionStorage.getItem(key); if (first) sessionStorage.setItem(key, '1'); } catch (_) {}
+      if (first && !kind) await sb.rpc('act_log', { p_kind: 'login', p_page: page, p_title: title, p_detail: null, p_device: deviceLabel() });
+      await sb.rpc('act_log', { p_kind: kind || 'page', p_page: page, p_title: title, p_detail: detail || null, p_device: deviceLabel() });
+    } catch (_) {}
+  }
+
   /* شريط المنصة في صفحة لها دخولها الخاص (مثل «التعليم عن بعد»):
      بلا جلسة ← صفحة الدخول ثم الرجوع (next)، والطالب غير المفعّل في المنصة يرى شريطًا مختصرًا */
   async function mountTopbar(next) {
@@ -379,6 +403,7 @@
       }
     } else ctx = { limited: true, profile: { full_name: (ctx && ctx.email) || session.user.email || '', role: 'student' } };
     renderTopbar(ctx);
+    logActivity();
     return ctx;
   }
 
@@ -592,5 +617,5 @@
 
   window.LMS = { sb, C, configured, ROLE_LABELS, esc, $, $$, toast, modal, openPage, confirmBox, errMsg, norm, has, linkMeet,
                  fetchAll, signInWithGoogle, signOut, getContext, cached, clearCache, requireAuth, downloadCSV, rememberNext, takeNext,
-                 getView, setView, canSwitch, applyView, mountTopbar, betaAllowed, applyCards, cardGated, BASE, hijri, dateLine, printHTML, printTable, exportTable, tableRows, ymd, cal, clsText, isGroupCls, DEMO };
+                 getView, setView, canSwitch, applyView, logActivity, mountTopbar, betaAllowed, applyCards, cardGated, BASE, hijri, dateLine, printHTML, printTable, exportTable, tableRows, ymd, cal, clsText, isGroupCls, DEMO };
 })();

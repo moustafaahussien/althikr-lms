@@ -20,7 +20,7 @@
     view.innerHTML = '<div class="empty">جارٍ التحميل…</div>';
     let L; try { L = await call('tp_list', { p: { status: FLT } }); } catch (e) { view.innerHTML = esc(errMsg(e)); return; }
     view.innerHTML = `<div class="toolbar glass" style="padding:10px"><button class="btn primary sm" id="nt">＋ رحلة جديدة</button></div>
-      ${L.map((t) => `<div class="glass xc"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b style="font-size:1.05rem">🚍 ${esc(t.title)}</b><span class="pill ${ST[t.status][1]}">${ST[t.status][0]}</span>
+      ${L.map((t) => `<div class="glass xc"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span style="font-size:1.05rem">🚍 <button class="nm-link" data-op="${t.id}">${esc(t.title)}</button></span><span class="pill ${ST[t.status][1]}">${ST[t.status][0]}</span>
           ${t.status === 'pending' && t.approver ? '<span class="pill gold">بانتظار قرارك</span>' : ''}</div>
         <div>📍 ${esc(t.destination)} · 📅 ${esc(t.day)}${t.depart_time ? ' · ' + esc(t.depart_time) + (t.return_time ? '–' + esc(t.return_time) : '') : ''}${+t.cost ? ` · 💰 ${esc(t.cost)} ريال` : ''}</div>
         <div class="hint">👤 ${esc(t.organizer || '')} · 🎯 ${esc(t.targets || '')}${['approved', 'done'].includes(t.status) ? ` · الموافقات: ✅ ${t.yes} · ✖ ${t.no} · ⏳ ${t.n - t.yes - t.no} من ${t.n}${+t.cost ? ` · دفع ${t.paid}` : ''}` : ''}</div>
@@ -33,7 +33,10 @@
       const b = e.target.closest('button'); if (!b) return; const t = L.find((x) => x.id === +(b.dataset.op || b.dataset.ed || b.dataset.sb || b.dataset.ap || b.dataset.rj)); if (!t) return;
       try {
         if (b.dataset.ed) tripForm(t);
-        if (b.dataset.op) openTrip(t.id);
+        if (b.dataset.op) { if (t.can) openTrip(t.id); else LMS.openPage('🚍 ' + t.title, `<div class="pg-hero"><span class="ic">🚍</span><div style="flex:1"><h2>${esc(t.title)}</h2><span class="pill ${ST[t.status][1]}">${ST[t.status][0]}</span></div></div>
+          <div class="pg-grid">${[['📍 الوجهة', t.destination], ['📅 اليوم', t.day], ['⏰ الوقت', t.depart_time ? t.depart_time + (t.return_time ? ' – ' + t.return_time : '') : ''], ['💰 التكلفة', +t.cost ? t.cost + ' ريال' : 'مجانية'],
+            ['👤 المنظم', t.organizer], ['🎯 المستهدفون', t.targets], ['📝 ملاحظة القرار', t.decision_note]].map(([k, v]) => `<div class="kv"><div class="k">${k}</div><div class="v">${esc(v || '—')}</div></div>`).join('')}</div>
+          ${['approved', 'done'].includes(t.status) ? `<div class="pg-sec"><h3>✅ موافقات أولياء الأمور</h3>✅ ${t.yes} · ✖ ${t.no} · ⏳ ${t.n - t.yes - t.no} من ${t.n}${+t.cost ? ` · دفع ${t.paid}` : ''}</div>` : ''}`); }
         if (b.dataset.sb) { if (!await confirmBox('إرسال الرحلة لمدير المرحلة لاعتمادها؟', 'إرسال', false)) return; await call('tp_submit', { p_id: t.id }); toast('أُرسلت للاعتماد ✓'); listView(); }
         if (b.dataset.ap || b.dataset.rj) { const ok = !!b.dataset.ap;
           modal({ title: (ok ? '✅ اعتماد ' : '⛔ عدم اعتماد ') + t.title, body: `${ok ? '<p class="hint">بعد الاعتماد يُنشأ كشف الطلاب المستهدفين، وتظهر الرحلة لأولياء أمورهم في البوابة لإرسال الموافقة.</p>' : ''}<label class="f">${ok ? 'ملاحظة (اختياري)' : 'السبب'}<textarea id="nn" rows="2"></textarea></label>`,

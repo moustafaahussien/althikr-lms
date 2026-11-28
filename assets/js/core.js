@@ -55,11 +55,25 @@
   }
 
   // ---------- نافذة منبثقة عامة ----------
-  function modal({ title, body, actions = [], wide = false }) {
+  // النوافذ الكبيرة (wide) وصفحات التفاصيل (page) تُفتح «صفحة كاملة» بزر رجوع، ويعمل معها زر الرجوع في المتصفح/الجوال.
+  // تمرير page:false يُبقي النافذة الكبيرة منبثقة.
+  let POP_SKIP = 0;
+  window.addEventListener('popstate', () => {
+    if (POP_SKIP) { POP_SKIP--; return; }
+    const pages = document.querySelectorAll('.modal-wrap.page'), top = pages[pages.length - 1];
+    if (top && top._close) top._close(null, true);
+  });
+  function modal({ title, body, actions = [], wide = false, page }) {
+    const full = page ?? wide;
     return new Promise((resolve) => {
       const wrap = document.createElement('div');
-      wrap.className = 'modal-wrap';
-      wrap.innerHTML = `
+      wrap.className = 'modal-wrap' + (full ? ' page' : '');
+      wrap.innerHTML = full ? `
+        <div class="modal glass wide" role="dialog" aria-modal="true">
+          <div class="modal-head"><button class="btn sm ghost pg-back" data-x aria-label="رجوع">→ رجوع</button><h3>${esc(title)}</h3><span></span></div>
+          <div class="modal-body"></div>
+          <div class="modal-foot"></div>
+        </div>` : `
         <div class="modal glass ${wide ? 'wide' : ''}" role="dialog" aria-modal="true">
           <div class="modal-head"><h3>${esc(title)}</h3><button class="icon-btn" data-x aria-label="إغلاق">✕</button></div>
           <div class="modal-body"></div>
@@ -68,7 +82,17 @@
       const bodyEl = $('.modal-body', wrap);
       if (typeof body === 'string') bodyEl.innerHTML = body; else if (body) bodyEl.appendChild(body);
       const foot = $('.modal-foot', wrap);
-      const close = (val) => { wrap.remove(); document.removeEventListener('keydown', onKey); resolve(val); };
+      let done = false;
+      const realRemove = wrap.remove.bind(wrap);
+      const close = (val, fromPop) => {
+        if (done) return; done = true;
+        realRemove(); document.removeEventListener('keydown', onKey);
+        if (full && !fromPop) { POP_SKIP++; history.back(); }
+        if (!document.querySelector('.modal-wrap.page')) document.documentElement.classList.remove('pg-open');
+        resolve(val);
+      };
+      wrap._close = close;
+      wrap.remove = () => close(null);   // إغلاق النافذة من أي كود يستدعي w.remove() يمر بنفس المسار (السجل وزر الرجوع)
       actions.forEach((a) => {
         const b = document.createElement('button');
         b.className = 'btn ' + (a.cls || '');
@@ -82,14 +106,19 @@
         };
         foot.appendChild(b);
       });
-      const onKey = (e) => { if (e.key === 'Escape') close(null); };
+      if (!actions.length) foot.remove();
+      // Esc يغلق النافذة العليا فقط
+      const onKey = (e) => { if (e.key === 'Escape') { const all = document.querySelectorAll('.modal-wrap'); if (all[all.length - 1] === wrap) close(null); } };
       document.addEventListener('keydown', onKey);
       $('[data-x]', wrap).onclick = () => close(null);
-      wrap.addEventListener('mousedown', (e) => { if (e.target === wrap) close(null); });
+      if (!full) wrap.addEventListener('mousedown', (e) => { if (e.target === wrap) close(null); });
       document.body.appendChild(wrap);
-      const first = $('input,select,textarea', bodyEl); if (first) first.focus();
+      if (full) { history.pushState({ lmsPage: 1 }, ''); document.documentElement.classList.add('pg-open'); wrap.scrollTop = 0; }
+      const first = $('input,select,textarea', bodyEl); if (first && !full) first.focus();
     });
   }
+  // صفحة تفاصيل كاملة (اختصار)
+  const openPage = (title, body, actions) => modal({ title, body, actions: actions || [], page: true });
 
   const confirmBox = (msg, okLabel = 'تأكيد', danger = true) => modal({
     title: 'تأكيد', body: `<p class="confirm-msg">${esc(msg)}</p>`,
@@ -556,7 +585,7 @@
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', applyBrand); else applyBrand();
 
-  window.LMS = { sb, C, configured, ROLE_LABELS, esc, $, $$, toast, modal, confirmBox, errMsg, norm, has, linkMeet,
+  window.LMS = { sb, C, configured, ROLE_LABELS, esc, $, $$, toast, modal, openPage, confirmBox, errMsg, norm, has, linkMeet,
                  fetchAll, signInWithGoogle, signOut, getContext, cached, clearCache, requireAuth, downloadCSV, rememberNext, takeNext,
                  getView, setView, canSwitch, applyView, mountTopbar, betaAllowed, applyCards, cardGated, BASE, hijri, dateLine, printHTML, printTable, exportTable, tableRows, ymd, cal, clsText, isGroupCls, DEMO };
 })();

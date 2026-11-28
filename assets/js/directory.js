@@ -29,6 +29,19 @@
 
   // أدوار المنسوبين في برامج الموهبة — تُقرأ من منصة الموهبة (المصدر الوحيد) وتظهر على بطاقاتهم
   if (window.TALENT && !LMS.DEMO) TALENT.staffMap().then((M) => { ALL.forEach((p) => { p.talent = M.get(String(p.email || '').toLowerCase()) || null; }); render(); }).catch(() => {});
+  // صفحة الموظف الكاملة بالضغط على اسمه
+  $('#list').addEventListener('click', (e) => { const b = e.target.closest('[data-pp]'); if (!b) return;
+    const p = ALL.find((x) => String(x.email || x.no) === b.dataset.pp); if (!p) return;
+    const kv = (k, v) => `<div class="kv"><div class="k">${k}</div><div class="v">${v || '—'}</div></div>`;
+    const box = document.createElement('div');
+    box.innerHTML = `<div class="pg-hero"><span class="avatar" style="width:64px;height:64px;font-size:1.4rem">${esc(initials(p.name))}</span><div style="flex:1"><h2>${esc(p.name)}</h2>${p.en ? `<div class="hint" dir="ltr" style="text-align:right">${esc(p.en)}</div>` : ''}<div>${esc(p.title || '')}</div></div></div>
+      <div class="pg-grid">${kv('🏢 القسم', esc(p.grp))}${kv('📚 المواد', esc(p.subj))}${kv('🎓 المراحل', esc(p.stg))}${kv('👤 المدير المباشر', esc(p.manager))}
+        ${kv('📱 الجوال', p.mobile ? `<a href="tel:${esc(p.mobile)}" class="ltr">${esc(telFmt(p.mobile))}</a>` : '')}${p.work ? kv('☎️ هاتف العمل', `<span class="ltr">${esc(p.work)}</span>`) : ''}
+        ${kv('✉️ البريد', p.email ? `<a href="mailto:${esc(p.email)}" class="ltr">${esc(p.email)}</a>` : '')}${p.no ? kv('🔢 الرقم الوظيفي', esc(p.no)) : ''}</div>
+      <div class="pg-sec"><h3>📞 تواصل</h3><div class="links">${contact(p) || '<span class="hint">لا توجد بيانات تواصل.</span>'}</div></div>
+      ${p.talent ? `<div class="pg-sec"><h3>🌟 أدواره في برامج الموهبة</h3><div id="tlx"></div></div>` : ''}`;
+    if (p.talent) { const d = TALENT.staffDetails(p.talent, p.name); const h = $('#tlx', box); if (typeof d === 'string') h.innerHTML = d; else if (d) h.appendChild(d); }
+    LMS.openPage('👤 ' + p.name, box); });
   $('#list').addEventListener('click', (e) => { const b = e.target.closest('[data-tl]'); if (!b) return;
     const p = ALL.find((x) => String(x.email || x.no) === b.dataset.tl); if (!p || !p.talent) return;
     LMS.modal({ title: `🌟 ${p.name} — برامج الموهبة`, wide: true, body: TALENT.staffDetails(p.talent, p.name), actions: [{ label: 'إغلاق', value: null }] }); });
@@ -59,7 +72,7 @@
     const stg = p.stg && p.stg !== p.grp ? `<span class="chip gray">${esc(p.stg)}</span>` : '';
     return `<div class="person glass">
       <div class="top"><span class="avatar">${esc(initials(p.name))}</span>
-        <div><b class="nm">${esc(p.name)}</b><div class="tt">${esc(p.title || '')}</div></div></div>
+        <div><button class="nm-link nm" data-pp="${esc(p.email || p.no)}">${esc(p.name)}</button><div class="tt">${esc(p.title || '')}</div></div></div>
       <div class="meta">${teach}${stg}</div>
       ${p.manager ? `<div class="mgr">المدير المباشر: ${esc(p.manager)}</div>` : ''}
       ${p.talent ? `<button class="tl-chip" data-tl="${esc(p.email || p.no)}" title="أدواره في برامج الموهبة">🌟 ${esc(window.TALENT.staffSummary(p.talent))}</button>` : ''}
@@ -73,7 +86,7 @@
     if ($('#view').value === 'table') {
       $('#list').innerHTML = `<div class="table-wrap" style="max-height:none;margin-top:12px"><table>
         <thead><tr><th>الاسم</th><th>المسمى الوظيفي</th><th>القسم</th><th>المواد</th><th>المدير المباشر</th><th>الجوال</th><th>البريد</th></tr></thead>
-        <tbody>${L.map((p) => `<tr><td><b>${esc(p.name)}</b>${p.talent ? ` <button class="tl-chip inline" data-tl="${esc(p.email || p.no)}" title="${esc(window.TALENT.staffSummary(p.talent))}">🌟 الموهبة</button>` : ''}</td><td>${esc(p.title || '')}</td><td>${esc(p.grp || '')}</td><td>${esc(p.subj)}</td>
+        <tbody>${L.map((p) => `<tr><td><button class="nm-link" data-pp="${esc(p.email || p.no)}">${esc(p.name)}</button>${p.talent ? ` <button class="tl-chip inline" data-tl="${esc(p.email || p.no)}" title="${esc(window.TALENT.staffSummary(p.talent))}">🌟 الموهبة</button>` : ''}</td><td>${esc(p.title || '')}</td><td>${esc(p.grp || '')}</td><td>${esc(p.subj)}</td>
           <td>${esc(p.manager || '')}</td><td>${p.mobile ? `<a href="tel:${esc(p.mobile)}" class="ltr">${esc(telFmt(p.mobile))}</a>` : ''}</td>
           <td>${p.email ? `<a href="mailto:${esc(p.email)}" class="ltr">${esc(p.email)}</a>` : ''}</td></tr>`).join('')}</tbody></table></div>`;
       return;

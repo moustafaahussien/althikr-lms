@@ -57,7 +57,7 @@
   async function routesView() {
     await reloadMe();
     view.innerHTML = `<div class="toolbar glass" style="padding:10px"><button class="btn primary sm" id="nr">＋ مسار / حافلة جديدة</button></div>
-      <div class="row2">${ME.routes.map((r) => `<div class="glass xc" style="${r.active ? '' : 'opacity:.55'}"><b style="font-size:1.05rem">🚌 ${esc(r.name)}</b> ${r.active ? '' : '<span class="pill">موقوف</span>'}
+      <div class="row2">${ME.routes.map((r) => `<div class="glass xc" style="${r.active ? '' : 'opacity:.55'}"><span style="font-size:1.05rem">🚌 <button class="nm-link" data-rd="${r.id}">${esc(r.name)}</button></span> ${r.active ? '' : '<span class="pill">موقوف</span>'}
         <div class="hint">${r.bus_no ? 'حافلة ' + esc(r.bus_no) : ''}${r.plate ? ' · لوحة ' + esc(r.plate) : ''}${r.area ? ' · ' + esc(r.area) : ''}</div>
         <div>👨‍✈️ ${esc(r.driver_name || '—')}${r.driver_phone ? ` <a href="tel:${esc(r.driver_phone)}" dir="ltr">${esc(r.driver_phone)}</a>` : ''} · 👤 المشرف: ${esc(r.supervisor || '—')}</div>
         <div class="hint">🌅 ${esc(r.am_time || '—')} · 🌇 ${esc(r.pm_time || '—')} · ${r.stops.length} محطة</div>
@@ -96,12 +96,19 @@
     const box = document.createElement('div');
     const load = async () => {
       let L; try { L = await call('tr_riders', { p_route: r.id }); } catch (e) { box.innerHTML = esc(errMsg(e)); return; }
-      box.innerHTML = `<div style="display:flex;gap:6px"><input id="sq" placeholder="🔎 أضف طالبًا: اكتب اسمه أو رقمه" style="flex:1"></div><div id="sr" class="res"></div>
+      const kv = (k, v) => `<div class="kv"><div class="k">${k}</div><div class="v">${v || '—'}</div></div>`;
+      box.innerHTML = `<div class="pg-hero"><span class="ic">🚌</span><div style="flex:1"><h2>${esc(r.name)}</h2>${r.active ? '<span class="pill ok">نشط</span>' : '<span class="pill">موقوف</span>'}</div></div>
+        <div class="pg-grid">${kv('🚍 رقم الحافلة', esc(r.bus_no))}${kv('🔢 اللوحة', esc(r.plate))}${kv('🗺️ المنطقة', esc(r.area))}
+          ${kv('👨‍✈️ السائق', esc(r.driver_name) + (r.driver_phone ? `<br><a href="tel:${esc(r.driver_phone)}" dir="ltr">${esc(r.driver_phone)}</a>` : ''))}${kv('👤 المشرف', esc(r.supervisor))}
+          ${kv('🌅 وقت الذهاب', esc(r.am_time))}${kv('🌇 وقت العودة', esc(r.pm_time))}${kv('👦 الطلاب', L.length + (r.capacity ? ' من ' + r.capacity : ''))}</div>
+        ${r.stops.length ? `<div class="pg-sec"><h3>📍 المحطات (${r.stops.length})</h3>${r.stops.map((x, i) => `<span class="pill" style="margin:2px">${i + 1}. ${esc(x.name)}${x.am_time ? ' · ' + esc(x.am_time) : ''}</span>`).join('')}</div>` : ''}
+        <div class="pg-sec"><h3>👦 الطلاب المشتركون</h3>
+        <div style="display:flex;gap:6px"><input id="sq" placeholder="🔎 أضف طالبًا: اكتب اسمه أو رقمه" style="flex:1"></div><div id="sr" class="res"></div>
         <p class="hint">${L.length}${r.capacity ? ' / ' + r.capacity : ''} طالب</p>
         <table class="t"><thead><tr><th>الطالب</th><th>المحطة</th><th>الاشتراك</th><th></th></tr></thead><tbody>${L.map((s) => `<tr><td><b>${esc(s.name)}</b><div class="hint">${esc(s.class || '')}${s.address ? ' · ' + esc(s.address) : ''}</div></td>
           <td><select data-stop="${s.id}">${r.stops.map((x) => `<option value="${x.id}" ${x.id === s.stop_id ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}<option value="" ${!s.stop_id ? 'selected' : ''}>—</option></select></td>
           <td><select data-mode="${s.id}">${Object.entries(MODE).map(([k, l]) => `<option value="${k}" ${k === s.mode ? 'selected' : ''}>${l}</option>`).join('')}</select></td>
-          <td><button class="btn sm danger" data-del="${s.id}">✕</button></td></tr>`).join('') || '<tr><td colspan="4" class="hint">لا طلاب بعد.</td></tr>'}</tbody></table>`;
+          <td><button class="btn sm danger" data-del="${s.id}">✕</button></td></tr>`).join('') || '<tr><td colspan="4" class="hint">لا طلاب بعد.</td></tr>'}</tbody></table></div>`;
       let t; $('#sq', box).oninput = (e) => { clearTimeout(t); t = setTimeout(async () => { const R = e.target.value.trim().length < 2 ? [] : await call('cs_student_search', { p_q: e.target.value });
         $('#sr', box).innerHTML = R.map((s) => `<div data-add="${s.id}">${esc(s.name)} <span class="hint">${esc(s.class || '')} · ${esc(s.no || '')}</span></div>`).join(''); }, 300); };
       const set = async (sid, extra) => { const s = L.find((x) => x.id === sid) || {}; await call('tr_rider_set', { p: Object.assign({ student_id: sid, route_id: r.id, stop_id: s.stop_id || (r.stops[0] || {}).id || '', mode: s.mode || 'both', address: s.address || '' }, extra) }); };

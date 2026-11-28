@@ -18,7 +18,7 @@
     $$('#tabs button').forEach((x) => x.classList.toggle('on', x === b)); paint(); };
 
   const card = (i) => `<div class="glass in-card">
-      <div class="toolbar" style="margin:0"><b class="grow">${esc(i.title)}</b><span class="st s-${i.status}">${ST[i.status]}</span></div>
+      <div class="toolbar" style="margin:0"><span class="grow"><button class="nm-link" data-vw="${i.id}">${esc(i.title)}</button></span><span class="st s-${i.status}">${ST[i.status]}</span></div>
       <div class="hint">${FIELD[i.field]}${i.target ? ' · الفئة: ' + esc(i.target) : ''}${i.plan_date ? ' · موعد التنفيذ: ' + esc(i.plan_date) : ''}${TAB !== 'mine' ? ` · <b>${esc(i.owner)}</b>${i.owner_title ? ' — ' + esc(i.owner_title) : ''}` : ''}</div>
       ${i.goals ? `<div class="pre">${esc(i.goals)}</div>` : ''}
       ${i.partners ? `<div class="hint">الشركاء: ${esc(i.partners)}</div>` : ''}
@@ -45,8 +45,9 @@
     $('#q').oninput = flt; $('#ff').onchange = flt;
     if ($('#new')) $('#new').onclick = () => form({ field: 'educational' });
     view.onclick = async (e) => {
-      const b = e.target.closest('button'); if (!b) return; const id = +(b.dataset.ed || b.dataset.sub || b.dataset.done || b.dataset.ap || b.dataset.ret || b.dataset.del); const i = L.find((x) => x.id === id); if (!i) return;
+      const b = e.target.closest('button'); if (!b) return; const id = +(b.dataset.vw || b.dataset.ed || b.dataset.sub || b.dataset.done || b.dataset.ap || b.dataset.ret || b.dataset.del); const i = L.find((x) => x.id === id); if (!i) return;
       try {
+        if (b.dataset.vw) return viewPage(i);
         if (b.dataset.ed) return form(i);
         if (b.dataset.sub) { await call('in_save', { p: Object.assign({}, i, { submit: true }) }); toast('أُرسلت للاعتماد ✓'); return paint(); }
         if (b.dataset.done) return doneForm(i);
@@ -56,6 +57,16 @@
         if (b.dataset.del) { if (!await confirmBox('حذف المبادرة؟', 'حذف')) return; await call('in_delete', { p_id: id }); paint(); }
       } catch (er) { toast(errMsg(er), 'err'); }
     };
+  }
+  // صفحة المبادرة الكاملة (بالضغط على اسمها)
+  function viewPage(i) {
+    const kv = (k, v) => `<div class="kv"><div class="k">${k}</div><div class="v">${v || '—'}</div></div>`;
+    LMS.openPage('💡 ' + i.title, `<div class="pg-hero"><span class="ic">💡</span><div style="flex:1"><h2>${esc(i.title)}</h2><span class="st s-${i.status}">${ST[i.status]}</span></div></div>
+      <div class="pg-grid">${kv('المجال', FIELD[i.field])}${kv('صاحب المبادرة', esc(i.owner || '') + (i.owner_title ? ' — ' + esc(i.owner_title) : ''))}${kv('الفئة المستهدفة', esc(i.target))}${kv('موعد التنفيذ', esc(i.plan_date))}
+        ${kv('الشركاء', esc(i.partners))}${kv('المعتمد', esc(i.reviewer))}${i.status === 'done' ? kv('تاريخ التنفيذ', esc(i.done_at)) + kv('عدد المستفيدين', i.beneficiaries) : ''}</div>
+      ${i.goals ? `<div class="pg-sec"><h3>🎯 الأهداف والوصف</h3><div class="pre">${esc(i.goals)}</div></div>` : ''}
+      ${i.review_note ? `<div class="pg-sec"><h3>📝 ملاحظات الاعتماد</h3>${esc(i.review_note)}</div>` : ''}
+      ${i.status === 'done' ? `<div class="pg-sec"><h3>🌟 الأثر</h3><div class="pre">${esc(i.impact || '')}</div>${(i.evidence || []).map((l) => `<a class="btn sm" href="${esc(l.url)}" target="_blank" rel="noopener">📎 ${esc(l.title || 'دليل')}</a>`).join(' ')}</div>` : ''}`);
   }
   function form(i) {
     modal({ title: i.id ? 'تعديل المبادرة' : 'مبادرة جديدة', wide: true, body: `

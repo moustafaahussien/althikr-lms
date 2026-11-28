@@ -25,7 +25,7 @@
       <label class="chk" style="margin:0"><input type="checkbox" id="fm" ${F.mine ? 'checked' : ''}> أنشطتي فقط</label></div><div id="al"></div>`;
     let D;
     const load = async () => { try { D = await call('ac_list', { p: F }); } catch (e) { $('#al').innerHTML = esc(errMsg(e)); return; }
-      $('#al').innerHTML = D.items.map((a) => `<div class="glass xc"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b style="font-size:1.05rem">${esc(a.title)}</b><span class="pill">${esc(KIND[a.kind])}</span><span class="pill ${ST[a.status][1]}">${ST[a.status][0]}</span></div>
+      $('#al').innerHTML = D.items.map((a) => `<div class="glass xc"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="nm-link" style="font-size:1.05rem" data-op="${a.id}">${esc(a.title)}</button><span class="pill">${esc(KIND[a.kind])}</span><span class="pill ${ST[a.status][1]}">${ST[a.status][0]}</span></div>
           <div class="hint">📅 ${esc(a.day)}${a.end_day ? ' → ' + esc(a.end_day) : ''}${a.place ? ' · 📍 ' + esc(a.place) : ''} · 👤 ${esc(a.organizer || '')}${a.team_names.length ? ' + ' + esc(a.team_names.join('، ')) : ''} · 🎯 ${esc(a.grades)} · 👦 ${a.students_n} طالب</div>
           ${a.description ? `<div>${esc(a.description)}</div>` : ''}<div class="acts"><button class="btn sm" data-op="${a.id}">📂 فتح</button>${a.can ? `<button class="btn sm" data-ed="${a.id}">✏️</button>${a.status === 'planned' ? `<button class="btn sm primary" data-rp="${a.id}">📝 توثيق التنفيذ</button>` : ''}` : ''}</div></div>`).join('')
         || '<div class="empty">لا أنشطة في هذه الفترة. أضف خطة أنشطة المدرسة: اليوم الوطني، المسابقات، الأيام العالمية، الحملات…</div>'; };

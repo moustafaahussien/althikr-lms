@@ -40,7 +40,7 @@
     bindPair(evalTab);
     let L = [];
     try { L = await call('rb_evals_list', { p_class: p.class_id, p_subject: p.subject_id }); } catch (e) { $('#lst').innerHTML = `<div class="notice err">${esc(errMsg(e))}</div>`; return; }
-    $('#lst').innerHTML = L.map((e) => `<div class="glass rb-card"><div class="toolbar" style="margin:0"><b class="grow">${esc(e.title)}</b>
+    $('#lst').innerHTML = L.map((e) => `<div class="glass rb-card"><div class="toolbar" style="margin:0"><span class="grow"><button class="nm-link" data-open="${e.id}">${esc(e.title)}</button></span>
         ${e.gb ? '<span class="pill ok">📒 مرحّل لسجل الدرجات</span>' : ''}${e.avg != null ? `<span class="pill gold">متوسط الفصل ${e.avg}%</span>` : ''}</div>
         <div class="hint">${esc(e.date)} · السلّم: ${esc(e.rubric)} · من ${e.max} · قُيّم ${e.done} طالب${e.show ? '' : ' · مخفي عن الطلاب'}</div>
         <div class="acts"><button class="btn sm primary" data-open="${e.id}">${p.own ? '✍️ رصد التقييم' : '👁️ عرض'}</button>
@@ -120,7 +120,7 @@
     view.innerHTML = '<div class="empty">جارٍ التحميل…</div>';
     let R = [];
     try { R = await call('rb_list'); } catch (e) { view.innerHTML = `<div class="notice err">${esc(errMsg(e))}</div>`; return; }
-    const grp = (t, a) => a.length ? `<h3 style="margin:14px 0 6px">${t}</h3>` + a.map((r) => `<div class="glass rb-card"><div class="toolbar" style="margin:0"><b class="grow">${esc(r.title)}</b>
+    const grp = (t, a) => a.length ? `<h3 style="margin:14px 0 6px">${t}</h3>` + a.map((r) => `<div class="glass rb-card"><div class="toolbar" style="margin:0"><span class="grow"><button class="nm-link" data-view="${r.id}">${esc(r.title)}</button></span>
         ${r.shared && r.mine ? '<span class="pill ok">مشارَك</span>' : ''}<span class="pill">${r.criteria.length} معايير · ${r.levels.length} مستويات · من ${r.max}</span></div>
         <div class="hint">${r.subject ? esc(r.subject) : 'كل المواد'}${r.grade ? ' · ' + esc(r.grade) : ''}${!r.mine && !r.template ? ' · ' + esc(r.owner || '') : ''}${r.uses ? ' · استُخدم ' + r.uses + ' مرة' : ''}</div>
         <div class="acts"><button class="btn sm" data-view="${r.id}">👁️ عرض</button>${r.can_edit ? `<button class="btn sm" data-ed="${r.id}">✏️ تعديل</button>` : ''}

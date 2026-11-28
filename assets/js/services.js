@@ -129,7 +129,7 @@
     const sum = (r) => r.fields.filter((f) => r.data[f.k]).slice(0, 3).map((f) => `${esc(f.l)}: ${esc(r.data[f.k])}`).join(' · ');
     $('#rBody').innerHTML = REQS.length ? `<div class="table-wrap" data-title="المعاملات" style="max-height:none"><table><thead><tr><th>#</th><th>الطلب</th>${RBOX === 'mine' ? '' : '<th>مقدّم الطلب</th>'}<th>التفاصيل</th><th>التاريخ</th><th>الحالة</th><th class="actions"></th></tr></thead><tbody>
       ${REQS.map((r) => { const cur = (r.steps || []).find((s) => s.step === r.step);
-        return `<tr><td>${r.id}</td><td>${esc(r.icon || '')} <b>${esc(r.type_name)}</b></td>${RBOX === 'mine' ? '' : `<td>${esc(r.requester)}</td>`}<td>${sum(r)}</td><td>${esc(fmt(r.at))}</td>
+        return `<tr><td>${r.id}</td><td>${esc(r.icon || '')} <button class="nm-link" data-r="${r.id}">${esc(r.type_name)}</button></td>${RBOX === 'mine' ? '' : `<td>${esc(r.requester)}</td>`}<td>${sum(r)}</td><td>${esc(fmt(r.at))}</td>
           <td><span class="st ${r.status}">${RST[r.status]}</span>${r.status === 'pending' && cur ? `<div class="hint">لدى: ${esc(cur.approver)}</div>` : ''}</td>
           <td class="actions"><button class="btn sm ${r.can_act ? 'primary' : ''}" data-r="${r.id}">${r.can_act ? 'اعتماد' : 'عرض'}</button></td></tr>`; }).join('')}</tbody></table></div>`
       : `<div class="empty">${{ mine: 'لم تقدّم طلبات بعد', inbox: 'لا توجد طلبات بانتظار اعتمادك ✓', done: 'لا يوجد', all: 'لا توجد طلبات' }[RBOX]}</div>`;
@@ -207,7 +207,7 @@
     if (error) { $('#cBody').innerHTML = `<div class="notice err">${esc(errMsg(error))}</div>`; return; }
     const L = data || [];
     $('#cBody').innerHTML = L.length ? `<div class="table-wrap" data-title="الشكاوى الأكاديمية" style="max-height:none"><table><thead><tr><th>#</th><th>الموضوع</th><th>التصنيف</th>${CBOX === 'manage' ? '<th>مقدّمها</th>' : ''}<th>الطالب</th><th>المسؤول</th><th>آخر تحديث</th><th>الحالة</th><th class="actions"></th></tr></thead><tbody>
-      ${L.map((c) => `<tr><td>${c.id}</td><td><b>${esc(c.subject)}</b></td><td>${esc(c.category)}</td>${CBOX === 'manage' ? `<td>${esc(c.by)} <span class="hint">(${esc(ROLE_LABELS[c.by_role] || '')})</span></td>` : ''}
+      ${L.map((c) => `<tr><td>${c.id}</td><td><button class="nm-link" data-c="${c.id}">${esc(c.subject)}</button></td><td>${esc(c.category)}</td>${CBOX === 'manage' ? `<td>${esc(c.by)} <span class="hint">(${esc(ROLE_LABELS[c.by_role] || '')})</span></td>` : ''}
         <td>${esc(c.student || '')}</td><td>${esc(c.assignee || '—')}</td><td>${esc(fmt(c.updated))}</td><td><span class="st ${c.status}">${CST[c.status]}</span></td>
         <td class="actions"><button class="btn sm" data-c="${c.id}">فتح</button></td></tr>`).join('')}</tbody></table></div>`
       : `<div class="empty">${CBOX === 'mine' ? 'لم تقدّم شكاوى' : 'لا توجد شكاوى'}</div>`;

@@ -1031,7 +1031,7 @@
         <button class="btn" id="arf">تحديث</button></div>
       <div class="grid stats" id="ast" style="margin:10px 0"></div>
       <div class="toolbar" id="asub" style="gap:6px">${[['people', '👥 المستخدمون'], ['log', '🕘 السجل التفصيلي'], ['stats', '📊 إحصاءات'], ['absent', '🚫 موظفون لم يدخلوا']].map(([k, l]) => `<button class="btn sm ${k === SUB ? 'primary' : ''}" data-sub="${k}">${l}</button>`).join('')}
-        <span class="grow"></span><button class="btn sm ghost" id="acsv">⬇️ تصدير Excel (CSV)</button></div>
+</div>
       <div id="abody"></div>
       <p class="hint">🔑 «دخول» = أول صفحة يفتحها المستخدم بعد ما يسجّل دخوله أو يفتح المتصفح، و«صفحة» = كل صفحة يفتحها (تحديث نفس الصفحة خلال دقيقتين مايتحسبش). السجل بيتحفظ 400 يوم. الوضع التجريبي مابيتسجلش.</p>`;
     const p = () => ({ from: F.from, to: F.to, role: F.role, q: F.q });
@@ -1085,7 +1085,6 @@
       const s = e.target.closest('[data-sub]'); if (s) { SUB = s.dataset.sub; return draw(); }
       const w = e.target.closest('[data-who]'); if (w) return personPage(w.dataset.who);
       if (e.target.id === 'arf') return load();
-      if (e.target.id === 'acsv') { const t = $('#abody table', pane); if (t) LMS.exportTable(t, 'سجل النشاطات ' + F.from + (F.to !== F.from ? ' إلى ' + F.to : '')); }
     };
     pane.onchange = (e) => {
       if (e.target.id === 'af') { F.from = e.target.value; load(); } if (e.target.id === 'at') { F.to = e.target.value; load(); }

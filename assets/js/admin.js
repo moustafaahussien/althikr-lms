@@ -1293,18 +1293,20 @@
       <div class="form-grid" style="margin-top:8px">
         <label class="chk" style="align-self:end"><input type="checkbox" id="lpT" ${L0.teacher !== false ? 'checked' : ''}> تنبيه المعلم قبل الحصة بيوم</label>
         <label class="f">ساعة إرسال تنبيه المعلم (بتوقيت الرياض)<select id="lpH">${Array.from({ length: 24 }, (_, h) => `<option value="${h}" ${h === (L0.teacher_hour ?? 13) ? 'selected' : ''}>${((h + 11) % 12) + 1}:00 ${h < 12 ? 'ص' : 'م'}</option>`).join('')}</select></label>
-        <label class="chk" style="align-self:end"><input type="checkbox" id="lpM" ${L0.managers !== false ? 'checked' : ''}> تنبيه مدير المرحلة والمشرف قبل الحصة</label>
-        <label class="f">قبل بداية الحصة بـ (دقيقة)<input type="number" id="lpMin" min="1" max="120" value="${L0.minutes ?? 10}"></label></div>
+        <label class="chk" style="align-self:end"><input type="checkbox" id="lpM" ${L0.managers !== false ? 'checked' : ''}> تنبيه مدير المرحلة والمشرف (على الصفحة الرئيسية)</label>
+        <label class="f">المدة الافتراضية قبل بداية الحصة (دقيقة)<input type="number" id="lpMin" min="1" max="120" value="${L0.minutes ?? 10}"></label></div>
+      <label class="f" style="margin-top:8px">المواد المستثناة (نمط بحث — افصل بـ |)<input id="lpX" dir="ltr" value="${esc(L0.exclude_re ?? '(^|[^a-z])pe([^a-z]|$)|بدني|سباحة|swim|القيادة|تايكوندو|taekwondo')}"></label>
       <p class="hint" style="margin:6px 0 0">• <b>المعلم:</b> رسالة واحدة (وإشعار جوال) بحصص يوم الدراسة الجاي اللي مالهاش تحضير مُرسل، بتتبعت في آخر يوم دراسي قبلها (الخميس لحصص الأحد) في الساعة المحددة.<br>
-        • <b>مدير المرحلة (من نطاقاته) والمشرف (صاحب الجدول):</b> رسالة قبل بداية الحصة بالدقايق المحددة لو المعلم لسه مابعتش تحضيرها — وكل الحصص اللي بتبدأ في نفس الوقت في رسالة واحدة.<br>
+        • <b>مدير المرحلة (من نطاقاته) والمشرف (صاحب الجدول):</b> بيظهرلهم في الصفحة الرئيسية كارت «📘 حصص اليوم بدون تحضير» (الحصص اللي بدأت أو هتبدأ خلال المدة) — من غير رسايل. وكل واحد يقدر من ⚙️ في الكارت يفعّل لنفسه «رسالة وإشعار على الجوال» ويغيّر المدة.<br>
+        • <b>المواد المستثناة:</b> التربية البدنية (PE / بدنية / تايكوندو) والسباحة والقيادة مابيتنبّهش عليها.<br>
         • التحضير «المسودة» اللي ماتبعتش للاعتماد بيتحسب كأنه مش موجود. مافيش تنبيهات في الإجازات وأسابيع الاختبارات حسب التقويم الدراسي.</p>
       <button class="btn primary" id="lpSave" style="margin-top:8px">حفظ إعدادات التنبيهات</button>`;
     pane.appendChild(lpa);
     $('#lpSave', lpa).onclick = async () => {
       try {
         const on = $('#lpOn', lpa).checked;
-        if (on && !L0.enabled && !await confirmBox('تشغيل تنبيهات الحصص بدون تحضير؟ هتبدأ الرسايل توصل للمعلمين ومديري المراحل والمشرفين على المنصة والجوال من دلوقتي.', 'تشغيل', false)) return;
-        const { data, error } = await sb.rpc('lpa_settings_set', { p: { enabled: on, teacher: $('#lpT', lpa).checked, managers: $('#lpM', lpa).checked, minutes: +$('#lpMin', lpa).value, teacher_hour: +$('#lpH', lpa).value } });
+        if (on && !L0.enabled && !await confirmBox('تشغيل تنبيهات الحصص بدون تحضير؟ هتبدأ رسايل التذكير توصل للمعلمين، والتنبيهات تظهر لمديري المراحل والمشرفين في الرئيسية من دلوقتي.', 'تشغيل', false)) return;
+        const { data, error } = await sb.rpc('lpa_settings_set', { p: { enabled: on, teacher: $('#lpT', lpa).checked, managers: $('#lpM', lpa).checked, minutes: +$('#lpMin', lpa).value, teacher_hour: +$('#lpH', lpa).value, exclude_re: $('#lpX', lpa).value.trim() } });
         if (error) throw error; Object.assign(L0, data); toast(on ? 'تم الحفظ — التنبيهات شغالة ✓' : 'تم الحفظ — التنبيهات متوقفة');
       } catch (er) { toast(errMsg(er), 'err'); }
     };

@@ -33,6 +33,7 @@
     </section>
     ${ctx.viewAs ? `<div class="notice" style="margin-bottom:14px">أنت الآن في <b>واجهة المشرف</b> — اضغط «${esc(ctx.fullLabel)}» تحت اسمك للرجوع${ctx.officeMgr ? ' لأدوات مدير المكتب' : ' للوضع الكامل'}.</div>` : ''}
     <div id="dutyToday"></div>
+    <div id="lpaBox"></div>
     <div id="pushBox"></div>
     <div id="acks"></div>
     <div id="today"></div>
@@ -47,6 +48,38 @@
     LMS.setView(v);
     location.href = v || ctx.officeMgr ? 'supervision/' : 'home.html';
   });
+
+  // ---------- حصص اليوم بدون تحضير (مدير المرحلة والمشرف — sql/91) ----------
+  // تظهر على الصفحة بس، وكل واحد يقدر يفعّل لنفسه «رسالة وإشعار على الجوال» من ⚙️
+  if (['principal', 'supervisor', 'admin', 'leadership'].includes(role)) (function lpaBox() {
+    const box = $('#lpaBox'); let seen = null, L = null;
+    const when = (x) => x.in > 0 ? `<span class="pill gold">تبدأ بعد ${x.in} د</span>` : x.in === 0 ? '<span class="pill bad">بتبدأ دلوقتي</span>' : '<span class="pill bad">بدأت</span>';
+    const t12 = (t) => { if (!t) return ''; const [h, m] = t.split(':').map(Number); return `${((h + 11) % 12) + 1}:${String(m).padStart(2, '0')} ${h < 12 ? 'ص' : 'م'}`; };
+    const paint = () => {
+      if (!L || !L.on || !L.school_day || (!L.items.length && !L.relevant)) { box.innerHTML = ''; return; }
+      const soon = L.items.filter((x) => x.in >= 0), past = L.items.filter((x) => x.in < 0);
+      const row = (x) => `<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:6px 0;border-bottom:1px solid var(--line)">${when(x)}<b>${esc(x.teacher)}</b>
+        <span class="hint">الحصة ${x.period} (${t12(x.start)}) · ${esc(x.subject || '')} · ${esc(x.class || '')}${x.draft ? ' · فيه مسودة ماتبعتتش' : ''}</span></div>`;
+      box.innerHTML = `<section class="card glass" style="margin-bottom:14px;border-inline-start:5px solid ${L.items.length ? '#c0392b' : 'var(--brand)'}">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><h3 style="margin:0;flex:1">📘 حصص اليوم بدون تحضير ${L.items.length ? `<span class="pill bad">${L.items.length}</span>` : ''}</h3>
+          <span class="hint">${L.notify ? '🔔 بتوصلك رسالة وإشعار' : '🔕 على الصفحة بس'} · قبل الحصة بـ ${L.minutes} د</span><button class="btn sm ghost" id="lpaCfg" title="إعدادات التنبيه">⚙️</button></div>
+        ${L.items.length ? `${soon.length ? soon.map(row).join('') : ''}${past.length ? `<details ${soon.length ? '' : 'open'} style="margin-top:6px"><summary class="hint">حصص بدأت من غير تحضير (${past.length})</summary>${past.map(row).join('')}</details>` : ''}`
+          : '<p class="hint" style="margin:6px 0 0">✓ كل حصص معلميك اللي بدأت أو قربت محضّرة لحد دلوقتي.</p>'}</section>`;
+      $('#lpaCfg', box).onclick = () => modal({ title: '⚙️ تنبيه الحصص بدون تحضير', body: `<p class="hint" style="margin-top:0">التنبيه بيظهر هنا في الصفحة الرئيسية دايمًا. لو عايز كمان توصلك رسالة في «الرسائل» وإشعار على الجوال، فعّلها من هنا.</p>
+          <label class="chk"><input type="checkbox" id="lpN" ${L.notify ? 'checked' : ''}> 🔔 وصّلني رسالة وإشعار على الجوال</label>
+          <label class="f" style="max-width:260px">قبل بداية الحصة بـ (دقيقة)<input type="number" id="lpMn" min="1" max="120" value="${L.minutes}"></label>`,
+        actions: [{ label: 'إلغاء', value: null }, { label: 'حفظ', cls: 'primary', onClick: async (w) => {
+          const { error } = await sb.rpc('lpa_prefs_set', { p_notify: $('#lpN', w).checked, p_minutes: +$('#lpMn', w).value }); if (error) throw error;
+          toast('تم الحفظ ✓'); load(); return true; } }] });
+    };
+    const load = async () => {
+      try { const { data, error } = await sb.rpc('lpa_my'); if (error) return; L = data; } catch (_) { return; }
+      const ids = new Set((L.items || []).filter((x) => x.in >= 0).map((x) => x.teacher + '|' + x.period));
+      if (seen && [...ids].some((k) => !seen.has(k))) toast('📘 فيه حصة هتبدأ قريب ولسه مالهاش تحضير', 'warn');
+      seen = ids; paint();
+    };
+    load(); setInterval(load, 60e3);
+  })();
 
   // ---------- تعاميم بانتظار «تم الاطلاع» ----------
   const showAcks = (d) => { const L = (d && d.pending_ack) || []; const box = $('#acks'); if (!box) return;

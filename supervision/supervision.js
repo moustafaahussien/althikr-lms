@@ -777,6 +777,8 @@ window.addEventListener("beforeunload",e=>{ if(dirty){ e.preventDefault(); e.ret
 const PAGE_URL = location.origin + location.pathname.replace(/index\.html$/,"");
 let ADM_USERS = [];
 const IS_SYS=()=>!!(WHO&&WHO.sys) && !SV_VIEW();
+// جدول المدرسة الموحد: للمدير ومسؤول النظام (sql/89)
+const CAN_SCH=()=>!!(WHO&&(WHO.admin||WHO.sys)) && !SV_VIEW();
 /* زر التبديل بين الدورين: «مدير المكتب» (أو مدير النظام) ⇄ «مشرف» — يظهر لمن يحمل صلاحية إدارية في المكتب */
 function applyViewSw(){ const b=document.getElementById("viewSw"); if(!b) return;
   const can = !!(WHO && (WHO.realAdmin || ["owner","sys","admin"].includes(WHO.role)));
@@ -787,9 +789,9 @@ function applyViewSw(){ const b=document.getElementById("viewSw"); if(!b) return
   else { b.textContent="⇄ واجهة المشرف"; b.title="عرض المكتب كما يراه أي مشرف (بدون أدوات الإدارة)"; }
   b.onclick=()=>{ try{ SV_VIEW() ? localStorage.removeItem("lms_view") : localStorage.setItem("lms_view","supervisor"); }catch(e){} location.reload(); };
 }
-function applyAdmin(){ applyViewSw(); document.getElementById("admTab").style.display = (WHO && WHO.admin) ? "" : "none"; document.getElementById("schTab").style.display = IS_SYS() ? "" : "none";
+function applyAdmin(){ applyViewSw(); document.getElementById("admTab").style.display = (WHO && WHO.admin) ? "" : "none"; document.getElementById("schTab").style.display = CAN_SCH() ? "" : "none";
   document.getElementById("schedCard").style.display = IS_SYS() ? "" : "none"; document.getElementById("svSysCard").style.display = IS_SYS() ? "" : "none"; document.getElementById("admRole").style.display = IS_SYS() ? "" : "none";
-  if((!(WHO&&WHO.admin) && curTab==="adm") || (!IS_SYS() && curTab==="sch")) document.querySelector('#tabs [data-t="day"]').click(); }
+  if((!(WHO&&WHO.admin) && curTab==="adm") || (!CAN_SCH() && curTab==="sch")) document.querySelector('#tabs [data-t="day"]').click(); }
 function inviteText(u,code){ if(LANG!=="en") return inviteTextAr(u,code); return `Hello ${u.name},
 
 The «Educational Supervision Office» is now part of the school platform:
@@ -866,7 +868,7 @@ function renderAdmin(){
     <td><div class="acts" style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center">
       <button class="btn sm" data-act="invite" data-c="${esc(u.code)}">نسخ رسالة الدعوة</button>
       <button class="btn sm" data-act="edit" data-c="${esc(u.code)}">تعديل</button>
-      ${me||u.role==="owner"?"":`<button class="btn sm danger" data-act="del" data-c="${esc(u.code)}">حذف</button>`}
+      ${me||u.role==="owner"||!IS_SYS()?"":`<button class="btn sm danger" data-act="del" data-c="${esc(u.code)}">حذف</button>`}
     </div></td></tr>`; }).join("")}</tbody></table></div>`;
 }
 function confirmDlg(title,msg,okLabel,danger){ return new Promise(res=>{ const b=document.getElementById("dlgBody"); b.innerHTML=`<h3>${title}</h3><p>${msg}</p><div class="acts"><button class="btn" id="cx1">إلغاء</button><button class="btn ${danger?"danger":"pri"}" id="cx2">${okLabel}</button></div>`; const d=document.getElementById("dlg"); d.showModal(); b.querySelector("#cx1").onclick=()=>{ d.close(); res(false); }; b.querySelector("#cx2").onclick=()=>{ d.close(); res(true); }; }); }
@@ -930,7 +932,7 @@ async function loadSchool(force){
   msg.textContent="جارٍ تحميل جداول المشرفين…";
   try{
     const {data:r,error}=await SB.rpc("sv_tt_get",{p_all:true});
-    if(error||!r||!r.ok){ msg.textContent=r&&r.error==="not_sys"?"هذه الصلاحية لمسؤول النظام فقط":"تعذّر التحميل ("+((r&&r.error)||(error&&error.message)||"")+")"; return; }
+    if(error||!r||!r.ok){ msg.textContent=r&&r.error==="not_sys"?"هذه الصلاحية لمدير المكتب ومسؤول النظام فقط":"تعذّر التحميل ("+((r&&r.error)||(error&&error.message)||"")+")"; return; }
     const sups=[], ents=[], seenSup=new Set(), owner={}; const c={stages:r.stages||{},subjects:r.subjects||{}};
     r.sheets.forEach(x=>{ owner[x.k]=x; if(!seenSup.has(x.owner)){ seenSup.add(x.owner); sups.push({code:x.owner,name:x.owner_name,dept:x.dept}); } });
     ttEntries(r).entries.forEach(e=>{ if(e.kind!=="class"&&e.kind!=="free") return; const o=owner[e.sheet]||{}; e.sup=o.owner_name||""; e.supCode=o.owner||""; e.stage=schStage(e,c); e.subject=e.subj||c.subjects[e.sheet+"|"+e.teacher]||""; ents.push(e); });
